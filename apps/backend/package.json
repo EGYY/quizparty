@@ -9,10 +9,10 @@
     "lint": "eslint .",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
-    "prisma:generate": "set -a; if [ -f ../../.env ]; then . ../../.env; else . ../../.env.example; fi; set +a; prisma generate --schema prisma/schema.prisma",
-    "prisma:migrate": "set -a; if [ -f ../../.env ]; then . ../../.env; else . ../../.env.example; fi; set +a; prisma migrate dev --schema prisma/schema.prisma --name init",
-    "prisma:studio": "set -a; if [ -f ../../.env ]; then . ../../.env; else . ../../.env.example; fi; set +a; prisma studio --schema prisma/schema.prisma",
-    "prisma:seed": "set -a; if [ -f ../../.env ]; then . ../../.env; else . ../../.env.example; fi; set +a; tsx prisma/seed.ts"
+    "prisma:generate": "node ../../scripts/load-env.js prisma generate --schema prisma/schema.prisma",
+    "prisma:migrate": "node ../../scripts/load-env.js prisma migrate dev --schema prisma/schema.prisma --name init",
+    "prisma:studio": "node ../../scripts/load-env.js prisma studio --schema prisma/schema.prisma",
+    "prisma:seed": "node ../../scripts/load-env.js tsx prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
