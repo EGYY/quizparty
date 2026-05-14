@@ -1,0 +1,15 @@
+{
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @quizparty/web typecheck)",
+      "Bash(xargs cat)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(pnpm --filter @quizparty/shared build)",
+      "Bash(pnpm lint *)"
+    ]
+  }
+}

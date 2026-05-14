@@ -1,0 +1,33 @@
+{
+  "name": "@quizparty/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@quizparty/shared": "workspace:*",
+    "@tanstack/react-query": "^5.100.9",
+    "@vitejs/plugin-react": "^6.0.1",
+    "axios": "^1.16.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.14.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-hook-form": "^7.75.0",
+    "react-router-dom": "^7.0.0",
+    "socket.io-client": "^4.8.3",
+    "vite": "^8.0.11",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "typescript": "^5.8.3"
+  }
+}

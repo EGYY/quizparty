@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AUTHOR
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuizStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+enum QuizCategory {
+  CINEMA
+  MUSIC
+  HISTORY
+  SCIENCE
+  GAMES
+  SPORTS
+  PARTY
+  KIDS
+  ADULT
+  ART
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  displayName  String
+  role         Role         @default(AUTHOR)
+  avatarUrl    String?
+  quizzes      Quiz[]
+  reviews      QuizReview[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Quiz {
+  id                    String       @id @default(uuid())
+  title                 String
+  description           String?
+  category              QuizCategory
+  difficulty            Difficulty
+  status                QuizStatus   @default(DRAFT)
+  coverUrl              String?
+  squareCoverUrl         String?
+  themeColor            String?
+  recommendedPlayersMin Int?
+  recommendedPlayersMax Int?
+  estimatedMinutes      Int?
+  tags                  String[]     @default([])
+  rejectionReason       String?
+  authorId              String
+  author                User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questions             Question[]
+  reviews               QuizReview[]
+  playCount             Int          @default(0)
+  rating                Float?
+  submittedAt           DateTime?
+  approvedAt            DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@index([status, category])
+  @@index([authorId, status])
+}
+
+model Question {
+  id           String     @id @default(uuid())
+  quizId       String
+  quiz         Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionText String
+  mediaUrl     String?
+  mediaType    MediaType?
+  mediaAlt     String?
+  mediaStartMs Int?
+  mediaEndMs   Int?
+  mediaPosterUrl String?
+  mediaPrompt  String?
+  revealMediaUrl String?
+  revealMediaType MediaType?
+  revealMediaAlt String?
+  revealMediaStartMs Int?
+  revealMediaEndMs Int?
+  revealMediaPosterUrl String?
+  revealMediaPrompt String?
+  options      String[]
+  correctIndex Int
+  explanation  String?
+  order        Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([quizId, order])
+}
+
+model MediaAsset {
+  id        String    @id @default(uuid())
+  url       String
+  type      MediaType
+  alt       String?
+  sizeBytes Int?
+  ownerId   String?
+  createdAt DateTime  @default(now())
+}
+
+model QuizReview {
+  id        String     @id @default(uuid())
+  quizId    String
+  quiz      Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  reviewerId String?
+  reviewer  User?      @relation(fields: [reviewerId], references: [id])
+  fromStatus QuizStatus
+  toStatus   QuizStatus
+  reasons   String[]   @default([])
+  comment   String?
+  createdAt DateTime   @default(now())
+
+  @@index([quizId, createdAt])
+}

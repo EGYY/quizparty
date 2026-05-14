@@ -1,0 +1,7 @@
+**/dist/**
+**/node_modules/**
+**/*.tsbuildinfo
+apps/tv/android/**
+apps/tv/ios/**
+apps/tv/vendor/**
+pnpm-lock.yaml

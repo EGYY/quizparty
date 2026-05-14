@@ -1,0 +1,19 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@quizparty/shared": ["../../packages/shared/src/index.ts"],
+      "@app/*": ["src/app/*"],
+      "@pages/*": ["src/pages/*"],
+      "@widgets/*": ["src/widgets/*"],
+      "@features/*": ["src/features/*"],
+      "@entities/*": ["src/entities/*"],
+      "@shared/*": ["src/shared/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "../../packages/shared/src"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}
