@@ -1,27 +1,20 @@
 import type { ImageSourcePropType } from 'react-native';
-import { WEB_PUBLIC_ORIGIN } from '@shared/config/env';
 
-const avatarIds = [
-  'avatar-01',
-  'avatar-02',
-  'avatar-03',
-  'avatar-04',
-  'avatar-05',
-  'avatar-06',
-  'avatar-07',
-  'avatar-08',
-  'popcorn-mascot',
-] as const;
+const avatarImages: Record<string, ImageSourcePropType> = {
+  'avatar-01': require('@shared/assets/images/avatars/avatar-01.png'),
+  'avatar-02': require('@shared/assets/images/avatars/avatar-02.png'),
+  'avatar-03': require('@shared/assets/images/avatars/avatar-03.png'),
+  'avatar-04': require('@shared/assets/images/avatars/avatar-04.png'),
+  'avatar-05': require('@shared/assets/images/avatars/avatar-05.png'),
+  'avatar-06': require('@shared/assets/images/avatars/avatar-06.png'),
+  'avatar-07': require('@shared/assets/images/avatars/avatar-07.png'),
+  'avatar-08': require('@shared/assets/images/avatars/avatar-08.png'),
+  'popcorn-mascot': require('@shared/assets/images/popcorn-mascot.png'),
+};
 
 export function getPhoneAvatarSource(
   avatarId: string | undefined,
 ): ImageSourcePropType | undefined {
-  if (
-    !avatarId ||
-    !avatarIds.includes(avatarId as (typeof avatarIds)[number])
-  ) {
-    return undefined;
-  }
-
-  return { uri: `${WEB_PUBLIC_ORIGIN}/assets/phone/${avatarId}.png` };
+  if (!avatarId) return undefined;
+  return avatarImages[avatarId];
 }

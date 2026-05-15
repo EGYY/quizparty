@@ -4,6 +4,7 @@
  * false → true : spring-поп при ответе игрока
  * true → false : сброс шкалы (новый вопрос)
  */
+import { s } from '@shared/config/scale';
 import { memo, useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
@@ -58,15 +59,15 @@ export const AnswerDot = memo(function AnswerDot({ isAnswered }: Props) {
 
 const styles = StyleSheet.create({
   dot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: s(18),
+    height: s(18),
+    borderRadius: s(9),
   },
   dot_answered: {
     backgroundColor: '#bff55b',
     shadowColor: '#bff55b',
     shadowOpacity: 0.7,
-    shadowRadius: 6,
+    shadowRadius: s(6),
     shadowOffset: { width: 0, height: 0 },
   },
   dot_waiting: {

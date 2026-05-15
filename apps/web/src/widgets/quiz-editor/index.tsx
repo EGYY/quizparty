@@ -359,7 +359,6 @@ const MetaPanel = memo(function MetaPanel({
         <span className="qe-label">Обложка</span>
         <MediaPicker
           accept="image/*"
-          compact
           currentUrl={draft.coverUrl}
           description="PNG, JPG, WEBP до 10 МБ"
           pendingFile={pendingCoverFile}
@@ -370,7 +369,7 @@ const MetaPanel = memo(function MetaPanel({
           }}
           onSelect={(file) => {
             onCoverFileChange(file);
-            setField('coverUrl', draft.coverUrl ?? 'http://localhost:5173/assets/covers/party.svg');
+            setField('coverUrl', draft.coverUrl);
           }}
         />
         <FieldError message={errors.cover} />
@@ -781,7 +780,6 @@ function ValidationPanel({ validation }: { validation: QuizDraft['validation'] }
 
 const MediaPicker = memo(function MediaPicker({
   accept,
-  compact,
   currentType,
   currentUrl,
   description,
@@ -791,7 +789,6 @@ const MediaPicker = memo(function MediaPicker({
   onSelect,
 }: {
   accept: string;
-  compact?: boolean;
   currentType?: MediaType | undefined;
   currentUrl: string | undefined;
   description: string;
@@ -817,7 +814,7 @@ const MediaPicker = memo(function MediaPicker({
         : 'image';
 
   return (
-    <div className={compact ? 'media-picker media-picker--compact' : 'media-picker'}>
+    <div className={'media-picker'}>
       <label className="media-dropzone">
         <input
           accept={accept}
@@ -828,7 +825,7 @@ const MediaPicker = memo(function MediaPicker({
             e.currentTarget.value = '';
           }}
         />
-        <UploadCloud size={compact ? 22 : 34} />
+        <UploadCloud size={34} />
         <strong>{pendingFile ? pendingFile.name : title}</strong>
         <span>{pendingFile ? 'Будет загружено при сохранении' : description}</span>
       </label>
@@ -842,7 +839,7 @@ const MediaPicker = memo(function MediaPicker({
             <img alt="" loading="lazy" src={previewUrl} />
           )
         ) : (
-          <ImagePlus size={compact ? 22 : 34} />
+          <ImagePlus size={34} />
         )}
         <button className="icon-button tiny danger media-clear" type="button" onClick={onClear}>
           <X size={14} />

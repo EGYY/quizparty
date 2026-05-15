@@ -13,6 +13,7 @@ import {
 } from '@quizparty/shared';
 import { getPhoneAvatarSource } from '@shared/config/phone-avatars';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 type PlayerTone = 'ready' | 'waiting' | 'offline' | 'empty';
 
@@ -128,21 +129,21 @@ export const PlayerCard = memo(function PlayerCard({
   );
 });
 
-const CARD_W = 170;
-const CARD_H = 218;
-const AVATAR = 90;
+const CARD_W = s(200);
+const CARD_H = sv(200);
+const AVATAR = s(90);
 
 const styles = StyleSheet.create({
   card: {
     width: CARD_W,
     height: CARD_H,
     alignItems: 'center',
-    borderRadius: 22,
-    borderWidth: 3,
+    borderRadius: s(22),
+    borderWidth: s(3),
     backgroundColor: 'rgba(20, 22, 40, 0.94)',
-    paddingTop: 8,
-    paddingHorizontal: 10,
-    paddingBottom: 12,
+    paddingTop: sv(8),
+    paddingHorizontal: s(10),
+    paddingBottom: sv(12),
   },
 
   // ── Тона ──
@@ -150,14 +151,14 @@ const styles = StyleSheet.create({
     borderColor: '#a7f47a',
     shadowColor: '#a7f47a',
     shadowOpacity: 0.6,
-    shadowRadius: 18,
+    shadowRadius: s(18),
     shadowOffset: { width: 0, height: 0 },
   },
   card_waiting: {
     borderColor: 'rgba(94, 215, 255, 0.55)',
     shadowColor: colors.blue,
     shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowRadius: s(8),
     shadowOffset: { width: 0, height: 0 },
   },
   card_offline: {
@@ -168,32 +169,32 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 209, 102, 0.28)',
     borderStyle: 'dashed',
     justifyContent: 'center',
-    gap: 10,
+    gap: s(10),
     backgroundColor: 'rgba(20, 22, 40, 0.6)',
   },
 
   // ── Корона / номер ──
   crown: {
     position: 'absolute',
-    top: -18,
-    left: 10,
-    fontSize: 26,
-    lineHeight: 30,
+    top: sv(-18),
+    left: s(10),
+    fontSize: sf(26),
+    lineHeight: sv(30),
   },
   numberBadge: {
     position: 'absolute',
-    left: 8,
-    top: 8,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    left: s(8),
+    top: sv(8),
+    width: s(22),
+    height: s(22),
+    borderRadius: s(11),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 209, 102, 0.18)',
   },
   numberText: {
     color: colors.gold,
-    fontSize: 12,
+    fontSize: sf(13),
     fontWeight: '900',
   },
 
@@ -205,8 +206,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
-    marginBottom: 10,
+    marginTop: sv(12),
+    marginBottom: sv(10),
   },
   avatarBg_ready: { backgroundColor: '#dce9aa' },
   avatarBg_waiting: { backgroundColor: '#9bd8f4' },
@@ -214,57 +215,57 @@ const styles = StyleSheet.create({
   avatarImage: { width: AVATAR, height: AVATAR },
   avatarInitial: {
     color: colors.textDark,
-    fontSize: 40,
+    fontSize: sf(40),
     fontWeight: '900',
   },
 
   // ── Пустой слот ──
   emptyCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: s(62),
+    height: s(62),
+    borderRadius: s(31),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderWidth: 2,
+    borderWidth: s(2),
     borderColor: 'rgba(255, 209, 102, 0.25)',
     borderStyle: 'dashed',
   },
   emptyPlus: {
     color: colors.gold,
-    fontSize: 30,
+    fontSize: sf(30),
     fontWeight: '300',
-    lineHeight: 38,
+    lineHeight: sv(38),
   },
   emptyLabel: {
     color: colors.textMuted,
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '900',
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: sv(19),
   },
 
   // ── Ник + статус ──
   name: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: sv(8),
   },
   statusPill: {
-    minWidth: 96,
+    minWidth: s(96),
     alignItems: 'center',
     borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingVertical: sv(5),
+    paddingHorizontal: s(12),
   },
   status_ready: { backgroundColor: 'rgba(92, 196, 86, 0.52)' },
   status_waiting: { backgroundColor: 'rgba(94, 215, 255, 0.2)' },
   status_offline: { backgroundColor: 'rgba(244, 162, 97, 0.18)' },
   statusText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: sf(13),
     fontWeight: '900',
   },
   statusText_offline: { color: colors.coral },

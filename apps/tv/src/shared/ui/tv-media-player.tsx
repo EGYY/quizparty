@@ -3,16 +3,16 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import Video, { type VideoRef } from 'react-native-video';
 import { MediaType, type Media } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
+import { getMediaUrl } from '@shared/lib/media';
 
 export function TvMediaPlayer({
-  compact,
   fallbackIcon = '?',
   media,
   variant = 'question',
   overrideWidth,
   overrideHeight,
 }: {
-  compact: boolean;
   fallbackIcon?: string;
   media: Media | undefined;
   variant?: 'question' | 'reveal' | 'question-av';
@@ -41,36 +41,24 @@ export function TvMediaPlayer({
         styles.frame_media,
         variant === 'reveal' && styles.frame_reveal,
         variant === 'question-av' && styles.frame_questionAv,
-        variant === 'question-av' && compact && styles.frame_questionAv_compact,
-        variant !== 'question-av' && compact && styles.frame_compact,
       ];
 
   if (!media) {
     return (
-      <View
-        style={
-          hasOverride
-            ? frameStyle
-            : [styles.frame, compact && styles.frame_compact]
-        }
-      >
+      <View style={hasOverride ? frameStyle : [styles.frame]}>
         <Text style={styles.fallbackIcon}>{fallbackIcon}</Text>
       </View>
     );
   }
 
+  const resolvedUrl = getMediaUrl(media.url)!;
+
   if (media.type === MediaType.IMAGE) {
     return (
-      <View
-        style={
-          hasOverride
-            ? frameStyle
-            : [styles.frame, compact && styles.frame_compact]
-        }
-      >
+      <View style={hasOverride ? frameStyle : [styles.frame]}>
         <Image
           resizeMode="cover"
-          source={{ uri: media.url }}
+          source={{ uri: resolvedUrl }}
           style={styles.image}
         />
       </View>
@@ -86,9 +74,7 @@ export function TvMediaPlayer({
     <View style={frameStyle}>
       {isAudio ? (
         <View style={styles.audioScene}>
-          <Text
-            style={[styles.mediaKicker, compact && styles.mediaKicker_compact]}
-          >
+          <Text style={[styles.mediaKicker]}>
             {media.prompt ??
               (variant === 'reveal'
                 ? 'Расширенный фрагмент'
@@ -98,17 +84,18 @@ export function TvMediaPlayer({
             {Array.from({ length: 13 }, (_, index) => (
               <View
                 key={index}
-                style={[styles.audioBar, { height: 24 + ((index * 17) % 58) }]}
+                style={[
+                  styles.audioBar,
+                  { height: sv(24 + ((index * 17) % 58)) },
+                ]}
               />
             ))}
           </View>
-          <Text style={[styles.mediaHint, compact && styles.mediaHint_compact]}>
-            AUDIO
-          </Text>
+          <Text style={[styles.mediaHint]}>AUDIO</Text>
           <Video
             paused={paused}
             ref={videoRef}
-            source={{ uri: media.url }}
+            source={{ uri: resolvedUrl }}
             style={styles.hiddenVideo}
             onLoad={() => {
               if (!didSeekRef.current && startSeconds > 0) {
@@ -128,7 +115,7 @@ export function TvMediaPlayer({
           paused={paused}
           ref={videoRef}
           resizeMode="cover"
-          source={{ uri: media.url }}
+          source={{ uri: resolvedUrl }}
           style={styles.video}
           onLoad={() => {
             if (!didSeekRef.current && startSeconds > 0) {
@@ -147,40 +134,30 @@ export function TvMediaPlayer({
 
 const styles = StyleSheet.create({
   frame: {
-    width: 430,
-    height: 150,
+    width: s(430),
+    height: sv(150),
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     borderColor: 'rgba(255, 210, 142, 0.7)',
-    borderRadius: 16,
-    borderWidth: 3,
+    borderRadius: s(16),
+    borderWidth: s(3),
     backgroundColor: 'rgba(255, 209, 102, 0.12)',
-    marginBottom: 20,
-  },
-  frame_compact: {
-    width: 292,
-    height: 92,
-    marginBottom: 10,
+    marginBottom: sv(20),
   },
   frame_media: {
     backgroundColor: 'rgba(15, 22, 45, 0.92)',
   },
   frame_reveal: {
-    width: 340,
-    height: 132,
-    marginTop: 16,
+    width: s(340),
+    height: sv(132),
+    marginTop: sv(16),
     marginBottom: 0,
   },
   frame_questionAv: {
-    width: 620,
-    height: 220,
-    marginBottom: 20,
-  },
-  frame_questionAv_compact: {
-    width: 440,
-    height: 160,
-    marginBottom: 12,
+    width: s(620),
+    height: sv(220),
+    marginBottom: sv(20),
   },
   image: {
     width: '100%',
@@ -192,8 +169,8 @@ const styles = StyleSheet.create({
   },
   hiddenVideo: {
     position: 'absolute',
-    width: 1,
-    height: 1,
+    width: s(1),
+    height: sv(1),
     opacity: 0,
   },
   audioScene: {
@@ -201,44 +178,38 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 18,
+    gap: s(8),
+    paddingHorizontal: s(18),
   },
   audioBars: {
-    height: 70,
+    height: sv(70),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: s(7),
   },
   audioBar: {
-    width: 10,
+    width: s(10),
     borderRadius: 999,
     backgroundColor: colors.gold,
     shadowColor: colors.gold,
     shadowOpacity: 0.5,
-    shadowRadius: 12,
+    shadowRadius: s(12),
     shadowOffset: { width: 0, height: 0 },
   },
   fallbackIcon: {
     color: colors.gold,
-    fontSize: 70,
+    fontSize: sf(70),
     fontWeight: '900',
   },
   mediaKicker: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '900',
-  },
-  mediaKicker_compact: {
-    fontSize: 14,
   },
   mediaHint: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: sf(14),
     fontWeight: '900',
     letterSpacing: 0,
-  },
-  mediaHint_compact: {
-    fontSize: 10,
   },
 });

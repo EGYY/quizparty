@@ -38,8 +38,8 @@ export default function LoginPage() {
 
   const { register, handleSubmit } = useForm<LoginRequest>({
     defaultValues: {
-      email: 'admin@quizparty.local',
-      password: 'local-dev',
+      email: '',
+      password: '',
     },
   });
 

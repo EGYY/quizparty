@@ -18,14 +18,21 @@ import { ErrorCode } from './errors';
 
 export const uuidSchema = z.string().uuid();
 
+export const mediaUrlSchema = z
+  .string()
+  .min(1)
+  .refine((v) => v.startsWith('/') || z.string().url().safeParse(v).success, {
+    message: 'Invalid url',
+  });
+
 export const mediaSchema = z
   .object({
-    url: z.string().url(),
+    url: mediaUrlSchema,
     type: z.nativeEnum(MediaType),
     alt: z.string().max(160).optional(),
     startMs: z.number().int().nonnegative().optional(),
     endMs: z.number().int().positive().optional(),
-    posterUrl: z.string().url().optional(),
+    posterUrl: mediaUrlSchema.optional(),
     prompt: z.string().max(160).optional(),
     durationSeconds: z.number().int().positive().optional(),
     sizeBytes: z.number().int().positive().optional(),
@@ -52,8 +59,8 @@ export const quizCardSchema = z.object({
   category: quizCategorySchema,
   difficulty: difficultySchema,
   status: z.nativeEnum(QuizStatus),
-  coverUrl: z.string().url().optional(),
-  squareCoverUrl: z.string().url().optional(),
+  coverUrl: mediaUrlSchema.optional(),
+  squareCoverUrl: mediaUrlSchema.optional(),
   themeColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -318,7 +325,7 @@ export const quizDraftSchema = z.object({
   category: quizCategorySchema,
   difficulty: difficultySchema,
   status: z.nativeEnum(QuizStatus),
-  coverUrl: z.string().url().optional(),
+  coverUrl: mediaUrlSchema.optional(),
   themeColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)

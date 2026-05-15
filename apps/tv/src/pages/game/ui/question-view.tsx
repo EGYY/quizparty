@@ -12,7 +12,6 @@
  * Таким образом каждую секунду обновляется только RoundTimer
  * (18 сегментов + текст таймера + анимации) — всё остальное заморожено.
  */
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { TvGameState } from '@entities/game';
 import {
   QuestionOptionsGrid,
@@ -22,10 +21,11 @@ import {
 import { RoundBadge } from '@entities/round';
 import { MediaType } from '@quizparty/shared';
 import { soundQuestionReview } from '@shared/assets/sounds';
-import { colors } from '@shared/config/theme';
+import { s, sv } from '@shared/config/scale';
 import { useMusicTrack } from '@shared/ui/music-provider';
 import { AnswerProgress } from '@widgets/answer-progress';
 import { RoundTimer } from '@widgets/round-timer';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 export function QuestionView({
   state,
@@ -33,7 +33,6 @@ export function QuestionView({
   state: Extract<TvGameState, { phase: 'question' }>;
 }) {
   const { height, width } = useWindowDimensions();
-  const compact = width < 1500 || height < 820;
 
   const { round, timer } = state;
   const { question } = round;
@@ -50,37 +49,23 @@ export function QuestionView({
   const chrome = (
     <View style={styles.topChrome}>
       <RoundBadge
-        compact={compact}
         roundNumber={round.roundNumber}
         totalRounds={round.totalRounds}
       />
-      <RoundTimer compact={compact} timer={timer} />
-      <View
-        style={[
-          styles.settingsButton,
-          compact && styles.settingsButton_compact,
-        ]}
-      >
-        <Text style={styles.settingsIcon}>⚙</Text>
-      </View>
+      <RoundTimer timer={timer} />
     </View>
   );
 
   const progress = (
-    <AnswerProgress
-      answeredCount={answeredCount}
-      compact={compact}
-      playerCount={playerCount}
-    />
+    <AnswerProgress answeredCount={answeredCount} playerCount={playerCount} />
   );
 
   // ── Layout with media (video / audio / image) ────────────────────────────
   if (hasMedia && media) {
     return (
-      <View style={[styles.layout, compact && styles.layout_compact]}>
+      <View style={[styles.layout]}>
         {chrome}
         <QuestionVideoHero
-          compact={compact}
           media={media}
           mediaH={mediaH}
           questionId={question.id}
@@ -88,7 +73,6 @@ export function QuestionView({
           screenWidth={width}
         />
         <QuestionOptionsGrid
-          compact={compact}
           options={question.options}
           questionId={question.id}
           videoMode
@@ -100,16 +84,14 @@ export function QuestionView({
 
   // ── Standard layout ──────────────────────────────────────────────────────
   return (
-    <View style={[styles.layout, compact && styles.layout_compact]}>
+    <View style={[styles.layout]}>
       {chrome}
       <QuestionTextPanel
-        compact={compact}
         media={media}
         questionId={question.id}
         questionText={question.questionText}
       />
       <QuestionOptionsGrid
-        compact={compact}
         options={question.options}
         questionId={question.id}
       />
@@ -122,33 +104,12 @@ const styles = StyleSheet.create({
   layout: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingBottom: 30,
-  },
-  layout_compact: {
-    paddingBottom: 18,
+    paddingBottom: sv(30),
   },
 
   topChrome: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 24,
-  },
-
-  settingsButton: {
-    width: 92,
-    height: 92,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: 'rgba(255, 209, 102, 0.45)',
-    borderRadius: 46,
-    borderWidth: 3,
-    backgroundColor: 'rgba(22, 24, 43, 0.9)',
-  },
-  settingsButton_compact: { width: 70, height: 70, borderRadius: 35 },
-  settingsIcon: {
-    color: colors.textSecondary,
-    fontSize: 45,
-    fontWeight: '900',
+    gap: s(24),
   },
 });

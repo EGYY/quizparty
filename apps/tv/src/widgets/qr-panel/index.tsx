@@ -2,6 +2,7 @@ import * as QRCode from 'qrcode';
 import React, { memo, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, SvgProps } from 'react-native-svg';
+import { s, sf, sv } from '@shared/config/scale';
 
 type Props = {
   joinUrl: string;
@@ -15,11 +16,11 @@ type QrMatrix = {
   data: boolean[];
 };
 
-const PANEL_W = 390;
-const PANEL_H = 580;
+const PANEL_W = s(390);
+const PANEL_H = sv(580);
 
-const QR_BOX_SIZE = 292;
-const QR_PADDING = 16;
+const QR_BOX_SIZE = s(292);
+const QR_PADDING = s(16);
 const QR_INNER_SIZE = QR_BOX_SIZE - QR_PADDING * 2;
 
 const palette = {
@@ -113,11 +114,18 @@ export const QrPanel = memo(
   function QrPanel({ joinUrl, qrVisible, roomCode }: Props) {
     const qrMatrix = useMemo(() => createQrMatrix(joinUrl), [joinUrl]);
 
-    const qrCellSize = useMemo(() => {
-      return Math.floor(QR_INNER_SIZE / qrMatrix.size);
-    }, [qrMatrix.size]);
-
-    const qrGridSize = qrCellSize * qrMatrix.size;
+    const svgPath = useMemo(() => {
+      const size = qrMatrix.size;
+      let d = '';
+      for (let i = 0; i < qrMatrix.data.length; i++) {
+        if (qrMatrix.data[i]) {
+          const col = i % size;
+          const row = Math.floor(i / size);
+          d += `M${col},${row}h1v1h-1Z`;
+        }
+      }
+      return d;
+    }, [qrMatrix]);
 
     const joinUrlLabel = useMemo(() => {
       return joinUrl.replace(/^https?:\/\//, '')?.split('/')?.[0] ?? joinUrl;
@@ -126,7 +134,6 @@ export const QrPanel = memo(
     return (
       <View style={styles.root}>
         <View style={styles.panel}>
-          <View style={styles.panelGlow} />
           <View style={styles.panelBorder} />
 
           <View style={styles.content}>
@@ -136,34 +143,18 @@ export const QrPanel = memo(
                 <Text style={styles.headerAccent}>с телефона!</Text>
               </View>
 
-              <PhoneIcon style={styles.phoneIcon} />
+              <PhoneIcon width={s(62)} style={styles.phoneIcon} />
             </View>
 
             <View style={styles.qrFrame}>
               {qrVisible ? (
-                <View
-                  style={[
-                    styles.qrGrid,
-                    {
-                      width: qrGridSize,
-                      height: qrGridSize,
-                    },
-                  ]}
+                <Svg
+                  width={QR_INNER_SIZE}
+                  height={QR_INNER_SIZE}
+                  viewBox={`0 0 ${qrMatrix.size} ${qrMatrix.size}`}
                 >
-                  {qrMatrix.data.map((filled, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.qrCell,
-                        {
-                          width: qrCellSize,
-                          height: qrCellSize,
-                        },
-                        filled && styles.qrCellFilled,
-                      ]}
-                    />
-                  ))}
-                </View>
+                  <Path d={svgPath} fill={palette.qrDark} />
+                </Svg>
               ) : (
                 <View style={styles.qrHidden}>
                   <Text style={styles.qrHiddenText}>QR скрыт</Text>
@@ -222,63 +213,47 @@ export const QrPanel = memo(
 
 const styles = StyleSheet.create({
   root: {
-    width: 530,
+    width: s(530),
     alignItems: 'center',
-    marginTop: Dimensions.get('screen').height / 2 - PANEL_H / 2 - 100,
+    marginTop: Dimensions.get('screen').height / 2 - PANEL_H / 2 - sv(100),
   },
 
   panel: {
     width: PANEL_W,
     height: PANEL_H,
-    borderRadius: 42,
+    borderRadius: s(42),
     backgroundColor: palette.bg,
     overflow: 'visible',
 
     shadowColor: palette.goldGlow,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.95,
-    shadowRadius: 30,
+    shadowRadius: s(30),
 
-    elevation: 18,
+    elevation: s(18),
   },
-
-  panelGlow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 42,
-    backgroundColor: 'transparent',
-    borderWidth: 5,
-    borderColor: 'rgba(255, 190, 68, 0.28)',
-
-    shadowColor: palette.goldGlow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 34,
-
-    elevation: 20,
-  },
-
   panelBorder: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 42,
-    borderWidth: 3,
+    borderRadius: s(42),
+    borderWidth: s(3),
     borderColor: palette.gold,
   },
 
   content: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 34,
-    paddingVertical: 34,
+    paddingHorizontal: s(34),
+    paddingVertical: sv(34),
   },
 
   header: {
     width: '100%',
-    minHeight: 86,
-    marginBottom: 20,
+    minHeight: sv(86),
+    marginBottom: sv(20),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: s(18),
   },
 
   headerText: {
@@ -287,37 +262,37 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     color: palette.text,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: sf(28),
+    lineHeight: sv(34),
     fontWeight: '900',
-    letterSpacing: 0.8,
+    letterSpacing: s(0.8),
     textAlign: 'center',
   },
 
   headerAccent: {
     color: palette.gold,
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: sf(34),
+    lineHeight: sv(40),
     fontWeight: '900',
-    letterSpacing: 0.8,
+    letterSpacing: s(0.8),
     textAlign: 'center',
 
     textShadowColor: 'rgba(255, 205, 82, 0.42)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 14,
+    textShadowRadius: s(14),
   },
 
   phoneIcon: {
     position: 'absolute',
-    right: 10,
-    top: -4,
+    right: s(10),
+    top: sv(-4),
   },
 
   qrFrame: {
     width: QR_BOX_SIZE,
     height: QR_BOX_SIZE,
     padding: QR_PADDING,
-    borderRadius: 18,
+    borderRadius: s(18),
     backgroundColor: palette.qrBg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -325,29 +300,15 @@ const styles = StyleSheet.create({
     shadowColor: '#FFFFFF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowRadius: s(16),
 
-    elevation: 8,
-  },
-
-  qrGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: palette.qrBg,
-  },
-
-  qrCell: {
-    backgroundColor: palette.qrBg,
-  },
-
-  qrCellFilled: {
-    backgroundColor: palette.qrDark,
+    elevation: s(8),
   },
 
   qrHidden: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: s(10),
     backgroundColor: palette.qrBg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -355,19 +316,19 @@ const styles = StyleSheet.create({
 
   qrHiddenText: {
     color: palette.darkText,
-    fontSize: 28,
+    fontSize: sf(28),
     fontWeight: '900',
   },
 
   urlBlock: {
-    marginTop: 24,
+    marginTop: sv(24),
     alignItems: 'center',
   },
 
   urlText: {
     color: palette.text,
-    fontSize: 22,
-    lineHeight: 30,
+    fontSize: sf(22),
+    lineHeight: sv(30),
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -378,14 +339,14 @@ const styles = StyleSheet.create({
   },
 
   codeCard: {
-    width: 380,
-    minHeight: 122,
-    marginTop: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 26,
-    borderRadius: 24,
+    width: s(380),
+    minHeight: sv(122),
+    marginTop: sv(18),
+    paddingVertical: sv(18),
+    paddingHorizontal: s(26),
+    borderRadius: s(24),
     backgroundColor: 'rgba(24, 22, 28, 0.96)',
-    borderWidth: 2,
+    borderWidth: s(2),
     borderColor: palette.gold,
 
     alignItems: 'center',
@@ -394,81 +355,81 @@ const styles = StyleSheet.create({
     shadowColor: palette.goldGlow,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
-    shadowRadius: 18,
+    shadowRadius: s(18),
 
-    elevation: 14,
+    elevation: s(14),
   },
 
   codeLabel: {
     color: palette.textMuted,
-    fontSize: 23,
-    lineHeight: 28,
+    fontSize: sf(23),
+    lineHeight: sv(28),
     fontWeight: '900',
-    letterSpacing: 0.4,
-    marginBottom: 2,
+    letterSpacing: s(0.4),
+    marginBottom: sv(2),
   },
 
   codeValue: {
     color: palette.gold,
-    fontSize: 54,
-    lineHeight: 64,
+    fontSize: sf(54),
+    lineHeight: sv(64),
     fontWeight: '900',
-    letterSpacing: 2.5,
+    letterSpacing: s(2.5),
 
     textShadowColor: 'rgba(255, 200, 80, 0.9)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
+    textShadowRadius: s(18),
   },
 
   decorLineLeft: {
     position: 'absolute',
-    left: 18,
-    top: 28,
-    gap: 8,
+    left: s(18),
+    top: sv(28),
+    gap: s(8),
     transform: [{ rotate: '18deg' }],
   },
 
   decorLineRight: {
     position: 'absolute',
-    right: 18,
-    top: 28,
-    gap: 8,
+    right: s(18),
+    top: sv(28),
+    gap: s(8),
     transform: [{ rotate: '-18deg' }],
   },
 
   decorLine: {
-    width: 28,
-    height: 3,
+    width: s(28),
+    height: sv(3),
     borderRadius: 999,
     backgroundColor: palette.orange,
   },
 
   decorLineSmall: {
-    width: 16,
+    width: s(16),
     opacity: 0.8,
   },
 
   hideButton: {
-    marginTop: 14,
-    minWidth: 214,
-    height: 58,
-    paddingHorizontal: 26,
+    marginTop: sv(14),
+    minWidth: s(214),
+    height: sv(58),
+    paddingHorizontal: s(26),
     borderRadius: 999,
     backgroundColor: palette.buttonBg,
-    borderWidth: 2,
+    borderWidth: s(2),
     borderColor: palette.buttonBorder,
 
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: s(12),
 
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: sv(8) },
     shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowRadius: s(14),
 
-    elevation: 8,
+    elevation: s(8),
   },
 
   hideButtonPressed: {
@@ -478,7 +439,7 @@ const styles = StyleSheet.create({
 
   hideButtonText: {
     color: palette.text,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '900',
   },
 });

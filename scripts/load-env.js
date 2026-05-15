@@ -10,15 +10,20 @@ const fallbackPath = join(root, '.env.example');
 const file = existsSync(envPath) ? envPath : fallbackPath;
 const env = {};
 
-readFileSync(file, 'utf8').split('\n').forEach(line => {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith('#')) return;
-  const idx = trimmed.indexOf('=');
-  if (idx === -1) return;
-  const key = trimmed.slice(0, idx).trim();
-  const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
-  env[key] = val;
-});
+readFileSync(file, 'utf8')
+  .split('\n')
+  .forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const idx = trimmed.indexOf('=');
+    if (idx === -1) return;
+    const key = trimmed.slice(0, idx).trim();
+    const val = trimmed
+      .slice(idx + 1)
+      .trim()
+      .replace(/^["']|["']$/g, '');
+    env[key] = val;
+  });
 
 Object.assign(process.env, env);
 

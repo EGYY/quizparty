@@ -109,4 +109,6 @@ DerivedData/
 # React Native bundle cache
 apps/tv/.bundle/
 
-
+# AI local settings
+.claude
+.codex

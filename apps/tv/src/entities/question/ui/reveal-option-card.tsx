@@ -4,21 +4,20 @@
  * Правильный вариант: зелёный фон, корона с анимацией покачивания.
  * Неправильный вариант: красный фон, крест.
  *
- * Мемоизирован — перерисовывается только при смене correctIndex или compact.
+ * Мемоизирован — перерисовывается только при смене correctIndex.
  */
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 type Props = {
-  compact: boolean;
   correctIndex: number;
   index: number;
   option: string;
 };
 
 export const RevealOptionCard = memo(function RevealOptionCard({
-  compact,
   correctIndex,
   index,
   option,
@@ -60,26 +59,27 @@ export const RevealOptionCard = memo(function RevealOptionCard({
     return () => anim.stop();
   }, []);
 
-  const crownRotate = crownSpin.interpolate({
-    inputRange: [-1, 0, 1],
-    outputRange: ['-18deg', '-8deg', '2deg'],
-  });
+  // Memoized: interpolate() creates a new AnimatedInterpolation node each call.
+  // crownSpin is a stable ref, so this runs exactly once per card instance.
+  const crownRotate = useMemo(
+    () =>
+      crownSpin.interpolate({
+        inputRange: [-1, 0, 1],
+        outputRange: ['-18deg', '-8deg', '2deg'],
+      }),
+    [crownSpin],
+  );
 
   return (
     <Animated.View
       style={[
         styles.option,
         isCorrect ? styles.option_correct : styles.option_wrong,
-        compact && styles.option_compact,
       ]}
     >
       {isCorrect ? (
         <Animated.Text
-          style={[
-            styles.crown,
-            compact && styles.crown_compact,
-            { transform: [{ rotate: crownRotate }] },
-          ]}
+          style={[styles.crown, { transform: [{ rotate: crownRotate }] }]}
         >
           👑
         </Animated.Text>
@@ -89,19 +89,15 @@ export const RevealOptionCard = memo(function RevealOptionCard({
         style={[
           styles.indexBadge,
           isCorrect ? styles.indexBadge_correct : styles.indexBadge_wrong,
-          compact && styles.indexBadge_compact,
         ]}
       >
-        <Text style={[styles.indexText, compact && styles.indexText_compact]}>
+        <Text style={[styles.indexText]}>
           {String.fromCharCode(65 + index)}
         </Text>
       </View>
 
       <View style={styles.textWrap}>
-        <Text
-          numberOfLines={2}
-          style={[styles.optionText, compact && styles.optionText_compact]}
-        >
+        <Text numberOfLines={2} style={[styles.optionText]}>
           {option}
         </Text>
       </View>
@@ -110,17 +106,9 @@ export const RevealOptionCard = memo(function RevealOptionCard({
         style={[
           styles.resultIcon,
           isCorrect ? styles.resultIcon_correct : styles.resultIcon_wrong,
-          compact && styles.resultIcon_compact,
         ]}
       >
-        <Text
-          style={[
-            styles.resultIconText,
-            compact && styles.resultIconText_compact,
-          ]}
-        >
-          {isCorrect ? '✓' : '✕'}
-        </Text>
+        <Text style={[styles.resultIconText]}>{isCorrect ? '✓' : '✕'}</Text>
       </View>
     </Animated.View>
   );
@@ -129,32 +117,25 @@ export const RevealOptionCard = memo(function RevealOptionCard({
 const styles = StyleSheet.create({
   option: {
     width: '48%',
-    minHeight: 110,
+    minHeight: sv(110),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    borderRadius: 20,
-    borderWidth: 3,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    gap: s(16),
+    borderRadius: s(20),
+    borderWidth: s(3),
+    paddingHorizontal: s(18),
+    paddingVertical: sv(14),
     shadowColor: '#000000',
     shadowOpacity: 0.28,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  option_compact: {
-    minHeight: 80,
-    gap: 11,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    shadowRadius: s(14),
+    shadowOffset: { width: 0, height: sv(8) },
   },
   option_correct: {
     borderColor: '#d8ff96',
     backgroundColor: 'rgba(39, 126, 54, 0.84)',
     shadowColor: '#a9ff6d',
     shadowOpacity: 0.86,
-    shadowRadius: 18,
+    shadowRadius: s(18),
     shadowOffset: { width: 0, height: 0 },
   },
   option_wrong: {
@@ -164,27 +145,20 @@ const styles = StyleSheet.create({
 
   crown: {
     position: 'absolute',
-    left: 6,
-    top: -28,
-    fontSize: 28,
+    left: s(6),
+    top: sv(-28),
+    fontSize: sf(28),
     transform: [{ rotate: '-8deg' }],
   },
-  crown_compact: { fontSize: 22, top: -22 },
 
   indexBadge: {
-    width: 68,
-    height: 68,
+    width: s(68),
+    height: s(68),
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 34,
-    borderWidth: 3,
-  },
-  indexBadge_compact: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
+    borderRadius: s(34),
+    borderWidth: s(3),
   },
   indexBadge_correct: {
     borderColor: '#beff72',
@@ -196,38 +170,30 @@ const styles = StyleSheet.create({
   },
   indexText: {
     color: colors.text,
-    fontSize: 44,
-    lineHeight: 52,
+    fontSize: sf(44),
+    lineHeight: sv(52),
     fontWeight: '900',
   },
-  indexText_compact: { fontSize: 30, lineHeight: 36 },
 
   textWrap: { flex: 1, justifyContent: 'center' },
   optionText: {
     color: colors.text,
-    fontSize: 38,
-    lineHeight: 46,
+    fontSize: sf(38),
+    lineHeight: sv(46),
     fontWeight: '900',
     textShadowColor: 'rgba(0, 0, 0, 0.45)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 4,
+    textShadowOffset: { width: 0, height: sv(3) },
+    textShadowRadius: s(4),
   },
-  optionText_compact: { fontSize: 26, lineHeight: 32 },
 
   resultIcon: {
-    width: 50,
-    height: 50,
+    width: s(50),
+    height: s(50),
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 25,
-    borderWidth: 3,
-  },
-  resultIcon_compact: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
+    borderRadius: s(25),
+    borderWidth: s(3),
   },
   resultIcon_correct: {
     borderColor: '#beff72',
@@ -239,9 +205,8 @@ const styles = StyleSheet.create({
   },
   resultIconText: {
     color: colors.text,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: sf(30),
+    lineHeight: sv(36),
     fontWeight: '900',
   },
-  resultIconText_compact: { fontSize: 22, lineHeight: 28 },
 });

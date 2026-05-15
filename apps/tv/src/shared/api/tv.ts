@@ -55,6 +55,7 @@ export async function listApprovedQuizzes(
 
   const params = category === QuizCategory.ALL ? '' : `?category=${category}`;
   const data = await request<QuizDetail[]>(`/quizzes/approved${params}`);
+  console.log('data quizes,', data);
   quizCache.set(key, data);
   return data;
 }

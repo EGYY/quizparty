@@ -11,6 +11,7 @@ import { memo, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { type Player } from '@quizparty/shared';
 import { PlayerCard, type PlayerSlot } from '@entities/player';
+import { s } from '@shared/config/scale';
 
 const MIN_VISIBLE = 10; // минимальное число слотов (чтобы сетка выглядела заполненной)
 
@@ -67,6 +68,6 @@ const styles = StyleSheet.create({
     maxWidth: Dimensions.get('screen').width / 2,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: s(10),
   },
 });

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { s } from './scale';
 
 export const colors = {
   bgNight: '#101426',
@@ -24,32 +25,32 @@ export const colors = {
 };
 
 export const radii = {
-  sm: 14,
-  md: 20,
-  lg: 28,
-  xl: 38,
+  sm: s(14),
+  md: s(20),
+  lg: s(28),
+  xl: s(38),
 };
 
 export const shadows = StyleSheet.create({
   focus: {
     shadowColor: colors.purple,
     shadowOpacity: 0.72,
-    shadowRadius: 22,
+    shadowRadius: s(22),
     shadowOffset: { width: 0, height: 0 },
   },
   warm: {
     shadowColor: colors.gold,
     shadowOpacity: 0.36,
-    shadowRadius: 24,
+    shadowRadius: s(24),
     shadowOffset: { width: 0, height: 0 },
   },
 });
 
 export const spacing = {
-  xs: 8,
-  sm: 12,
-  md: 18,
-  lg: 28,
-  xl: 42,
-  xxl: 64,
+  xs: s(8),
+  sm: s(12),
+  md: s(18),
+  lg: s(28),
+  xl: s(42),
+  xxl: s(64),
 };

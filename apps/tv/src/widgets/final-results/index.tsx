@@ -1,14 +1,15 @@
+import type { LeaderboardEntry, ReactionEvent } from '@quizparty/shared';
+import { soundFinal } from '@shared/assets/sounds';
+import { s, sv } from '@shared/config/scale';
+import { useMusicTrack } from '@shared/ui/music-provider';
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
-import type { LeaderboardEntry, ReactionEvent } from '@quizparty/shared';
 import { getFinalLeaderboard } from './model';
 import { FinalConfetti } from './ui/final-confetti';
 import { FinalHeader } from './ui/final-header';
 import { FinalHostActions } from './ui/final-host-actions';
 import { FinalRating } from './ui/final-rating';
 import { WinnersPodium } from './ui/podium';
-import { soundFinal } from '@shared/assets/sounds';
-import { useMusicTrack } from '@shared/ui/music-provider';
 
 export function FinalResults({
   leaderboard,
@@ -21,8 +22,7 @@ export function FinalResults({
   onPlayAgain: () => void;
   reactions: ReactionEvent[];
 }) {
-  const { height, width } = useWindowDimensions();
-  const compact = width < 1500 || height < 820;
+  const { height } = useWindowDimensions();
   const sortedLeaderboard = useMemo(
     () => getFinalLeaderboard(leaderboard),
     [leaderboard],
@@ -64,30 +64,23 @@ export function FinalResults({
   }, [playersOpacity, playersSlide]);
 
   return (
-    <View style={[styles.root, compact && styles.root_compact]}>
-      <FinalConfetti compact={compact} screenHeight={height} />
-      <FinalHeader compact={compact} />
+    <View style={[styles.root]}>
+      <FinalConfetti screenHeight={height} />
+      <FinalHeader />
 
       <Animated.View
         style={[
           styles.content,
-          compact && styles.content_compact,
           {
             opacity: playersOpacity,
             transform: [{ translateY: playersSlide }],
           },
         ]}
       >
-        <WinnersPodium
-          compact={compact}
-          first={first}
-          second={second}
-          third={third}
-        />
-        <View style={[styles.side, compact && styles.side_compact]}>
-          <FinalRating compact={compact} players={rest} />
+        <WinnersPodium first={first} second={second} third={third} />
+        <View style={[styles.side]}>
+          <FinalRating players={rest} />
           <FinalHostActions
-            compact={compact}
             onChooseQuiz={onChooseQuiz}
             onPlayAgain={onPlayAgain}
             reactions={reactions}
@@ -101,32 +94,22 @@ export function FinalResults({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 38,
-    paddingBottom: 28,
-  },
-  root_compact: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingHorizontal: s(38),
+    paddingBottom: sv(28),
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 28,
+    gap: s(28),
     zIndex: 2,
   },
-  content_compact: {
-    gap: 18,
-  },
+
   side: {
     flex: 1,
-    minWidth: 500,
+    minWidth: s(500),
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 16,
-  },
-  side_compact: {
-    minWidth: 360,
-    gap: 10,
+    gap: s(16),
   },
 });

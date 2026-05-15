@@ -357,12 +357,6 @@ img {
   background: rgba(255, 255, 255, 0.07);
 }
 
-.secondary-button.compact {
-  min-height: 34px;
-  padding: 0 11px;
-  font-size: 13px;
-}
-
 .danger-button {
   color: #fff2f3;
   border-color: rgba(255, 82, 103, 0.32);
@@ -999,10 +993,13 @@ th {
 
 .phone-shell {
   min-height: 100vh;
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  padding: 10px 14px 22px;
+  min-height: 100svh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(6px, 1.2dvh, 10px) 14px;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5dvh, 22px));
   background:
     linear-gradient(180deg, rgba(6, 7, 19, 0.06), rgba(6, 7, 19, 0.76)),
     url('/assets/phone/web-game-bg.png') center / cover fixed,
@@ -1021,7 +1018,7 @@ th {
 }
 
 .phone-card {
-  padding: 18px;
+  padding: clamp(12px, 2dvh, 18px);
 }
 
 .phone-controller {
@@ -1034,50 +1031,57 @@ th {
 
 .join-card {
   display: grid;
-  gap: 16px;
+  gap: clamp(8px, 1.6dvh, 16px);
   margin-top: -10px;
   position: relative;
   z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .phone-join-hero {
   width: min(430px, 100%);
-  min-height: 320px;
+  min-height: clamp(190px, 36dvh, 320px);
+  flex-shrink: 0;
   position: relative;
   display: grid;
   justify-items: center;
   align-content: start;
-  padding-top: 26px;
+  padding-top: clamp(12px, 2.8dvh, 26px);
   color: #fff8de;
   text-align: center;
 }
 
 .phone-join-logo {
-  width: min(330px, 86vw);
+  width: min(clamp(160px, 36dvh, 330px), 86vw);
   height: auto;
   filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.38));
 }
 
 .phone-join-hero h1 {
   width: min(330px, 90%);
-  margin: 16px 0 0;
+  margin: clamp(6px, 1.4dvh, 16px) 0 0;
   color: #fff;
-  font-size: 23px;
+  font-size: clamp(15px, 2.8dvh, 23px);
   line-height: 1.26;
   text-shadow: 0 3px 14px rgba(0, 0, 0, 0.62);
 }
 
 .phone-join-tip {
-  width: 246px;
-  min-height: 94px;
+  position: relative;
+  width: clamp(190px, 52vw, 246px);
+  min-height: clamp(58px, 11dvh, 94px);
   display: grid;
   place-items: center;
-  margin: 30px auto 0 18px;
-  padding: 14px 18px;
+  margin: clamp(14px, 3.5dvh, 30px) auto 0 18px;
+  padding: clamp(8px, 1.8dvh, 14px) 14px;
   border-radius: 18px;
   color: #17101b;
   background: linear-gradient(180deg, #ffe189, #ffd078);
-  font-size: 20px;
+  font-size: clamp(14px, 2.6dvh, 20px);
   font-weight: 900;
   line-height: 1.26;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
@@ -1086,19 +1090,19 @@ th {
 .phone-join-tip::after {
   content: '';
   position: absolute;
-  width: 28px;
-  height: 28px;
-  right: 122px;
-  top: 240px;
-  transform: rotate(45deg);
+  width: 22px;
+  height: 22px;
+  right: -11px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
   background: #ffd078;
 }
 
 .phone-join-mascot {
   position: absolute;
   right: -16px;
-  bottom: -26px;
-  width: 180px;
+  bottom: clamp(-40px, -4dvh, -20px);
+  width: clamp(120px, 22dvh, 180px);
   height: auto;
   filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.42));
 }
@@ -1141,9 +1145,9 @@ th {
 .phone-field {
   display: grid;
   justify-items: center;
-  gap: 9px;
+  gap: clamp(6px, 1dvh, 9px);
   color: #ffc96c;
-  font-size: 24px;
+  font-size: clamp(18px, 3dvh, 24px);
   font-weight: 800;
 }
 
@@ -1156,14 +1160,14 @@ th {
 
 .phone-field input {
   width: 100%;
-  min-height: 70px;
+  min-height: clamp(50px, 8dvh, 70px);
   border: 2px solid rgba(255, 205, 129, 0.82);
   border-radius: 16px;
   outline: 0;
   color: #fff;
   background: linear-gradient(180deg, rgba(37, 42, 68, 0.9), rgba(19, 24, 45, 0.96));
   padding: 0 18px;
-  font-size: 24px;
+  font-size: clamp(18px, 2.8dvh, 24px);
   font-weight: 800;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -1172,7 +1176,7 @@ th {
 
 .phone-field small {
   color: #b9bfd5;
-  font-size: 15px;
+  font-size: clamp(12px, 1.8dvh, 15px);
   font-weight: 700;
 }
 
@@ -1184,23 +1188,14 @@ th {
   flex-shrink: 0;
 }
 
-.phone-field.compact input {
-  min-height: 44px;
-  font-size: 16px;
-}
-
 .avatar-picker {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.avatar-picker.compact {
-  grid-template-columns: repeat(6, 1fr);
+  gap: clamp(6px, 1.2dvh, 10px);
 }
 
 .avatar-choice {
-  min-height: 88px;
+  min-height: clamp(58px, 10dvh, 88px);
   position: relative;
   overflow: hidden;
   display: grid;
@@ -1211,11 +1206,6 @@ th {
   color: #fff6dd;
   background: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 -22px 34px rgba(0, 0, 0, 0.28);
-}
-
-.avatar-picker.compact .avatar-choice {
-  min-height: 48px;
-  border-radius: 12px;
 }
 
 .avatar-choice.active {
@@ -1259,15 +1249,15 @@ th {
 
 .phone-section-title {
   margin: 2px 0 -4px;
-  font-size: 22px;
+  font-size: clamp(16px, 2.6dvh, 22px);
 }
 
 .phone-safety {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  padding: 12px 14px;
+  padding: clamp(8px, 1.4dvh, 12px) 14px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 16px;
   color: #c3c7dc;
@@ -1299,14 +1289,14 @@ th {
 }
 
 .phone-primary {
-  min-height: 76px;
+  min-height: clamp(54px, 8.5dvh, 76px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   border: 2px solid #ffdf77;
   color: #fff;
-  font-size: 28px;
+  font-size: clamp(20px, 3.2dvh, 28px);
   background: linear-gradient(180deg, #ff7855, #ee5638);
   box-shadow:
     0 0 0 4px rgba(255, 110, 66, 0.3),
@@ -1320,6 +1310,49 @@ th {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Compact layout for short screens (iPhone SE, landscape, etc.) */
+@media (max-height: 650px) {
+  .phone-join-hero {
+    min-height: clamp(140px, 28dvh, 200px);
+  }
+
+  .phone-join-hero h1 {
+    font-size: clamp(13px, 2.2dvh, 17px);
+    margin-top: 4px;
+  }
+
+  .phone-join-tip {
+    min-height: clamp(44px, 9dvh, 64px);
+    font-size: clamp(12px, 2dvh, 15px);
+    margin-top: clamp(8px, 2dvh, 16px);
+  }
+
+  .phone-join-mascot {
+    width: clamp(90px, 18dvh, 130px);
+  }
+
+  .avatar-picker {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .avatar-choice {
+    min-height: clamp(38px, 7dvh, 54px);
+  }
+
+  .phone-field input {
+    min-height: clamp(42px, 7dvh, 54px);
+  }
+
+  .phone-primary {
+    min-height: clamp(44px, 7.5dvh, 58px);
+    font-size: clamp(17px, 2.8dvh, 22px);
+  }
+
+  .join-card {
+    gap: clamp(6px, 1.2dvh, 10px);
   }
 }
 
@@ -1375,30 +1408,41 @@ th {
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* phone-shell modifier: removes padding so lobby fills the full viewport */
+.phone-shell--lobby {
+  padding: 0;
+  height: 100dvh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* ── Lobby screen: flex column, exact viewport height, no page scroll ── */
 .phone-lobby-screen {
-  width: min(430px, 100%);
-  min-height: 100dvh;
-  position: relative;
-  display: grid;
-  align-content: start;
-  padding: 0 10px 18px;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   color: #fff6dd;
 }
 
+/* Hero: fixed height using dvh so it scales on every device */
 .phone-lobby-hero {
-  min-height: 356px;
+  flex-shrink: 0;
+  height: clamp(85px, 28dvh, 190px);
   position: relative;
   display: grid;
   justify-items: center;
   align-content: start;
-  padding-top: 10px;
+  padding: clamp(8px, 1.5dvh, 12px) 10px 0;
   text-align: center;
 }
 
 .phone-lobby-actions {
   width: 100%;
   position: absolute;
-  top: 6px;
+  top: clamp(4px, 1dvh, 8px);
   left: 0;
   z-index: 3;
   display: flex;
@@ -1407,8 +1451,8 @@ th {
 }
 
 .lobby-icon-button {
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 12vw, 56px);
+  height: clamp(44px, 12vw, 56px);
   display: grid;
   place-items: center;
   border: 2px solid rgba(255, 214, 143, 0.28);
@@ -1419,30 +1463,28 @@ th {
 }
 
 .phone-lobby-logo {
-  width: min(270px, 72vw);
+  width: clamp(190px, 54vw, 270px);
   height: auto;
-  margin-top: 4px;
+  margin-top: -20px;
   filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.48));
 }
 
 .phone-lobby-code {
-  margin-top: 72px;
-  margin-right: 110px;
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .phone-lobby-code span,
 .phone-lobby-code small {
   color: #ffe2bd;
-  font-size: 20px;
+  font-size: clamp(10px, 2dvh, 16px);
   font-weight: 800;
   text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
 }
 
 .phone-lobby-code strong {
   color: #ffc850;
-  font-size: 40px;
+  font-size: clamp(16px, 4.5dvh, 30px);
   line-height: 1;
   letter-spacing: 0;
   text-shadow: 0 5px 18px rgba(0, 0, 0, 0.62);
@@ -1450,22 +1492,29 @@ th {
 
 .phone-lobby-mascot {
   position: absolute;
-  right: -12px;
-  bottom: 8px;
-  width: 170px;
+  right: -8px;
+  bottom: clamp(4px, 1dvh, 8px);
+  width: clamp(100px, 26vw, 160px);
   height: auto;
   filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.46));
 }
 
+/* Panel: grows to fill remaining space, scrolls internally */
 .phone-lobby-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   position: relative;
   z-index: 2;
   display: grid;
-  gap: 16px;
-  margin-top: -34px;
-  padding: 18px 14px;
+  align-content: start;
+  gap: clamp(10px, 2dvh, 16px);
+  margin-top: clamp(-44px, -5.5dvh, -46px);
+  padding: clamp(12px, 2.5dvh, 18px) clamp(10px, 3.5vw, 14px) clamp(10px, 2dvh, 14px);
   border: 2px solid rgba(221, 160, 84, 0.66);
-  border-radius: 28px;
+  border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(11, 17, 32, 0.97), rgba(7, 11, 22, 0.98)),
     radial-gradient(circle at 50% 0%, rgba(255, 197, 96, 0.12), transparent 46%);
@@ -1480,19 +1529,19 @@ th {
 
 .lobby-profile {
   display: grid;
-  grid-template-columns: 148px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: clamp(78px, 21vw, 148px) minmax(0, 1fr);
+  gap: clamp(10px, 2.5vw, 16px);
   align-items: center;
 }
 
 .lobby-profile-avatar {
-  width: 148px;
-  height: 148px;
+  width: clamp(78px, 21vw, 148px);
+  height: clamp(78px, 21vw, 148px);
   overflow: hidden;
-  border: 3px solid #d49345;
+  border: 2px solid #d49345;
   border-radius: 999px;
   background: #242432;
-  box-shadow: 0 0 0 5px rgba(255, 200, 80, 0.14);
+  box-shadow: 0 0 0 4px rgba(255, 200, 80, 0.13);
 }
 
 .lobby-profile-avatar img {
@@ -1505,21 +1554,21 @@ th {
   min-width: 0;
   display: grid;
   justify-items: start;
-  gap: 9px;
+  gap: clamp(6px, 1.5dvh, 9px);
 }
 
 .lobby-profile-name {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) clamp(38px, 10vw, 48px);
+  gap: 8px;
   align-items: center;
 }
 
 .lobby-profile-name strong {
   overflow: hidden;
   color: #fff;
-  font-size: clamp(38px, 13vw, 54px);
+  font-size: clamp(26px, 9vw, 54px);
   line-height: 0.98;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1527,8 +1576,8 @@ th {
 }
 
 .lobby-profile-name button {
-  width: 48px;
-  height: 48px;
+  width: clamp(38px, 10vw, 48px);
+  height: clamp(38px, 10vw, 48px);
   display: grid;
   place-items: center;
   border: 2px solid rgba(255, 255, 255, 0.14);
@@ -1538,33 +1587,33 @@ th {
 }
 
 .lobby-score-pill {
-  min-width: 118px;
+  min-width: clamp(90px, 26vw, 118px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: clamp(6px, 1.5vw, 9px);
   border: 2px solid #d68d35;
   border-radius: 999px;
   color: #ffc850;
   background: linear-gradient(180deg, rgba(255, 170, 55, 0.22), rgba(255, 137, 32, 0.08));
-  padding: 8px 14px;
-  font-size: 24px;
+  padding: clamp(5px, 1.2dvh, 8px) clamp(10px, 3vw, 14px);
+  font-size: clamp(17px, 4.5vw, 24px);
   font-weight: 900;
 }
 
 .lobby-ready-button {
   width: 100%;
-  min-height: 62px;
+  min-height: clamp(46px, 8dvh, 62px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: clamp(8px, 2vw, 12px);
   border: 2px solid rgba(183, 255, 105, 0.55);
-  border-radius: 22px;
+  border-radius: clamp(16px, 4vw, 22px);
   color: #c8ff79;
   background: rgba(88, 166, 60, 0.17);
   box-shadow: 0 0 22px rgba(151, 255, 96, 0.24);
-  font-size: 24px;
+  font-size: clamp(16px, 4.5vw, 24px);
   font-weight: 900;
 }
 
@@ -1579,7 +1628,7 @@ th {
 
 .lobby-ready-bonus {
   color: #f7d7a8;
-  font-size: 14px;
+  font-size: clamp(12px, 3vw, 14px);
   font-weight: 800;
 }
 
@@ -1589,11 +1638,11 @@ th {
 
 .lobby-profile-editor {
   display: grid;
-  gap: 12px;
+  gap: clamp(9px, 2dvh, 12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
-  padding: 12px;
+  padding: clamp(10px, 2dvh, 12px);
 }
 
 .lobby-save-button {
@@ -1607,11 +1656,11 @@ th {
 
 .lobby-players-card {
   display: grid;
-  gap: 12px;
+  gap: clamp(8px, 1.5dvh, 12px);
   border: 1px solid rgba(221, 160, 84, 0.38);
-  border-radius: 20px;
+  border-radius: clamp(16px, 4vw, 20px);
   background: rgba(2, 7, 17, 0.56);
-  padding: 14px;
+  padding: clamp(10px, 2dvh, 14px);
 }
 
 .lobby-players-card h2 {
@@ -1620,7 +1669,7 @@ th {
   gap: 9px;
   margin: 0;
   color: #f0c997;
-  font-size: 23px;
+  font-size: clamp(17px, 4.5vw, 23px);
 }
 
 .lobby-players-card h2 span {
@@ -1629,19 +1678,19 @@ th {
 
 .lobby-player-list {
   display: grid;
-  gap: 11px;
+  gap: clamp(7px, 1.5dvh, 11px);
 }
 
 .lobby-player-row {
-  min-height: 88px;
+  min-height: clamp(60px, 10dvh, 88px);
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: clamp(46px, 14vw, 72px) minmax(0, 1fr) auto;
+  gap: clamp(8px, 2.5vw, 12px);
   align-items: center;
   border: 2px solid rgba(220, 139, 62, 0.58);
-  border-radius: 22px;
+  border-radius: clamp(16px, 4vw, 22px);
   background: rgba(255, 255, 255, 0.035);
-  padding: 10px;
+  padding: clamp(7px, 1.5dvh, 10px);
 }
 
 .lobby-player-row.ready {
@@ -1661,8 +1710,8 @@ th {
 
 .lobby-player-row img,
 .lobby-empty-avatar {
-  width: 66px;
-  height: 66px;
+  width: clamp(46px, 14vw, 66px);
+  height: clamp(46px, 14vw, 66px);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1673,7 +1722,7 @@ th {
 
 .lobby-empty-avatar {
   color: #8f93a0;
-  font-size: 38px;
+  font-size: clamp(24px, 7vw, 38px);
   font-weight: 900;
 }
 
@@ -1687,40 +1736,40 @@ th {
 
 .lobby-player-row strong {
   color: #fff;
-  font-size: 25px;
+  font-size: clamp(17px, 5vw, 25px);
   font-weight: 900;
 }
 
 .lobby-player-row small {
-  margin-top: 4px;
+  margin-top: 2px;
   color: #ffc850;
-  font-size: 17px;
+  font-size: clamp(13px, 3.5vw, 17px);
   font-weight: 900;
 }
 
 .lobby-player-status {
-  min-width: 42px;
+  min-width: clamp(30px, 8vw, 42px);
   display: grid;
   place-items: center;
   color: #b9ff72;
-  font-size: 24px;
+  font-size: clamp(18px, 5vw, 24px);
   font-weight: 900;
 }
 
 .lobby-tv-card {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: clamp(44px, 12vw, 64px) minmax(0, 1fr);
+  gap: clamp(8px, 2.5vw, 12px);
   align-items: center;
   border: 1px solid rgba(221, 160, 84, 0.45);
-  border-radius: 18px;
+  border-radius: clamp(14px, 3.5vw, 18px);
   background: rgba(255, 255, 255, 0.045);
-  padding: 12px;
+  padding: clamp(9px, 2dvh, 12px);
 }
 
 .lobby-tv-icon {
-  width: 58px;
-  height: 58px;
+  width: clamp(44px, 12vw, 58px);
+  height: clamp(44px, 12vw, 58px);
   display: grid;
   place-items: center;
   border-radius: 999px;
@@ -1735,31 +1784,54 @@ th {
 
 .lobby-tv-card h2 {
   color: #fff;
-  font-size: 21px;
+  font-size: clamp(15px, 4vw, 21px);
 }
 
 .lobby-tv-card p {
-  margin-top: 4px;
+  margin-top: 3px;
   color: #c7c9d4;
+  font-size: clamp(12px, 3vw, 15px);
   line-height: 1.28;
 }
 
 .lobby-tv-preview {
-  grid-column: 1 / -1;
-  min-height: 86px;
-  border-radius: 14px;
-  background:
-    linear-gradient(90deg, rgba(5, 7, 15, 0.12), rgba(5, 7, 15, 0.2)),
-    url('/assets/phone/web-game-bg.png') center 28% / cover;
+  display: none;
+}
+
+/* Reactions: pinned at the bottom of the flex column */
+.lobby-reactions {
+  flex-shrink: 0;
+  position: relative;
+  bottom: auto;
+  grid-template-columns: repeat(5, 1fr);
+  gap: clamp(6px, 1.5vw, 12px);
+  padding: clamp(9px, 1.8dvh, 13px) clamp(8px, 3vw, 14px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), clamp(9px, 1.8dvh, 13px));
+  margin-top: 0;
+  border: 2px solid rgba(221, 160, 84, 0.44);
+  border-radius: 0;
+  background: rgba(10, 12, 23, 0.92);
+}
+
+.lobby-reactions button {
+  min-height: clamp(44px, 7.5dvh, 62px);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 197, 80, 0.3);
+  background: radial-gradient(
+    circle at 35% 25%,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 145, 55, 0.22)
+  );
+  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.28);
+  font-size: clamp(22px, 5.5vw, 32px);
 }
 
 .phone-lobby-connection {
-  justify-self: center;
-  margin-top: 8px;
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.62);
-  background: rgba(0, 0, 0, 0.22);
-  padding: 4px 10px;
+  flex-shrink: 0;
+  text-align: center;
+  padding: 3px 10px 4px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.3);
   font-size: 11px;
   font-weight: 800;
 }
@@ -1976,19 +2048,6 @@ th {
   border-radius: 26px;
   background: rgba(10, 12, 23, 0.86);
   padding: 14px;
-}
-
-.lobby-reactions button {
-  min-height: 64px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 197, 80, 0.3);
-  background: radial-gradient(
-    circle at 35% 25%,
-    rgba(255, 255, 255, 0.18),
-    rgba(255, 145, 55, 0.22)
-  );
-  box-shadow: inset 0 -8px 18px rgba(0, 0, 0, 0.28);
-  font-size: 34px;
 }
 
 .game-controller-shell {
@@ -3081,218 +3140,6 @@ th {
     font-size: 15px;
   }
 
-  .phone-lobby-screen {
-    width: 100%;
-    min-height: 100dvh;
-    padding: 0 2px 10px;
-  }
-
-  .phone-lobby-hero {
-    min-height: 280px;
-    padding-top: 8px;
-  }
-
-  .phone-lobby-actions {
-    top: 8px;
-    padding: 0 6px;
-  }
-
-  .lobby-icon-button {
-    width: 46px;
-    height: 46px;
-  }
-
-  .phone-lobby-logo {
-    width: min(226px, 64vw);
-    margin-top: 0;
-  }
-
-  .phone-lobby-code {
-    margin-top: 50px;
-    margin-right: 94px;
-    gap: 2px;
-  }
-
-  .phone-lobby-code span,
-  .phone-lobby-code small {
-    font-size: 16px;
-  }
-
-  .phone-lobby-code strong {
-    font-size: clamp(30px, 9vw, 36px);
-  }
-
-  .phone-lobby-mascot {
-    right: -8px;
-    bottom: 6px;
-    width: 132px;
-  }
-
-  .phone-lobby-panel {
-    gap: 10px;
-    margin-top: -24px;
-    padding: 12px 10px;
-    border-radius: 22px;
-  }
-
-  .lobby-profile {
-    grid-template-columns: 104px minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .lobby-profile-avatar {
-    width: 104px;
-    height: 104px;
-    border-width: 2px;
-    box-shadow: 0 0 0 3px rgba(255, 200, 80, 0.13);
-  }
-
-  .lobby-profile-main {
-    gap: 7px;
-  }
-
-  .lobby-profile-name {
-    grid-template-columns: minmax(0, 1fr) 40px;
-    gap: 8px;
-  }
-
-  .lobby-profile-name strong {
-    font-size: clamp(28px, 10vw, 40px);
-  }
-
-  .lobby-profile-name button {
-    width: 40px;
-    height: 40px;
-  }
-
-  .lobby-score-pill {
-    min-width: 92px;
-    gap: 6px;
-    padding: 6px 11px;
-    font-size: 19px;
-  }
-
-  .lobby-ready-button {
-    min-height: 48px;
-    gap: 8px;
-    border-radius: 17px;
-    font-size: 18px;
-  }
-
-  .lobby-ready-bonus {
-    font-size: 12px;
-  }
-
-  .lobby-profile-editor {
-    gap: 9px;
-    padding: 10px;
-  }
-
-  .lobby-profile-editor .avatar-picker.compact {
-    /* grid-template-columns: repeat(8, 1fr); */
-    gap: 5px;
-  }
-
-  .lobby-profile-editor .avatar-choice {
-    min-height: 38px;
-    border-width: 1px;
-    border-radius: 10px;
-  }
-
-  .lobby-profile-editor .avatar-choice.active::after {
-    width: 16px;
-    height: 16px;
-    top: 2px;
-    right: 2px;
-    font-size: 11px;
-  }
-
-  .lobby-players-card {
-    gap: 8px;
-    padding: 10px;
-    border-radius: 17px;
-  }
-
-  .lobby-players-card h2 {
-    font-size: 19px;
-  }
-
-  .lobby-player-list {
-    gap: 7px;
-  }
-
-  .lobby-player-row {
-    min-height: 62px;
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    gap: 9px;
-    border-width: 1px;
-    border-radius: 16px;
-    padding: 7px;
-  }
-
-  .lobby-player-row img,
-  .lobby-empty-avatar {
-    width: 46px;
-    height: 46px;
-  }
-
-  .lobby-empty-avatar {
-    font-size: 26px;
-  }
-
-  .lobby-player-row strong {
-    font-size: 19px;
-  }
-
-  .lobby-player-row small {
-    margin-top: 1px;
-    font-size: 14px;
-  }
-
-  .lobby-player-status {
-    min-width: 32px;
-    font-size: 18px;
-  }
-
-  .lobby-tv-card {
-    grid-template-columns: 48px minmax(0, 1fr);
-    gap: 9px;
-    border-radius: 16px;
-    padding: 10px;
-  }
-
-  .lobby-tv-icon {
-    width: 46px;
-    height: 46px;
-  }
-
-  .lobby-tv-card h2 {
-    font-size: 18px;
-  }
-
-  .lobby-tv-card p {
-    font-size: 13px;
-  }
-
-  .lobby-tv-preview {
-    display: none;
-  }
-
-  .lobby-reactions {
-    gap: 8px;
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 22px;
-  }
-
-  .lobby-reactions button {
-    min-height: 50px;
-    font-size: 27px;
-  }
-
-  .phone-lobby-connection {
-    margin-top: 5px;
-  }
 }
 
 @media (max-height: 760px) and (max-width: 460px) {
@@ -3635,76 +3482,6 @@ th {
     font-size: 13px;
   }
 
-  .phone-lobby-hero {
-    min-height: 236px;
-  }
-
-  .phone-lobby-logo {
-    width: min(190px, 58vw);
-  }
-
-  .phone-lobby-code {
-    margin-top: 34px;
-    margin-right: 82px;
-  }
-
-  .phone-lobby-code span,
-  .phone-lobby-code small {
-    font-size: 14px;
-  }
-
-  .phone-lobby-code strong {
-    font-size: clamp(26px, 8vw, 31px);
-  }
-
-  .phone-lobby-mascot {
-    width: 110px;
-  }
-
-  .phone-lobby-panel {
-    gap: 8px;
-    padding: 10px 9px;
-  }
-
-  .lobby-profile {
-    grid-template-columns: 88px minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .lobby-profile-avatar {
-    width: 88px;
-    height: 88px;
-  }
-
-  .lobby-profile-name strong {
-    font-size: clamp(25px, 9vw, 34px);
-  }
-
-  .lobby-ready-button {
-    min-height: 44px;
-    font-size: 16px;
-  }
-
-  .lobby-ready-bonus {
-    display: none;
-  }
-
-  .lobby-player-row.empty {
-    display: none;
-  }
-
-  .lobby-tv-card {
-    padding: 8px 10px;
-  }
-
-  .lobby-reactions {
-    padding: 8px;
-  }
-
-  .lobby-reactions button {
-    min-height: 44px;
-    font-size: 24px;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -4189,20 +3966,6 @@ th {
   padding: 60px 20px;
   color: #6e7795;
   text-align: center;
-}
-
-/* ── Compact MediaPicker variant ───────────────────────────────────────────── */
-
-/* .media-picker--compact {
-  grid-template-columns: minmax(0, 1fr) 120px;
-} */
-
-.media-picker--compact .media-dropzone {
-  min-height: 100px;
-}
-
-.media-picker--compact .media-preview-box {
-  min-height: 100px;
 }
 
 /* ── Responsive: tablet ────────────────────────────────────────────────────── */

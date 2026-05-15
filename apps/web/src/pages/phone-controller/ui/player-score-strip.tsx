@@ -5,7 +5,7 @@ export function PlayerScoreStrip({
   delta,
   message,
   nickname,
-  rank,
+  // rank,
   score,
 }: {
   avatarUrl: string;
@@ -28,10 +28,10 @@ export function PlayerScoreStrip({
       <div className="question-score-delta">
         {typeof delta === 'number' && delta > 0 ? `+${delta}` : '✓'}
       </div>
-      <div className="question-rank">
+      {/* <div className="question-rank">
         <strong>{rank ?? '-'}</strong>
         <span>место</span>
-      </div>
+      </div> */}
       <p>{message}</p>
     </div>
   );

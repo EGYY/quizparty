@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 import { useSoundEffects } from '@shared/ui/sound-effects-provider';
 
 type Toast = {
@@ -61,14 +62,14 @@ export function useToast() {
 const styles = StyleSheet.create({
   viewport: {
     position: 'absolute',
-    right: 54,
-    top: 42,
+    right: s(54),
+    top: sv(42),
     gap: spacing.sm,
-    width: 420,
+    width: s(420),
   },
   toast: {
     borderRadius: radii.md,
-    borderWidth: 1,
+    borderWidth: s(1),
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: '800',
   },
 });

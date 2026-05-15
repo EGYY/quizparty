@@ -2,7 +2,7 @@
  * QuestionVideoHero — полноэкранное медиа с оверлеем текста вопроса.
  *
  * Используется, когда у вопроса есть видео / аудио / изображение.
- * Мемоизирован по questionId + compact — НЕ перерисовывается на тиках таймера.
+ * Мемоизирован по questionId — НЕ перерисовывается на тиках таймера.
  */
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -13,7 +13,6 @@ import { TvMediaPlayer } from '@shared/ui/tv-media-player';
 const GAME_PADDING_H = 58;
 
 type Props = {
-  compact: boolean;
   media: Media;
   mediaH: number;
   questionId: string;
@@ -23,7 +22,6 @@ type Props = {
 
 export const QuestionVideoHero = memo(
   function QuestionVideoHero({
-    compact,
     media,
     mediaH,
     questionText,
@@ -32,7 +30,6 @@ export const QuestionVideoHero = memo(
     return (
       <View style={[styles.wrapper, { height: mediaH }]}>
         <TvMediaPlayer
-          compact={compact}
           media={media}
           overrideWidth={screenWidth}
           overrideHeight={mediaH}
@@ -40,18 +37,14 @@ export const QuestionVideoHero = memo(
         />
         <View pointerEvents="none" style={styles.overlay}>
           <View style={styles.overlayGradient} />
-          <Text
-            numberOfLines={2}
-            style={[styles.overlayText, compact && styles.overlayText_compact]}
-          >
+          <Text numberOfLines={2} style={[styles.overlayText]}>
             {questionText}
           </Text>
         </View>
       </View>
     );
   },
-  (prev, next) =>
-    prev.questionId === next.questionId && prev.compact === next.compact,
+  (prev, next) => prev.questionId === next.questionId,
 );
 
 const styles = StyleSheet.create({
@@ -82,5 +75,4 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 3 },
     textShadowRadius: 12,
   },
-  overlayText_compact: { fontSize: 36, lineHeight: 44 },
 });

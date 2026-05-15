@@ -62,8 +62,7 @@ type UsePhoneGameParams = {
   room: RoomSummary;
 };
 
-const socketOrigin = window.location.origin.replace(/:\d+$/, ':3001');
-const socketBaseUrl = import.meta.env.VITE_SOCKET_BASE_URL ?? socketOrigin;
+const socketBaseUrl = import.meta.env.VITE_SOCKET_BASE_URL || window.location.origin;
 
 function readError(payload: unknown): string {
   const parsed = wsErrorEventSchema.safeParse(payload);

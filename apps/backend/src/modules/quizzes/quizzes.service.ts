@@ -232,7 +232,7 @@ export class QuizzesService {
     await writeFile(absolutePath, file.buffer);
 
     const media: Media = {
-      url: `${this.getBackendPublicUrl()}${UPLOAD_PUBLIC_PATH}/${encodeURIComponent(filename)}`,
+      url: `${UPLOAD_PUBLIC_PATH}/${encodeURIComponent(filename)}`,
       type: metadata.type,
       ...(alt?.trim() ? { alt: alt.trim().slice(0, 160) } : {}),
       sizeBytes: file.size,
@@ -492,12 +492,6 @@ export class QuizzesService {
     return join(this.getUploadRoot(), 'quiz-media');
   }
 
-  private getBackendPublicUrl(): string {
-    return this.config
-      .get<string>('BACKEND_PUBLIC_URL', 'http://localhost:3001')
-      .replace(/\/$/, '');
-  }
-
   private collectQuizMediaUrls(quiz: {
     coverUrl?: string | null;
     questions?: Array<{
@@ -553,12 +547,10 @@ export class QuizzesService {
   }
 
   private isLocalUploadUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url);
-      return parsed.pathname.startsWith(`${UPLOAD_PUBLIC_PATH}/`);
-    } catch {
-      return url.startsWith(`${UPLOAD_PUBLIC_PATH}/`);
-    }
+    // URLs are stored as relative paths: /uploads/quiz-media/filename
+    // Support legacy absolute URLs (https://domain/uploads/...) for backward compat
+    const pathname = this.getUploadPathname(url);
+    return pathname.startsWith(`${UPLOAD_PUBLIC_PATH}/`);
   }
 
   private async deleteLocalUploadFile(url: string): Promise<void> {
@@ -576,6 +568,8 @@ export class QuizzesService {
   }
 
   private getUploadPathname(url: string): string {
+    // Relative path → return as-is; absolute URL → extract pathname
+    if (url.startsWith('/')) return url;
     try {
       return new URL(url).pathname;
     } catch {

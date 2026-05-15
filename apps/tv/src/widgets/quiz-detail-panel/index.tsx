@@ -1,7 +1,14 @@
 import { memo } from 'react';
-import { Dimensions } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TVFocusGuideView,
+  View,
+} from 'react-native';
 import { Difficulty, GameMode } from '@quizparty/shared';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { TvQuiz } from '@entities/quiz';
 import {
   categoryIcons,
@@ -10,6 +17,7 @@ import {
   modeLabels,
 } from '@shared/config/labels';
 import { colors, radii, spacing } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 import { Focusable } from '@shared/ui/focusable';
 import {
   LightningIcon,
@@ -17,6 +25,7 @@ import {
   SignalBarsIcon,
   TrophyIcon,
 } from '@shared/assets/icons';
+import { getMediaUrl } from '@shared/lib/media';
 
 const difficultyColors: Record<Difficulty, string> = {
   [Difficulty.EASY]: colors.mint,
@@ -47,7 +56,13 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
   const quizDifficulty = quiz.difficulty ?? Difficulty.MEDIUM;
 
   return (
-    <View style={styles.panelOuter}>
+    <TVFocusGuideView
+      trapFocusUp
+      trapFocusDown
+      trapFocusLeft
+      trapFocusRight
+      style={styles.panelOuter}
+    >
       <View style={styles.panel}>
         {/*  Scrollable body  */}
         <ScrollView
@@ -76,7 +91,7 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
             {canUseCover && quiz.coverUrl ? (
               <Image
                 resizeMode="cover"
-                source={{ uri: quiz.coverUrl }}
+                source={{ uri: getMediaUrl(quiz.coverUrl) }}
                 style={styles.coverImage}
               />
             ) : (
@@ -119,7 +134,7 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
                 ]}
               >
                 <SignalBarsIcon
-                  size={30}
+                  size={s(30)}
                   color={difficultyColors[quizDifficulty]}
                 />
                 <View>
@@ -153,9 +168,9 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
                       ]}
                     >
                       {value === GameMode.FAST ? (
-                        <LightningIcon color={colors.blue} size={32} />
+                        <LightningIcon color={colors.blue} size={s(32)} />
                       ) : (
-                        <TrophyIcon color={colors.blue} size={32} />
+                        <TrophyIcon color={colors.blue} size={s(32)} />
                       )}
                       <View style={styles.modeTextBlock}>
                         <Text
@@ -186,7 +201,7 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
             style={styles.primary}
             disabled={isCreating}
           >
-            <PartyPopperIcon accentColor={colors.purple} size={64} />
+            <PartyPopperIcon accentColor={colors.purple} size={s(74)} />
             <Text style={styles.primaryText}>
               {isCreating ? 'Создаём комнату...' : 'Создать комнату'}
             </Text>
@@ -200,7 +215,7 @@ export const QuizDetailPanel = memo(function QuizDetailPanel({
           <Text style={styles.closeText}>✕</Text>
         </Focusable>
       </View>
-    </View>
+    </TVFocusGuideView>
   );
 });
 
@@ -208,7 +223,7 @@ const styles = StyleSheet.create({
   // Outer wrapper: same size as the panel but NO overflow:hidden,
   // so tvOS focus engine can always reach the close button that lives here.
   panelOuter: {
-    width: 720,
+    width: s(720),
     height: '100%',
   },
 
@@ -216,13 +231,13 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     borderColor: 'rgba(255, 248, 238, 0.18)',
-    borderRadius: 34,
-    borderWidth: 2,
+    borderRadius: s(34),
+    borderWidth: s(2),
     backgroundColor: 'rgba(24, 24, 49, 0.97)',
     shadowColor: '#000',
     shadowOpacity: 0.52,
-    shadowRadius: 36,
-    shadowOffset: { width: -14, height: 0 },
+    shadowRadius: s(36),
+    shadowOffset: { width: s(-14), height: 0 },
     overflow: 'hidden',
   },
 
@@ -232,58 +247,58 @@ const styles = StyleSheet.create({
   //  must live on an outer plain View, not on Focusable's style prop.)
   closeWrap: {
     position: 'absolute',
-    top: 18,
-    right: 18,
+    top: sv(18),
+    right: s(18),
     zIndex: 10,
-    width: 56,
-    height: 56,
+    width: s(56),
+    height: s(56),
   },
   closeButton: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 28,
+    borderRadius: s(28),
     backgroundColor: 'rgba(255, 255, 255, 0.09)',
-    borderWidth: 1,
+    borderWidth: s(1),
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   closeText: {
     color: colors.textSecondary,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '700',
   },
 
   // ── Scroll ──
   scrollContent: {
-    paddingHorizontal: 28,
-    paddingTop: 22,
-    paddingBottom: 28,
-    gap: 16,
+    paddingHorizontal: s(28),
+    paddingTop: sv(22),
+    paddingBottom: sv(28),
+    gap: s(16),
   },
 
   // ── Title ──
   titleBlock: {
     // leave space for the close button on the right
-    paddingRight: 66,
-    gap: 8,
+    paddingRight: s(66),
+    gap: s(8),
   },
   title: {
     color: colors.text,
-    fontSize: 36,
+    fontSize: sf(36),
     fontWeight: '900',
-    lineHeight: 42,
+    lineHeight: sv(42),
   },
   categoryPill: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: s(16),
+    paddingVertical: sv(8),
   },
   categoryPillText: {
     color: colors.textSecondary,
-    fontSize: 16,
+    fontSize: sf(16),
     fontWeight: '800',
   },
 
@@ -295,103 +310,103 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     overflow: 'hidden',
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
+    borderWidth: s(1),
   },
   coverImage: {
     width: '100%',
     height: '100%',
   },
   coverIcon: {
-    fontSize: 90,
+    fontSize: sf(90),
   },
 
   // ── Description ──
   description: {
     color: colors.text,
-    fontSize: 22,
-    lineHeight: 31,
+    fontSize: sf(22),
+    lineHeight: sv(31),
   },
 
   // ── Author + Stats ──
   infoRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 12,
+    gap: s(12),
   },
   author: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: s(12),
     borderRadius: radii.md,
-    borderWidth: 1,
+    borderWidth: s(1),
     borderColor: 'rgba(255, 255, 255, 0.10)',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: s(16),
+    paddingVertical: sv(12),
   },
   authorMark: {
-    width: 44,
-    height: 44,
+    width: s(44),
+    height: s(44),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: colors.purple,
-    borderRadius: 22,
-    borderWidth: 2,
+    borderRadius: s(22),
+    borderWidth: s(2),
     backgroundColor: 'rgba(155, 124, 255, 0.16)',
   },
   authorMarkText: {
     color: colors.gold,
-    fontSize: 16,
+    fontSize: sf(18),
     fontWeight: '900',
   },
   authorLabel: {
     color: colors.textMuted,
-    fontSize: 13,
+    fontSize: sf(16),
     fontWeight: '800',
   },
   authorName: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: sf(18),
     fontWeight: '900',
   },
   statGroup: {
     flexDirection: 'row',
-    gap: 10,
+    gap: s(10),
   },
   statCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: s(10),
     borderRadius: radii.md,
-    borderWidth: 1.5,
+    borderWidth: s(1.5),
     borderColor: 'rgba(255, 255, 255, 0.12)',
     backgroundColor: 'rgba(255, 255, 255, 0.065)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minWidth: 112,
+    paddingHorizontal: s(14),
+    paddingVertical: sv(12),
+    minWidth: s(112),
   },
   statEmoji: {
-    fontSize: 22,
+    fontSize: sf(22),
   },
   statValue: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '900',
   },
   statLabel: {
     color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: sf(13),
     fontWeight: '700',
   },
 
   // ── Mode ──
   section: {
-    gap: 8,
+    gap: s(8),
   },
   sectionTitle: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '900',
   },
   modeGrid: {
@@ -403,31 +418,31 @@ const styles = StyleSheet.create({
   },
   modeOption: {
     width: '100%',
-    minHeight: 80,
+    minHeight: sv(80),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: s(14),
     borderRadius: radii.md,
-    borderWidth: 1,
+    borderWidth: s(1),
     borderColor: 'rgba(255, 255, 255, 0.12)',
     backgroundColor: 'rgba(255, 255, 255, 0.055)',
-    paddingHorizontal: 18,
+    paddingHorizontal: s(18),
   },
   modeOptionActive: {
     borderColor: colors.blue,
     backgroundColor: 'rgba(94, 215, 255, 0.13)',
     shadowColor: colors.blue,
     shadowOpacity: 0.42,
-    shadowRadius: 16,
+    shadowRadius: s(16),
     shadowOffset: { width: 0, height: 0 },
   },
   modeTextBlock: {
     flex: 1,
-    gap: 4,
+    gap: s(4),
   },
   modeTitle: {
     color: colors.textSecondary,
-    fontSize: 18,
+    fontSize: sf(18),
     fontWeight: '900',
   },
   modeTitleActive: {
@@ -435,30 +450,30 @@ const styles = StyleSheet.create({
   },
   modeDescription: {
     color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: sf(16),
+    lineHeight: sv(20),
   },
 
   // ── Primary button ──
   primary: {
-    minHeight: 78,
+    minHeight: sv(78),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 22,
-    borderWidth: 2,
+    borderRadius: s(22),
+    borderWidth: s(2),
     borderColor: 'rgba(255, 248, 238, 0.78)',
     backgroundColor: colors.purple,
     shadowColor: colors.purple,
     shadowOpacity: 0.76,
-    shadowRadius: 24,
+    shadowRadius: s(24),
     shadowOffset: { width: 0, height: 0 },
-    marginTop: 12,
+    marginTop: sv(12),
     flexDirection: 'row',
-    gap: 14,
+    gap: s(14),
   },
   primaryText: {
     color: colors.text,
-    fontSize: 29,
+    fontSize: sf(29),
     fontWeight: '900',
   },
 });

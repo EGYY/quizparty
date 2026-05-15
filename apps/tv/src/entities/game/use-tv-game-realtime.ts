@@ -155,18 +155,10 @@ export function useTvGameRealtime({ playerId, room }: UseTvGameRealtimeParams) {
         if (!parsed.success || !currentRoundRef.current) return;
 
         setGameState(current => {
-          if (current.phase !== 'question') {
-            return {
-              phase: 'question',
-              round: currentRoundRef.current as RoundStartEvent,
-              timer: parsed.data,
-            };
-          }
-
-          return {
-            ...current,
-            timer: parsed.data,
-          };
+          // Ignore stale ticks that arrive after ROUND_END — they must not
+          // override the reveal/final state and re-mount QuestionView.
+          if (current.phase !== 'question') return current;
+          return { ...current, timer: parsed.data };
         });
       });
       socket.on(ServerEvent.ANSWER_PROGRESS, (payload: unknown) => {

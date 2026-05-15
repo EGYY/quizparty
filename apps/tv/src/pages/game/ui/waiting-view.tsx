@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 const STEPS = ['3', '2', '1', '🚀'];
 /** How long each step stays on screen (ms) */
@@ -19,7 +20,7 @@ export function WaitingView() {
   const ring2Scale = useRef(new Animated.Value(1)).current;
   const ring2Opacity = useRef(new Animated.Value(0.55)).current;
 
-  const playStep = () => {
+  const playStep = useCallback(() => {
     // Reset
     labelScale.setValue(0.3);
     labelOpacity.setValue(0);
@@ -69,7 +70,14 @@ export function WaitingView() {
         ]),
       ]),
     ]).start();
-  };
+  }, [
+    labelScale,
+    labelOpacity,
+    ring1Scale,
+    ring1Opacity,
+    ring2Scale,
+    ring2Opacity,
+  ]);
 
   useEffect(() => {
     playStep();
@@ -77,12 +85,12 @@ export function WaitingView() {
       setStepIndex(i => (i + 1) % STEPS.length);
     }, STEP_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [playStep]);
 
   // Re-trigger animation whenever the step changes
   useEffect(() => {
     playStep();
-  }, [stepIndex]);
+  }, [stepIndex, playStep]);
 
   const label = STEPS[stepIndex];
   const isRocket = label === '🚀';
@@ -149,35 +157,35 @@ export function WaitingView() {
   );
 }
 
-const CIRCLE_SIZE = 260;
-const RING_SIZE = CIRCLE_SIZE + 30;
+const CIRCLE_SIZE = s(260);
+const RING_SIZE = CIRCLE_SIZE + s(30);
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 28,
+    gap: s(28),
   },
 
   glow: {
     position: 'absolute',
-    width: 560,
-    height: 560,
-    borderRadius: 280,
+    width: s(560),
+    height: s(560),
+    borderRadius: s(280),
     backgroundColor: 'rgba(155, 124, 255, 0.08)',
     // no shadow — just a soft ambient fill
   },
 
   eyebrow: {
     color: colors.gold,
-    fontSize: 30,
+    fontSize: sf(30),
     fontWeight: '900',
-    letterSpacing: 3,
+    letterSpacing: s(3),
     textTransform: 'uppercase',
     textShadowColor: 'rgba(255, 209, 102, 0.55)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
+    textShadowRadius: s(18),
   },
 
   // ── Rings ──
@@ -190,7 +198,7 @@ const styles = StyleSheet.create({
   ring: {
     position: 'absolute',
     borderRadius: RING_SIZE / 2,
-    borderWidth: 3,
+    borderWidth: s(3),
   },
   ring1: {
     width: RING_SIZE,
@@ -211,50 +219,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(24, 24, 49, 0.94)',
-    borderWidth: 4,
+    borderWidth: s(4),
     borderColor: colors.gold,
     shadowColor: colors.gold,
     shadowOpacity: 0.65,
-    shadowRadius: 32,
+    shadowRadius: s(32),
     shadowOffset: { width: 0, height: 0 },
   },
   labelNumber: {
     color: colors.text,
-    fontSize: 128,
-    lineHeight: 140,
+    fontSize: sf(128),
+    lineHeight: sv(140),
     fontWeight: '900',
     textShadowColor: 'rgba(255, 255, 255, 0.3)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
+    textShadowRadius: s(12),
   },
   labelRocket: {
-    fontSize: 90,
-    lineHeight: 108,
+    fontSize: sf(90),
+    lineHeight: sv(108),
   },
 
   subtitle: {
     color: colors.textSecondary,
-    fontSize: 26,
+    fontSize: sf(26),
     fontWeight: '800',
   },
 
   // ── Step dots ──
   dots: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: -8,
+    gap: s(12),
+    marginTop: sv(-8),
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: s(10),
+    height: s(10),
+    borderRadius: s(5),
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   dotActive: {
     backgroundColor: colors.gold,
     shadowColor: colors.gold,
     shadowOpacity: 0.8,
-    shadowRadius: 8,
+    shadowRadius: s(8),
     shadowOffset: { width: 0, height: 0 },
   },
 });

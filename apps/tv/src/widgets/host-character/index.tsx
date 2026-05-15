@@ -4,11 +4,12 @@
  * Бобает вверх-вниз в зависимости от mood.
  * Опциональный prop `speech` рендерит речевой пузырь над головой персонажа.
  */
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'react-native';
 import { hostPresenter } from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 type Props = {
   mood?: 'welcome' | 'thinking' | 'party';
@@ -45,10 +46,17 @@ export const HostCharacter = memo(function HostCharacter({
     return () => animation.stop();
   }, [bob, mood]);
 
-  const translateY = bob.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, mood === 'party' ? -12 : -7],
-  });
+  // Memoized: interpolate() creates a new AnimatedInterpolation node each call.
+  // Since bob is a stable ref and mood rarely changes, this memo prevents
+  // unnecessary node creation on every parent re-render.
+  const translateY = useMemo(
+    () =>
+      bob.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, mood === 'party' ? -12 : -7],
+      }),
+    [bob, mood],
+  );
 
   const isRight = placement !== 'left';
 
@@ -57,7 +65,7 @@ export const HostCharacter = memo(function HostCharacter({
       style={[
         styles.wrap,
         isRight ? styles.rightWrap : styles.leftWrap,
-        placement === 'topRight' && { top: -120 },
+        placement === 'topRight' && { top: sv(-120) },
         { transform: [{ translateY }] },
       ]}
     >
@@ -70,13 +78,6 @@ export const HostCharacter = memo(function HostCharacter({
           ]}
         >
           <Text style={styles.bubbleText}>{speech}</Text>
-          {/* Хвостик пузыря */}
-          <View
-            style={[
-              styles.bubbleTail,
-              isRight ? styles.bubbleTail_right : styles.bubbleTail_left,
-            ]}
-          />
         </View>
       ) : null}
 
@@ -92,21 +93,21 @@ export const HostCharacter = memo(function HostCharacter({
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    bottom: -36,
-    width: 470,
-    height: 840,
+    bottom: sv(-36),
+    width: s(470),
+    height: sv(840),
     // zIndex намеренно не задан: порядок отрисовки управляется
     // позицией в JSX-дереве — HostCharacter рендерится ДО content,
     // поэтому content (карусель) всегда рисуется поверх персонажа.
     // Внутри detailOverlay (zIndex: 20) персонаж появляется после dimLayer,
     // что даёт правильный порядок без хардкода.
   },
-  rightWrap: { right: -14 },
+  rightWrap: { right: s(-14) },
   leftWrap: {
-    left: -80,
-    bottom: -92,
-    width: 430,
-    height: 760,
+    left: s(-80),
+    bottom: sv(-92),
+    width: s(430),
+    height: sv(760),
   },
   image: { width: '100%', height: '100%' },
   mirrored: { transform: [{ scaleX: -1 }] },
@@ -114,49 +115,33 @@ const styles = StyleSheet.create({
   // ── Речевой пузырь ──
   bubble: {
     position: 'absolute',
-    maxWidth: 220,
-    borderRadius: 20,
-    borderWidth: 2,
+    maxWidth: s(220),
+    borderRadius: s(20),
+    borderWidth: s(2),
     borderColor: 'rgba(255, 209, 102, 0.6)',
     backgroundColor: 'rgba(22, 20, 40, 0.96)',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingHorizontal: s(16),
+    paddingVertical: sv(13),
     shadowColor: colors.gold,
     shadowOpacity: 0.45,
-    shadowRadius: 16,
+    shadowRadius: s(16),
     shadowOffset: { width: 0, height: 0 },
     zIndex: 10,
   },
   bubble_right: {
     // Над головой персонажа (голова примерно в верхней четверти wrap)
-    top: 140,
-    right: 300,
+    top: sv(170),
+    right: s(300),
   },
   bubble_left: {
-    top: 80,
-    left: 300,
+    top: sv(100),
+    left: s(300),
   },
   bubbleText: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: sf(23),
     fontWeight: '900',
-    lineHeight: 26,
+    lineHeight: sv(26),
     textAlign: 'center',
   },
-
-  // Хвостик — треугольник (CSS border trick)
-  bubbleTail: {
-    position: 'absolute',
-    bottom: -13,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 13,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: 'rgba(22, 20, 40, 0.96)',
-  },
-  bubbleTail_right: { right: 24 },
-  bubbleTail_left: { left: 24 },
 });

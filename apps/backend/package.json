@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "build": "tsc -b tsconfig.json",
+    "build": "tsc -b tsconfig.json --force",
     "typecheck": "tsc -b tsconfig.json",
     "lint": "eslint .",
     "start": "node dist/main.js",

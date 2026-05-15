@@ -2,29 +2,28 @@
  * RoundBadge — бейдж «★ Раунд X / Y».
  *
  * Используется в фазах question и reveal.
- * Мемоизирован — перерисовывается только при смене номеров раунда или compact.
+ * Мемоизирован — перерисовывается только при смене номеров раунда.
  */
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
+import { s, sf } from '@shared/config/scale';
 
 type Props = {
-  compact: boolean;
   roundNumber: number | string;
   totalRounds: number | string;
 };
 
 export const RoundBadge = memo(function RoundBadge({
-  compact,
   roundNumber,
   totalRounds,
 }: Props) {
   return (
-    <View style={[styles.badge, compact && styles.badge_compact]}>
+    <View style={[styles.badge]}>
       <View style={styles.icon}>
         <Text style={styles.iconText}>★</Text>
       </View>
-      <Text style={[styles.label, compact && styles.label_compact]}>
+      <Text style={[styles.label]}>
         Раунд {roundNumber} / {totalRounds}
       </Text>
     </View>
@@ -33,8 +32,8 @@ export const RoundBadge = memo(function RoundBadge({
 
 const styles = StyleSheet.create({
   badge: {
-    width: 340,
-    height: 82,
+    width: s(340),
+    height: s(82),
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: 'rgba(255, 209, 102, 0.58)',
@@ -44,18 +43,11 @@ const styles = StyleSheet.create({
     paddingLeft: 72,
     paddingRight: 22,
   },
-  badge_compact: {
-    width: 278,
-    height: 66,
-    borderRadius: 22,
-    paddingLeft: 58,
-    paddingRight: 14,
-  },
   icon: {
     position: 'absolute',
     left: -18,
-    width: 96,
-    height: 96,
+    width: s(96),
+    height: s(96),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: 'rgba(255, 209, 102, 0.7)',
@@ -65,14 +57,13 @@ const styles = StyleSheet.create({
   },
   iconText: {
     color: colors.gold,
-    fontSize: 42,
+    fontSize: sf(42),
     fontWeight: '900',
   },
   label: {
     color: colors.text,
-    fontSize: 32,
+    fontSize: sf(28),
     fontWeight: '900',
-    paddingLeft: 15,
+    marginLeft: -20,
   },
-  label_compact: { fontSize: 25 },
 });

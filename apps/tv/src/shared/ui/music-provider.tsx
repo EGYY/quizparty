@@ -40,7 +40,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     loop: true,
     key: 0,
   });
-
   const setTrack = useCallback((source: unknown, loop = true) => {
     if (source == null) {
       setTrackState(null);

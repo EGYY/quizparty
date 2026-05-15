@@ -1,23 +1,20 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { quizPartyLogo } from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
-export function FinalHeader({ compact }: { compact: boolean }) {
+export function FinalHeader() {
   return (
-    <View style={[styles.header, compact && styles.header_compact]}>
+    <View style={[styles.header]}>
       <Image
         resizeMode="contain"
         source={quizPartyLogo}
-        style={[styles.logo, compact && styles.logo_compact]}
+        style={[styles.logo]}
       />
       <View style={styles.titleWrap}>
-        <Text style={[styles.title, compact && styles.title_compact]}>
-          Игра окончена
-        </Text>
-        <View style={[styles.ribbon, compact && styles.ribbon_compact]}>
-          <Text
-            style={[styles.ribbonText, compact && styles.ribbonText_compact]}
-          >
+        <Text style={[styles.title]}>Игра окончена</Text>
+        <View style={[styles.ribbon]}>
+          <Text style={[styles.ribbonText]}>
             Вот это игра! Вы настоящие знатоки!
           </Text>
         </View>
@@ -28,66 +25,46 @@ export function FinalHeader({ compact }: { compact: boolean }) {
 
 const styles = StyleSheet.create({
   header: {
-    minHeight: 168,
+    minHeight: sv(168),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 42,
+    gap: s(42),
     zIndex: 2,
   },
-  header_compact: {
-    minHeight: 114,
-    gap: 24,
-  },
   logo: {
-    width: 310,
-    height: 98,
-  },
-  logo_compact: {
-    width: 218,
-    height: 70,
+    width: s(310),
+    height: sv(98),
   },
   titleWrap: {
     flex: 1,
     alignItems: 'center',
-    paddingRight: 180,
+    paddingRight: s(180),
   },
   title: {
     color: colors.gold,
-    fontSize: 76,
-    lineHeight: 86,
+    fontSize: sf(76),
+    lineHeight: sv(86),
     fontWeight: '900',
     textAlign: 'center',
     textShadowColor: 'rgba(255, 141, 62, 0.82)',
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 9,
-  },
-  title_compact: {
-    fontSize: 52,
-    lineHeight: 60,
+    textShadowOffset: { width: 0, height: sv(4) },
+    textShadowRadius: s(9),
   },
   ribbon: {
-    minWidth: 660,
+    minWidth: s(660),
     alignItems: 'center',
     borderColor: 'rgba(244, 166, 91, 0.56)',
     borderRadius: 999,
-    borderWidth: 2,
+    borderWidth: s(2),
     backgroundColor: 'rgba(20, 30, 54, 0.94)',
-    marginTop: 2,
-    paddingHorizontal: 36,
-    paddingVertical: 11,
-  },
-  ribbon_compact: {
-    minWidth: 450,
-    paddingHorizontal: 24,
-    paddingVertical: 7,
+    marginTop: sv(2),
+    paddingHorizontal: s(36),
+    paddingVertical: sv(11),
   },
   ribbonText: {
     color: colors.text,
-    fontSize: 25,
+    fontSize: sf(25),
     fontWeight: '900',
     textAlign: 'center',
-  },
-  ribbonText_compact: {
-    fontSize: 17,
   },
 });

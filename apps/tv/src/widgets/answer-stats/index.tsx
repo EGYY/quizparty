@@ -10,10 +10,10 @@ import { memo, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import type { AnswerStats as AnswerStatsType } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 type Props = {
   answerStats: AnswerStatsType[];
-  compact: boolean;
   correctIndex: number;
   /** Меняется при смене раунда — сигнал для перезапуска анимации. */
   roundNumber: number | undefined;
@@ -21,7 +21,6 @@ type Props = {
 
 export const AnswerStats = memo(function AnswerStats({
   answerStats,
-  compact,
   correctIndex,
   roundNumber,
 }: Props) {
@@ -49,10 +48,8 @@ export const AnswerStats = memo(function AnswerStats({
   }, [roundNumber]);
 
   return (
-    <View style={[styles.panel, compact && styles.panel_compact]}>
-      <Text style={[styles.title, compact && styles.title_compact]}>
-        Как ответили игроки
-      </Text>
+    <View style={[styles.panel]}>
+      <Text style={[styles.title]}>Как ответили игроки</Text>
 
       {answerStats.map((stat, index) => (
         <View key={stat.optionIndex} style={styles.row}>
@@ -94,44 +91,38 @@ export const AnswerStats = memo(function AnswerStats({
 const styles = StyleSheet.create({
   panel: {
     flex: 1,
-    minHeight: 194,
+    minHeight: sv(194),
     borderColor: 'rgba(255, 224, 168, 0.34)',
-    borderRadius: 24,
-    borderWidth: 2,
+    borderRadius: s(24),
+    borderWidth: s(2),
     backgroundColor: 'rgba(18, 22, 39, 0.9)',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    gap: 6,
+    paddingHorizontal: s(24),
+    paddingVertical: sv(16),
+    gap: s(6),
   },
-  panel_compact: {
-    minHeight: 148,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
+
   title: {
     color: colors.text,
-    fontSize: 22,
+    fontSize: sf(25),
     fontWeight: '900',
-    marginBottom: 4,
+    marginBottom: sv(4),
   },
-  title_compact: { fontSize: 16, marginBottom: 2 },
   row: {
-    minHeight: 32,
+    minHeight: sv(32),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: s(12),
   },
   letter: {
-    width: 30,
-    fontSize: 23,
+    width: s(30),
+    fontSize: sf(23),
     fontWeight: '900',
   },
   letter_correct: { color: '#befe5d' },
   letter_wrong: { color: '#ff715f' },
   track: {
     flex: 1,
-    height: 22,
+    height: sv(22),
     overflow: 'hidden',
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -143,9 +134,9 @@ const styles = StyleSheet.create({
   fill_correct: { backgroundColor: '#a9e95c' },
   fill_wrong: { backgroundColor: '#f0644d' },
   count: {
-    width: 30,
+    width: s(30),
     color: colors.gold,
-    fontSize: 22,
+    fontSize: sf(26),
     fontWeight: '900',
     textAlign: 'right',
   },

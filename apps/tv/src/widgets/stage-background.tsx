@@ -2,6 +2,7 @@ import { memo, type ReactNode } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { homeBackground } from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
+import { s, sv } from '@shared/config/scale';
 
 export const StageBackground = memo(function StageBackground({
   children,
@@ -38,34 +39,34 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 980,
+    width: s(980),
     backgroundColor: 'rgba(7, 8, 25, 0.15)',
   },
   starOne: {
     position: 'absolute',
-    left: 145,
-    top: 150,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    left: s(145),
+    top: sv(150),
+    width: s(8),
+    height: s(8),
+    borderRadius: s(4),
     backgroundColor: colors.gold,
   },
   starTwo: {
     position: 'absolute',
-    left: 720,
-    top: 84,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    left: s(720),
+    top: sv(84),
+    width: s(10),
+    height: s(10),
+    borderRadius: s(5),
     backgroundColor: colors.blue,
   },
   starThree: {
     position: 'absolute',
-    right: 520,
-    top: 280,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    right: s(520),
+    top: sv(280),
+    width: s(7),
+    height: s(7),
+    borderRadius: s(4),
     backgroundColor: colors.pink,
   },
 });

@@ -73,5 +73,9 @@ export const tvCategories = [
   QuizCategory.HISTORY,
   QuizCategory.SCIENCE,
   QuizCategory.GAMES,
+  QuizCategory.SPORTS,
   QuizCategory.PARTY,
+  QuizCategory.KIDS,
+  QuizCategory.ADULT,
+  QuizCategory.ART,
 ];

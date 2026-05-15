@@ -12,7 +12,7 @@ export const LobbyPlayerList = memo(function LobbyPlayerList({
   ownPlayerId: string | undefined;
   players: Player[];
 }) {
-  const visiblePlayers = players.filter((player) => player.playerId !== ownPlayerId).slice(0, 2);
+  const visiblePlayers = players.filter((player) => player.playerId !== ownPlayerId);
   const emptySlots = Array.from({ length: Math.max(0, 2 - visiblePlayers.length) });
 
   return (
@@ -36,7 +36,7 @@ export const LobbyPlayerList = memo(function LobbyPlayerList({
                   : isDisconnected
                     ? 'отключен'
                     : isReady
-                      ? 'готова'
+                      ? 'готов'
                       : 'ждет'}
               </small>
             </div>

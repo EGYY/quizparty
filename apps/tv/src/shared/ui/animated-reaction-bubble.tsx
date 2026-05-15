@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import type { ReactionEvent } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
+import { s, sf } from '@shared/config/scale';
 import { hashString } from '@shared/lib/hash-string';
 
 export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
@@ -108,37 +109,37 @@ export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
 });
 
 const defaultPlacement = {
-  rightMin: 18,
-  rightSpread: 150,
-  topMin: 18,
-  topSpread: 430,
+  rightMin: s(18),
+  rightSpread: s(150),
+  topMin: s(18),
+  topSpread: s(430),
 };
 
 const finalHostPlacement = {
-  rightMin: 12,
-  rightSpread: 260,
-  topMin: 6,
-  topSpread: 210,
+  rightMin: s(12),
+  rightSpread: s(260),
+  topMin: s(6),
+  topSpread: s(210),
 };
 
 const styles = StyleSheet.create({
   bubble: {
     position: 'absolute',
-    minWidth: 80,
-    minHeight: 68,
+    minWidth: s(80),
+    minHeight: s(68),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: 'rgba(255, 255, 255, 0.28)',
-    borderRadius: 34,
-    borderWidth: 2,
+    borderRadius: s(34),
+    borderWidth: s(2),
     backgroundColor: 'rgba(66, 82, 126, 0.84)',
-    paddingHorizontal: 14,
+    paddingHorizontal: s(14),
     shadowColor: colors.gold,
     shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowRadius: s(14),
     shadowOffset: { width: 0, height: 0 },
   } satisfies ViewStyle,
   text: {
-    fontSize: 40,
+    fontSize: sf(40),
   },
 });

@@ -1,9 +1,9 @@
-import { memo } from 'react';
-import { ArrowLeft, Check, Pencil, Settings, Star, Tv, Users } from 'lucide-react';
-import { MAX_PLAYERS } from '@quizparty/shared';
-import type { Player, RoomSummary } from '@quizparty/shared';
 import { phoneAvatars } from '@entities/player/model';
+import type { Player, RoomSummary } from '@quizparty/shared';
+import { MAX_PLAYERS } from '@quizparty/shared';
 import { phonePopcornMascotUrl, quizPartyLogoUrl } from '@shared/lib/assets';
+import { ArrowLeft, Check, Pencil, Star, Tv, Users } from 'lucide-react';
+import { memo } from 'react';
 import { getPhoneAvatar } from '../lib/get-phone-avatar';
 import { LobbyPlayerList } from './lobby-player-list';
 import { ReactionBar } from './reaction-bar';
@@ -57,15 +57,11 @@ export const LobbyPhoneScreen = memo(function LobbyPhoneScreen({
           <button className="lobby-icon-button" type="button" onClick={onLeave}>
             <ArrowLeft size={26} />
           </button>
-          <button className="lobby-icon-button" type="button" aria-label="Настройки">
-            <Settings size={25} />
-          </button>
         </div>
         <img alt="QuizParty" className="phone-lobby-logo" src={quizPartyLogoUrl} />
         <div className="phone-lobby-code">
           <span>Комната</span>
           <strong>{room.roomCode}</strong>
-          <small>Введи этот код на TV</small>
         </div>
         <img alt="" className="phone-lobby-mascot" src={phonePopcornMascotUrl} />
       </header>
@@ -101,7 +97,7 @@ export const LobbyPhoneScreen = memo(function LobbyPhoneScreen({
               onClick={onReadyChange}
             >
               <Check size={26} />
-              {ownReady ? 'Готов к игре' : 'Готовиться'}
+              {ownReady ? 'Готов к игре' : 'Начать'}
             </button>
             <small className="lobby-ready-bonus">
               Ты получишь <b>+10%</b> очков за готовность!
@@ -111,7 +107,7 @@ export const LobbyPhoneScreen = memo(function LobbyPhoneScreen({
 
         {isEditingProfile ? (
           <div className="lobby-profile-editor">
-            <label className="phone-field compact">
+            <label className="phone-field">
               Никнейм
               <input
                 maxLength={24}
@@ -119,7 +115,7 @@ export const LobbyPhoneScreen = memo(function LobbyPhoneScreen({
                 onChange={(event) => onDraftNicknameChange(event.target.value)}
               />
             </label>
-            <div className="avatar-picker compact" aria-label="Выбор аватара">
+            <div className="avatar-picker" aria-label="Выбор аватара">
               {phoneAvatars.map((avatar) => (
                 <button
                   className={`avatar-choice ${avatarId === avatar.id ? 'active' : ''}`}

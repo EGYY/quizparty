@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { roomSummarySchema } from '@quizparty/shared';
 import type { RoomSummary } from '@quizparty/shared';
@@ -39,6 +39,7 @@ export function useJoinRoom() {
   const params = useParams<{ roomCode?: string }>();
   const [searchParams] = useSearchParams();
   const routeRoomCode = normalizeRoomCode(params.roomCode ?? searchParams.get('room'));
+  const leavingRef = useRef(false);
   const [room, setRoom] = useState<RoomSummary | undefined>(() => {
     if (!routeRoomCode) return undefined;
     const parsed = roomSummarySchema.safeParse(readLastRoom());
@@ -77,7 +78,7 @@ export function useJoinRoom() {
   const canJoin = roomCode.trim().length >= 4 && nickname.trim().length >= 2;
 
   useEffect(() => {
-    if (!routeRoomCode) return;
+    if (!routeRoomCode || leavingRef.current) return;
     setRoomCodeState(routeRoomCode);
     if (room?.roomCode === routeRoomCode || isPending) return;
     if (nickname.trim().length < 2) return;
@@ -106,9 +107,10 @@ export function useJoinRoom() {
   );
 
   const onLeave = useCallback(() => {
+    leavingRef.current = true;
     clearLastRoom();
     setRoom(undefined);
-    void navigate('/join', { replace: true });
+    void navigate('/', { replace: true });
   }, [navigate]);
 
   const setRoomCode = useCallback((next: string) => {

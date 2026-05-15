@@ -140,7 +140,7 @@ function PhoneGameShell({
 
   if (game.gameState.phase === 'lobby') {
     return (
-      <main className="phone-shell">
+      <main className="phone-shell phone-shell--lobby">
         <LobbyPhoneScreen
           avatarId={avatarId}
           connectionStatus={game.connectionStatus}

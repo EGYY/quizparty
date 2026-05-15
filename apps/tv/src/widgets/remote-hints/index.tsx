@@ -9,6 +9,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { colors, spacing } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 type RemoteHintsProps = {
   style?: ViewStyle;
@@ -39,7 +40,7 @@ export const RemoteHints = memo(function RemoteHints({
 
 const DPadIcon = memo(function DPadIcon() {
   return (
-    <Svg width={48} height={48} viewBox="0 0 48 48" fill="none">
+    <Svg width={s(48)} height={s(48)} viewBox="0 0 48 48" fill="none">
       <Path
         d="M20 4H28C29.6 4 31 5.4 31 7V17H41C42.6 17 44 18.4 44 20V28C44 29.6 42.6 31 41 31H31V41C31 42.6 29.6 44 28 44H20C18.4 44 17 42.6 17 41V31H7C5.4 31 4 29.6 4 28V20C4 18.4 5.4 17 7 17H17V7C17 5.4 18.4 4 20 4Z"
         fill="rgba(255,255,255,0.08)"
@@ -60,7 +61,7 @@ const DPadIcon = memo(function DPadIcon() {
 
 const RemoteOkIcon = memo(function RemoteOkIcon() {
   return (
-    <Svg width={58} height={58} viewBox="0 0 58 58" fill="none">
+    <Svg width={s(58)} height={s(58)} viewBox="0 0 58 58" fill="none">
       <Defs>
         <LinearGradient id="okGradient" x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0%" stopColor="#B5FF8A" />
@@ -86,14 +87,14 @@ const RemoteOkIcon = memo(function RemoteOkIcon() {
         strokeWidth={2.8}
       />
 
-      <TextSvg x={29} y={35} text="OK" color="#8FFF75" />
+      <TextSvg x={29} y={29} text="OK" color="#8FFF75" />
     </Svg>
   );
 });
 
 export const RemoteBackIcon = memo(function RemoteBackIcon() {
   return (
-    <Svg width={58} height={58} viewBox="0 0 58 58" fill="none">
+    <Svg width={s(58)} height={s(58)} viewBox="0 0 58 58" fill="none">
       <Circle cx={29} cy={29} r={25} fill="rgba(255, 60, 60, 0.12)" />
 
       <Circle
@@ -146,6 +147,7 @@ const TextSvg = memo(function TextSvg({
       fontSize={18}
       fontWeight="900"
       textAnchor="middle"
+      alignmentBaseline="central"
     >
       {text}
     </SvgText>
@@ -155,14 +157,14 @@ const TextSvg = memo(function TextSvg({
 const styles = StyleSheet.create({
   row: {
     position: 'absolute',
-    left: 58,
-    right: 58,
-    bottom: 34,
-    maxWidth: 700,
+    left: s(58),
+    right: s(58),
+    bottom: sv(34),
+    maxWidth: s(700),
 
-    minHeight: 74,
-    paddingHorizontal: 34,
-    paddingVertical: 12,
+    minHeight: sv(74),
+    paddingHorizontal: s(34),
+    paddingVertical: sv(12),
 
     flexDirection: 'row',
     alignItems: 'center',
@@ -170,15 +172,15 @@ const styles = StyleSheet.create({
 
     borderRadius: 999,
     backgroundColor: 'rgba(8, 10, 28, 0.82)',
-    borderWidth: 1.5,
+    borderWidth: s(1.5),
     borderColor: 'rgba(120, 150, 255, 0.42)',
 
     shadowColor: '#536DFF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.55,
-    shadowRadius: 18,
+    shadowRadius: s(18),
 
-    elevation: 14,
+    elevation: s(14),
   },
 
   hint: {
@@ -189,13 +191,13 @@ const styles = StyleSheet.create({
 
   text: {
     color: colors.text ?? '#F4F2FF',
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: sf(28),
+    lineHeight: sv(34),
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: s(0.3),
 
     textShadowColor: 'rgba(255, 255, 255, 0.22)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: s(8),
   },
 });

@@ -10,9 +10,10 @@
  *                                       чтобы glow не прыгал при каждом тике
  */
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import type { TimerTickEvent } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 
 const SEGMENT_COUNT = 18;
 /** Сегменты, которые становятся красными (меньше всего времени = левая сторона) */
@@ -27,11 +28,10 @@ function getProgressPercent(timer: TimerTickEvent): number {
 }
 
 type Props = {
-  compact: boolean;
   timer: TimerTickEvent;
 };
 
-export function RoundTimer({ compact, timer }: Props) {
+export function RoundTimer({ timer }: Props) {
   const progress = getProgressPercent(timer);
   const isHot = timer.remainingSeconds > 0 && timer.remainingSeconds <= 5;
   const activeSegments = Math.ceil((progress / 100) * SEGMENT_COUNT);
@@ -77,6 +77,17 @@ export function RoundTimer({ compact, timer }: Props) {
   const timerFillAnim = useRef(new Animated.Value(progress)).current;
   const fillAnimRef = useRef<Animated.CompositeAnimation | null>(null);
 
+  // Memoized: interpolate() creates a new AnimatedInterpolation node each call.
+  // timerFillAnim is a stable ref, so this runs exactly once per component instance.
+  const fillGlowWidth = useMemo(
+    () =>
+      timerFillAnim.interpolate({
+        inputRange: [0, 100],
+        outputRange: ['0%', '100%'],
+      }),
+    [timerFillAnim],
+  );
+
   useEffect(() => {
     fillAnimRef.current?.stop();
     fillAnimRef.current = Animated.timing(timerFillAnim, {
@@ -107,11 +118,7 @@ export function RoundTimer({ compact, timer }: Props) {
 
   return (
     <Animated.View
-      style={[
-        styles.frame,
-        compact && styles.frame_compact,
-        { transform: [{ scale: timerPulse }] },
-      ]}
+      style={[styles.frame, { transform: [{ scale: timerPulse }] }]}
     >
       <View style={styles.segments}>
         {segmentStyles.map((segStyle, i) => (
@@ -120,22 +127,10 @@ export function RoundTimer({ compact, timer }: Props) {
       </View>
 
       {/* Декоративное свечение - плавная анимированная ширина */}
-      <Animated.View
-        style={[
-          styles.fillGlow,
-          {
-            width: timerFillAnim.interpolate({
-              inputRange: [0, 100],
-              outputRange: ['0%', '100%'],
-            }),
-          },
-        ]}
-      />
+      <Animated.View style={[styles.fillGlow, { width: fillGlowWidth }]} />
 
-      <View style={[styles.center, compact && styles.center_compact]}>
-        <Text style={[styles.centerText, compact && styles.centerText_compact]}>
-          {timer.remainingSeconds}с
-        </Text>
+      <View style={[styles.center]}>
+        <Text style={[styles.centerText]}>{timer.remainingSeconds}с</Text>
       </View>
     </Animated.View>
   );
@@ -144,40 +139,34 @@ export function RoundTimer({ compact, timer }: Props) {
 const styles = StyleSheet.create({
   frame: {
     flex: 1,
-    maxWidth: 980,
-    height: 106,
+    maxWidth: s(980),
+    height: sv(106),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: colors.gold,
     borderRadius: 999,
-    borderWidth: 7,
+    borderWidth: s(7),
     backgroundColor: 'rgba(19, 20, 38, 0.92)',
-    paddingHorizontal: 34,
+    paddingHorizontal: s(34),
     shadowColor: colors.gold,
     shadowOpacity: 0.7,
-    shadowRadius: 22,
+    shadowRadius: s(22),
     shadowOffset: { width: 0, height: 0 },
+    marginLeft: sv(Dimensions.get('window').width / 20),
   },
-  frame_compact: {
-    height: 82,
-    maxWidth: 760,
-    borderWidth: 5,
-    paddingHorizontal: 24,
-  },
-
   segments: {
     width: '100%',
-    height: 52,
+    height: sv(52),
     flexDirection: 'row',
-    gap: 5,
+    gap: s(5),
     overflow: 'hidden',
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 4,
+    padding: s(4),
   },
   segment: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: s(18),
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   segment_active: { backgroundColor: '#ffd966' },
@@ -185,34 +174,32 @@ const styles = StyleSheet.create({
 
   fillGlow: {
     position: 'absolute',
-    left: 40,
-    height: 50,
+    left: s(40),
+    height: sv(50),
     borderRadius: 999,
     backgroundColor: 'rgba(255, 209, 102, 0.2)',
   },
 
   center: {
     position: 'absolute',
-    width: 230,
-    height: 108,
+    width: s(230),
+    height: sv(108),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 38,
+    borderRadius: s(38),
     backgroundColor: 'rgba(25, 29, 55, 0.98)',
     shadowColor: '#ffffff',
     shadowOpacity: 0.42,
-    shadowRadius: 18,
+    shadowRadius: s(18),
     shadowOffset: { width: 0, height: 0 },
   },
-  center_compact: { width: 172, height: 82, borderRadius: 30 },
   centerText: {
     color: colors.text,
-    fontSize: 66,
-    lineHeight: 76,
+    fontSize: sf(66),
+    lineHeight: sv(76),
     fontWeight: '900',
     textShadowColor: 'rgba(126, 164, 255, 0.78)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 14,
+    textShadowRadius: s(14),
   },
-  centerText_compact: { fontSize: 48, lineHeight: 56 },
 });

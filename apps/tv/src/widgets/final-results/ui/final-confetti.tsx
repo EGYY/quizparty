@@ -212,18 +212,11 @@ const pieces = [
   },
 ] as const;
 
-export function FinalConfetti({
-  compact,
-  screenHeight,
-}: {
-  compact: boolean;
-  screenHeight: number;
-}) {
+export function FinalConfetti({ screenHeight }: { screenHeight: number }) {
   return (
     <Animated.View pointerEvents="none" style={styles.layer}>
       {pieces.map((piece, index) => (
         <FallingConfetti
-          compact={compact}
           key={`${piece.left}-${piece.delay}-${index}`}
           piece={piece}
           screenHeight={screenHeight}
@@ -234,11 +227,9 @@ export function FinalConfetti({
 }
 
 function FallingConfetti({
-  compact,
   piece,
   screenHeight,
 }: {
-  compact: boolean;
   piece: (typeof pieces)[number];
   screenHeight: number;
 }) {
@@ -274,12 +265,11 @@ function FallingConfetti({
     <Animated.View
       style={[
         styles.piece,
-        compact && styles.piece_compact,
         piece.size === 'square' && styles.piece_square,
         piece.size === 'short' && styles.piece_short,
         {
           backgroundColor: piece.color,
-          left: compact ? piece.left * 0.72 : piece.left,
+          left: piece.left,
           transform: [
             { translateX: drift },
             { translateY },
@@ -304,11 +294,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     opacity: 0.95,
   } satisfies ViewStyle,
-  piece_compact: {
-    width: 11,
-    height: 24,
-    borderRadius: 3,
-  },
   piece_square: {
     width: 20,
     height: 20,

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 import { Focusable } from '@shared/ui/focusable';
 
 export function PageState({
@@ -30,24 +31,24 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 420,
+    minHeight: sv(420),
     gap: spacing.md,
     padding: spacing.xl,
   },
   title: {
     color: colors.text,
-    fontSize: 38,
+    fontSize: sf(38),
     fontWeight: '900',
   },
   message: {
-    maxWidth: 720,
+    maxWidth: s(720),
     color: colors.textSecondary,
-    fontSize: 22,
-    lineHeight: 32,
+    fontSize: sf(22),
+    lineHeight: sv(32),
     textAlign: 'center',
   },
   action: {
-    minWidth: 220,
+    minWidth: s(220),
     alignItems: 'center',
     borderRadius: radii.md,
     backgroundColor: colors.gold,
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: colors.textDark,
-    fontSize: 20,
+    fontSize: sf(20),
     fontWeight: '900',
   },
 });

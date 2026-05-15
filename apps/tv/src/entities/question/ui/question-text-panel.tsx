@@ -1,28 +1,23 @@
 /**
  * QuestionTextPanel — панель с текстом вопроса + опциональное inline-медиа.
  *
- * Мемоизирован по questionId + compact — НЕ перерисовывается на тиках таймера.
+ * Мемоизирован по questionId — НЕ перерисовывается на тиках таймера.
  * Анимация въезда перезапускается при смене questionId.
  */
 import { memo, useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import type { Media } from '@quizparty/shared';
 import { TvMediaPlayer } from '@shared/ui/tv-media-player';
+import { s, sf } from '@shared/config/scale';
 
 type Props = {
-  compact: boolean;
   media: Media | undefined;
   questionId: string;
   questionText: string;
 };
 
 export const QuestionTextPanel = memo(
-  function QuestionTextPanel({
-    compact,
-    media,
-    questionId,
-    questionText,
-  }: Props) {
+  function QuestionTextPanel({ media, questionId, questionText }: Props) {
     const slideAnim = useRef(new Animated.Value(40)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -50,53 +45,38 @@ export const QuestionTextPanel = memo(
     }, [questionId]);
 
     return (
-      <View style={[styles.heroRow, compact && styles.heroRow_compact]}>
+      <View style={[styles.heroRow]}>
         <Animated.View
           style={[
             styles.panel,
-            compact && styles.panel_compact,
             {
               opacity: opacityAnim,
               transform: [{ translateY: slideAnim }],
             },
           ]}
         >
-          {media ? (
-            <TvMediaPlayer compact={compact} media={media} variant="question" />
-          ) : null}
-          <Text
-            numberOfLines={compact ? 3 : 2}
-            style={[
-              styles.questionText,
-              compact && styles.questionText_compact,
-            ]}
-          >
+          {media ? <TvMediaPlayer media={media} variant="question" /> : null}
+          <Text numberOfLines={3} style={[styles.questionText]}>
             {questionText}
           </Text>
         </Animated.View>
       </View>
     );
   },
-  (prev, next) =>
-    prev.questionId === next.questionId && prev.compact === next.compact,
+  (prev, next) => prev.questionId === next.questionId,
 );
 
 const styles = StyleSheet.create({
   heroRow: {
-    minHeight: 350,
+    minHeight: s(350),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 24,
     marginTop: 8,
   },
-  heroRow_compact: {
-    minHeight: 246,
-    gap: 16,
-    marginTop: 2,
-  },
   panel: {
     flex: 1,
-    minHeight: 350,
+    minHeight: s(350),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: 'rgba(255, 201, 119, 0.66)',
@@ -106,14 +86,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 72,
     paddingVertical: 22,
   },
-  panel_compact: {
-    minHeight: 246,
-    paddingHorizontal: 34,
-    paddingVertical: 12,
-  },
   questionText: {
     color: '#ffffff',
-    fontSize: 58,
+    fontSize: sf(58),
     lineHeight: 68,
     fontWeight: '900',
     textAlign: 'center',
@@ -121,5 +96,4 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 5,
   },
-  questionText_compact: { fontSize: 38, lineHeight: 44 },
 });

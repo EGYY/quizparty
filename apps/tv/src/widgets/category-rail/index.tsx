@@ -2,6 +2,7 @@ import { tvCategories } from '@entities/quiz';
 import { QuizCategory } from '@quizparty/shared';
 import { categoryIcons, categoryLabels } from '@shared/config/labels';
 import { colors, spacing } from '@shared/config/theme';
+import { s, sf, sv } from '@shared/config/scale';
 import { Focusable } from '@shared/ui/focusable';
 import { memo, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -51,16 +52,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   item: {
-    minWidth: 148,
-    height: 68,
+    minWidth: s(148),
+    height: sv(68),
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    gap: 8,
+    paddingHorizontal: s(20),
+    gap: s(8),
     backgroundColor: 'rgba(36, 39, 70, 0.82)',
-    borderWidth: 1.5,
+    borderWidth: s(1.5),
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   active: {
@@ -68,16 +69,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 224, 130, 0.6)',
     shadowColor: colors.gold,
     shadowOpacity: 0.45,
-    shadowRadius: 18,
+    shadowRadius: s(18),
     shadowOffset: { width: 0, height: 0 },
   },
   icon: {
     color: colors.gold,
-    fontSize: 26,
+    fontSize: sf(26),
   },
   label: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: sf(22),
     fontWeight: '900',
   },
   activeText: {

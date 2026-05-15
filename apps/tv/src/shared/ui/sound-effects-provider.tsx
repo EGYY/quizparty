@@ -49,6 +49,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
       {focusKey > 0 ? (
         <Video
           key={`focus-${focusKey}`}
+          disableFocus
           mixWithOthers="mix"
           paused={false}
           source={soundFocus}
@@ -58,6 +59,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
       {submitKey > 0 ? (
         <Video
           key={`submit-${submitKey}`}
+          disableFocus
           mixWithOthers="mix"
           paused={false}
           source={soundButtonSubmit}
@@ -67,6 +69,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
       {errorKey > 0 ? (
         <Video
           key={`error-${errorKey}`}
+          disableFocus
           mixWithOthers="mix"
           paused={false}
           source={soundError}

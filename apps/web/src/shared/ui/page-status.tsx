@@ -14,7 +14,7 @@ export function PageStatus({
       <Eye size={20} />
       <span>{text}</span>
       {onRetry ? (
-        <button className="secondary-button compact" type="button" onClick={onRetry}>
+        <button className="secondary-button" type="button" onClick={onRetry}>
           <RotateCcw size={15} />
           Повторить
         </button>

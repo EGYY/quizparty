@@ -65,11 +65,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/tv/**/*.js'],
+    files: ['apps/tv/**/*.js', 'scripts/**/*.js'],
     languageOptions: {
       globals: {
         __dirname: 'readonly',
         module: 'readonly',
+        process: 'readonly',
         require: 'readonly',
       },
     },
