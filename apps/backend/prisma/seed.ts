@@ -63,7 +63,7 @@ async function main() {
         passwordHash: hashPassword('local-dev'),
         displayName: 'QuizParty Admin',
         role: 'ADMIN',
-        avatarUrl: 'http://localhost:5173/assets/avatars/admin.svg',
+        avatarUrl: '/assets/avatars/admin.svg',
       },
     });
 

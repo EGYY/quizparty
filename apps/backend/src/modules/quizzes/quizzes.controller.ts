@@ -83,7 +83,7 @@ export class QuizzesController {
 
   @Post('admin/media/upload')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 50 * 1024 * 1024 } }))
   async uploadMediaAsset(
     @UploadedFile() file: { buffer: Buffer; mimetype: string; originalname: string; size: number },
     @Body('alt') alt: string | undefined,
