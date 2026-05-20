@@ -1,4 +1,4 @@
-import { BACKEND_ORIGIN } from '@shared/config/backend';
+import { BACKEND_ORIGIN } from '@shared/config/backend.example';
 
 export function getMediaUrl(url: string | undefined): string | undefined {
   if (!url) return undefined;

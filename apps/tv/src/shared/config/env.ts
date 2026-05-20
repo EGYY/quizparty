@@ -1,4 +1,4 @@
-import { BACKEND_ORIGIN } from './backend';
+import { BACKEND_ORIGIN } from './backend.example';
 
 export const API_ORIGIN = BACKEND_ORIGIN;
 export const API_BASE_URL = `${API_ORIGIN}/api`;
