@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Difficulty, GameMode } from '@quizparty/shared';
-import { useTvNavigation } from '@app/navigation';
-import { useToast } from '@app/toast-provider';
 import type { TvQuiz } from '@entities/quiz';
-import { createRoom } from '@shared/api/tv';
+import type { TvRoom } from '@shared/types/tv';
+import { createRoom } from './api/create-room';
 
 type CreateRoomParams = {
   difficulty: Difficulty;
@@ -11,26 +10,42 @@ type CreateRoomParams = {
   quiz: TvQuiz;
 };
 
-export function useCreateRoom() {
-  const { navigate } = useTvNavigation();
-  const toast = useToast();
+export type CreateRoomSuccess = {
+  quiz: TvQuiz;
+  room: TvRoom;
+};
+
+type UseCreateRoomOptions = {
+  onError?: (error: unknown) => void;
+  onSuccess?: (result: CreateRoomSuccess) => void;
+};
+
+export function useCreateRoom({
+  onError,
+  onSuccess,
+}: UseCreateRoomOptions = {}) {
   const [isCreating, setIsCreating] = useState(false);
+  const isCreatingRef = useRef(false);
 
   const create = useCallback(
     async ({ difficulty, mode, quiz }: CreateRoomParams) => {
-      if (isCreating) return;
+      if (isCreatingRef.current) return undefined;
+      isCreatingRef.current = true;
       setIsCreating(true);
       try {
         const room = await createRoom({ quizId: quiz.id, difficulty, mode });
-        toast.notify(`Комната ${room.roomCode} создана`, 'success');
-        navigate({ name: 'lobby', quiz, room });
-      } catch {
-        toast.notify('Не удалось создать комнату. Проверьте backend.', 'error');
+        const result = { quiz, room };
+        onSuccess?.(result);
+        return result;
+      } catch (error) {
+        onError?.(error);
+        return undefined;
       } finally {
+        isCreatingRef.current = false;
         setIsCreating(false);
       }
     },
-    [isCreating, navigate, toast],
+    [onError, onSuccess],
   );
 
   return { create, isCreating };

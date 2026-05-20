@@ -1,15 +1,12 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { refreshAdminSession } from './auth';
+import { axiosConfig } from './client-config';
 import { useAppStore } from '../model/app-store';
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
-export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
-  timeout: 8_000,
-  withCredentials: true,
-});
+export const http = axios.create(axiosConfig);
 
 let refreshPromise: Promise<string> | undefined;
 

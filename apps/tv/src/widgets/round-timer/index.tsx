@@ -10,7 +10,13 @@
  *                                       чтобы glow не прыгал при каждом тике
  */
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import type { TimerTickEvent } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
@@ -32,6 +38,7 @@ type Props = {
 };
 
 export function RoundTimer({ timer }: Props) {
+  const { width } = useWindowDimensions();
   const progress = getProgressPercent(timer);
   const isHot = timer.remainingSeconds > 0 && timer.remainingSeconds <= 5;
   const activeSegments = Math.ceil((progress / 100) * SEGMENT_COUNT);
@@ -115,10 +122,14 @@ export function RoundTimer({ timer }: Props) {
       }),
     [activeSegments],
   );
+  const frameStyle = useMemo(
+    () => [styles.frame, { marginLeft: Math.round(width / 20) }],
+    [width],
+  );
 
   return (
     <Animated.View
-      style={[styles.frame, { transform: [{ scale: timerPulse }] }]}
+      style={[frameStyle, { transform: [{ scale: timerPulse }] }]}
     >
       <View style={styles.segments}>
         {segmentStyles.map((segStyle, i) => (
@@ -152,7 +163,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.7,
     shadowRadius: s(22),
     shadowOffset: { width: 0, height: 0 },
-    marginLeft: sv(Dimensions.get('window').width / 20),
   },
   segments: {
     width: '100%',

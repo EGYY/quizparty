@@ -2,9 +2,10 @@ import type { LeaderboardEntry, ReactionEvent } from '@quizparty/shared';
 import { soundFinal } from '@shared/assets/sounds';
 import { s, sv } from '@shared/config/scale';
 import { useMusicTrack } from '@shared/ui/music-provider';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { getFinalLeaderboard } from './model';
+import { useFinalResultsReveal } from './model/use-final-results-reveal';
 import { FinalConfetti } from './ui/final-confetti';
 import { FinalHeader } from './ui/final-header';
 import { FinalHostActions } from './ui/final-host-actions';
@@ -30,38 +31,10 @@ export function FinalResults({
   const first = sortedLeaderboard.find(player => player.rank === 1);
   const second = sortedLeaderboard.find(player => player.rank === 2);
   const third = sortedLeaderboard.find(player => player.rank === 3);
-  const rest = sortedLeaderboard.slice(3, 8);
+  const rest = sortedLeaderboard.slice(3);
 
   useMusicTrack(soundFinal, false);
-  const playersOpacity = useRef(new Animated.Value(0)).current;
-  const playersSlide = useRef(new Animated.Value(48)).current;
-
-  useEffect(() => {
-    const animation = Animated.sequence([
-      Animated.delay(3000),
-      Animated.parallel([
-        Animated.timing(playersOpacity, {
-          toValue: 1,
-          duration: 420,
-          useNativeDriver: true,
-          isInteraction: false,
-        }),
-        Animated.spring(playersSlide, {
-          toValue: 0,
-          friction: 9,
-          tension: 90,
-          useNativeDriver: true,
-          isInteraction: false,
-        }),
-      ]),
-    ]);
-
-    animation.start();
-
-    return () => {
-      animation.stop();
-    };
-  }, [playersOpacity, playersSlide]);
+  const contentAnimationStyle = useFinalResultsReveal();
 
   return (
     <View style={[styles.root]}>
@@ -71,10 +44,7 @@ export function FinalResults({
       <Animated.View
         style={[
           styles.content,
-          {
-            opacity: playersOpacity,
-            transform: [{ translateY: playersSlide }],
-          },
+          contentAnimationStyle,
         ]}
       >
         <WinnersPodium first={first} second={second} third={third} />
@@ -109,7 +79,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: s(500),
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: s(16),
+    justifyContent: 'space-between',
+    gap: s(12),
+    paddingTop: sv(18),
   },
 });

@@ -1,9 +1,10 @@
+import type { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { ServerOptions } from 'socket.io';
 
 export class CorsSocketIoAdapter extends IoAdapter {
   constructor(
-    app: any,
+    app: INestApplicationContext,
     private readonly webOrigin: string | string[],
   ) {
     super(app);

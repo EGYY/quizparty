@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   DEFAULT_REACTIONS,
   ErrorCode,
@@ -31,12 +31,15 @@ import {
   wsError,
 } from './game.helpers';
 import type { InternalGameState, PlayerGameStats, RoomPatchResult } from './game.types';
+import { PlayerTokenService } from './player-token.service';
 
 const GAME_START_COUNTDOWN_SECONDS = 3;
 const ROOM_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class LobbyService {
+  private readonly logger = new Logger(LobbyService.name);
+
   constructor(
     private readonly quizzes: QuizzesService,
     private readonly redis: RedisService,
@@ -44,17 +47,51 @@ export class LobbyService {
     private readonly gameState: GameStateService,
     private readonly realtime: GameRealtimeService,
     private readonly timers: GameTimersService,
+    private readonly playerTokens: PlayerTokenService,
   ) {}
 
-  async joinLobby(payload: JoinLobbyPayload): Promise<{ state: LobbyState; playerId: string }> {
+  async joinLobby(
+    payload: JoinLobbyPayload,
+  ): Promise<{ state: LobbyState; playerId: string; playerToken: string }> {
     const roomCode = payload.roomCode.toUpperCase();
     await this.getRoomOrThrow(roomCode);
+
+    // Если клиент предъявил подписанный сервером токен — верифицируем; иначе
+    // позже под локом проверим, не пытается ли он перехватить чужой playerId.
+    let trustedFromToken = false;
+    if (payload.playerToken) {
+      if (!payload.playerId) {
+        throw wsError(ErrorCode.UNAUTHORIZED, 'Player token requires player id');
+      }
+      const verification = this.playerTokens.verify(payload.playerToken, {
+        playerId: payload.playerId,
+        roomCode,
+      });
+      if (!verification.ok) {
+        throw wsError(ErrorCode.UNAUTHORIZED, 'Invalid player token');
+      }
+      trustedFromToken = true;
+    }
+
     const playerId = payload.playerId ?? randomUUID();
 
     const joinedAt = new Date().toISOString();
     const next = await this.roomState.patchRoomState(roomCode, (state) => {
       const normalized = normalizeLobbyState(state);
       const existingPlayer = normalized.players.find((player) => player.playerId === playerId);
+
+      // Анти-спуфинг под локом: повторный захват известного playerId без токена.
+      if (existingPlayer && !trustedFromToken) {
+        if (this.playerTokens.isStrict) {
+          throw wsError(
+            ErrorCode.UNAUTHORIZED,
+            'Player token required to reclaim this player id',
+          );
+        }
+        this.logger.warn(
+          `legacy token-less re-join: playerId=${playerId} roomCode=${roomCode}`,
+        );
+      }
 
       if (!existingPlayer && normalized.players.length >= MAX_PLAYERS) {
         throw wsError(ErrorCode.ROOM_FULL, 'Room is full');
@@ -104,7 +141,9 @@ export class LobbyService {
 
     if (!next) throw wsError(ErrorCode.ROOM_NOT_FOUND, 'Room not found');
     this.realtime.emitLobby(roomCode, ServerEvent.PLAYER_JOINED, next);
-    return { state: next, playerId };
+
+    const playerToken = this.playerTokens.sign(playerId, roomCode);
+    return { state: next, playerId, playerToken };
   }
 
   async disconnectPlayer(roomCode: string, playerId: string): Promise<RoomPatchResult | null> {
@@ -250,23 +289,40 @@ export class LobbyService {
   }
 
   async startGame(roomCode: string, playerId: string): Promise<GameStartingEvent> {
-    const state = normalizeLobbyState(await this.getRoomOrThrow(roomCode));
-    ensureHost(state, playerId);
+    const preState = normalizeLobbyState(await this.getRoomOrThrow(roomCode));
+    ensureHost(preState, playerId);
 
-    if (![GamePhase.LOBBY, GamePhase.FINAL_RESULTS].includes(state.phase)) {
+    if (![GamePhase.LOBBY, GamePhase.FINAL_RESULTS].includes(preState.phase)) {
       throw wsError(ErrorCode.GAME_ALREADY_STARTED, 'Game is already running');
     }
 
-    const quiz = await this.quizzes.getApprovedQuizForRoom(state.settings.quizId);
+    const quiz = await this.quizzes.getApprovedQuizForRoom(preState.settings.quizId);
     if (!quiz.questions.length) {
       throw wsError(ErrorCode.VALIDATION_FAILED, 'Quiz has no questions');
     }
 
     const now = Date.now();
     const startsAt = now + GAME_START_COUNTDOWN_SECONDS * 1000;
+
+    // Авторитетная проверка фазы и переход — атомарно под room-локом.
+    // Параллельный второй startGame увидит фазу STARTING и упадёт здесь.
+    const next = await this.roomState.patchRoomState(roomCode, (current) => {
+      const normalized = normalizeLobbyState(current);
+      if (![GamePhase.LOBBY, GamePhase.FINAL_RESULTS].includes(normalized.phase)) {
+        throw wsError(ErrorCode.GAME_ALREADY_STARTED, 'Game is already running');
+      }
+      return {
+        ...normalized,
+        phase: GamePhase.STARTING,
+        players: normalized.players.map((player) => ({ ...player, score: 0, streak: 0 })),
+      };
+    });
+
+    if (!next) throw wsError(ErrorCode.ROOM_NOT_FOUND, 'Room not found');
+
     const gameState: InternalGameState = {
       roomCode,
-      quizId: state.settings.quizId,
+      quizId: preState.settings.quizId,
       phase: GamePhase.STARTING,
       startedAt: now,
       currentRoundIndex: -1,
@@ -276,7 +332,7 @@ export class LobbyService {
         .map((question) => mapQuestion(question)),
       answers: {},
       playerStats: Object.fromEntries(
-        state.players.map((player) => [
+        next.players.map((player) => [
           player.playerId,
           { correctAnswers: 0, bestStreak: 0 } satisfies PlayerGameStats,
         ]),
@@ -285,14 +341,6 @@ export class LobbyService {
     };
 
     await this.gameState.setGameState(roomCode, gameState);
-    await this.roomState.patchRoomState(roomCode, (current) => {
-      const normalized = normalizeLobbyState(current);
-      return {
-        ...normalized,
-        phase: GamePhase.STARTING,
-        players: normalized.players.map((player) => ({ ...player, score: 0, streak: 0 })),
-      };
-    });
     await this.timers.scheduleStartRound(roomCode, 0, GAME_START_COUNTDOWN_SECONDS * 1000);
 
     const event: GameStartingEvent = {

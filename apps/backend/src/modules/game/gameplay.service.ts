@@ -67,8 +67,7 @@ export class GamePlayService implements OnModuleInit {
       throw wsError(ErrorCode.ANSWER_TOO_LATE, 'Answer deadline has passed');
     }
 
-    const questionAnswers = game.answers[question.id] ?? {};
-    if (questionAnswers[playerId]) {
+    if ((game.answers[question.id] ?? {})[playerId]) {
       throw wsError(ErrorCode.ANSWER_ALREADY_SUBMITTED, 'Answer already submitted');
     }
 
@@ -85,20 +84,39 @@ export class GamePlayService implements OnModuleInit {
       scoreDelta,
     };
 
-    await this.gameState.patchGameState(roomCode, (current) => ({
-      ...current,
-      answers: {
-        ...current.answers,
-        [question.id]: { ...(current.answers[question.id] ?? {}), [playerId]: answer },
-      },
-      playerStats: nextPlayerStats(
-        current.playerStats,
-        playerId,
-        answer,
-        isCorrect ? player.streak + 1 : 0,
-      ),
-      lastActivityAt: now,
-    }));
+    // Атомарный check-and-set под game-локом: повторный ответ того же игрока
+    // и гонка между игроками невозможны (нет потерянных ответов/очков).
+    let accepted = false;
+    const patched = await this.gameState.patchGameState(roomCode, (current) => {
+      if (current.phase !== GamePhase.QUESTION || current.currentQuestion?.id !== question.id) {
+        return current;
+      }
+      if (current.answers[question.id]?.[playerId]) {
+        return current;
+      }
+      accepted = true;
+      return {
+        ...current,
+        answers: {
+          ...current.answers,
+          [question.id]: { ...(current.answers[question.id] ?? {}), [playerId]: answer },
+        },
+        playerStats: nextPlayerStats(
+          current.playerStats,
+          playerId,
+          answer,
+          isCorrect ? player.streak + 1 : 0,
+        ),
+        lastActivityAt: now,
+      };
+    });
+
+    if (!patched) {
+      throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game not started');
+    }
+    if (!accepted) {
+      throw wsError(ErrorCode.ANSWER_ALREADY_SUBMITTED, 'Answer already submitted');
+    }
 
     await this.roomState.patchRoomState(roomCode, (current) => ({
       ...current,
@@ -115,7 +133,7 @@ export class GamePlayService implements OnModuleInit {
 
     const progressEvent: AnswerProgressEvent = {
       questionId: payload.questionId,
-      answeredCount: Object.keys(questionAnswers).length + 1,
+      answeredCount: Object.keys(patched.answers[question.id] ?? {}).length,
       playerCount: room.players.length,
       serverTime: Date.now(),
     };
@@ -129,8 +147,10 @@ export class GamePlayService implements OnModuleInit {
   }
 
   async startRound(roomCode: string, roundIndex: number): Promise<void> {
-    const room = await this.getRoomOrThrow(roomCode);
-    const game = await this.getGameOrThrow(roomCode);
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return; // stale job — room was already cleaned up
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game) return; // stale job — game state was already cleaned up
     const question = game.questions[roundIndex];
     if (!question) return;
 
@@ -176,8 +196,10 @@ export class GamePlayService implements OnModuleInit {
   }
 
   async emitTimerTick(roomCode: string, roundIndex: number, questionId: string): Promise<void> {
-    const room = await this.getRoomOrThrow(roomCode);
-    const game = await this.getGameOrThrow(roomCode);
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return;
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game) return;
 
     if (
       game.phase !== GamePhase.QUESTION ||
@@ -208,8 +230,10 @@ export class GamePlayService implements OnModuleInit {
   }
 
   async endRound(roomCode: string, roundIndex: number, questionId: string): Promise<void> {
-    const room = await this.getRoomOrThrow(roomCode);
-    const game = await this.getGameOrThrow(roomCode);
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return;
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game) return;
     const question = game.currentQuestion;
     if (
       game.phase !== GamePhase.QUESTION ||
@@ -320,8 +344,10 @@ export class GamePlayService implements OnModuleInit {
   }
 
   async finishGame(roomCode: string): Promise<void> {
-    const room = await this.getRoomOrThrow(roomCode);
-    const game = await this.getGameOrThrow(roomCode);
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return;
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game) return;
     const rankedPlayers = applyRanks(room.players);
     const leaderboard: LeaderboardEntry[] = rankedPlayers.map((player) => {
       const stats = game.playerStats[player.playerId] ?? {

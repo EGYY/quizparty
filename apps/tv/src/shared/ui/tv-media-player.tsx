@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Video, { type VideoRef } from 'react-native-video';
 import { MediaType, type Media } from '@quizparty/shared';
@@ -19,9 +19,36 @@ export function TvMediaPlayer({
   overrideWidth?: number;
   overrideHeight?: number;
 }) {
-  const [paused, setPaused] = useState(false);
+  const [pausedState, setPausedState] = useState({
+    mediaKey: 'empty',
+    paused: false,
+  });
   const didSeekRef = useRef(false);
+  const previousMediaKeyRef = useRef('empty');
   const videoRef = useRef<VideoRef | null>(null);
+  const mediaKey = media
+    ? `${media.type}:${media.url}:${media.startMs ?? 0}:${media.endMs ?? 'end'}`
+    : 'empty';
+
+  if (previousMediaKeyRef.current !== mediaKey) {
+    previousMediaKeyRef.current = mediaKey;
+    didSeekRef.current = false;
+  }
+
+  const paused =
+    pausedState.mediaKey === mediaKey ? pausedState.paused : false;
+
+  useEffect(() => {
+    setPausedState(current => {
+      if (current.mediaKey === mediaKey && !current.paused) return current;
+      return { mediaKey, paused: false };
+    });
+  }, [mediaKey]);
+  const resolvedUrl = media ? getMediaUrl(media.url) : undefined;
+  const videoSource = useMemo(
+    () => (resolvedUrl ? { uri: resolvedUrl } : undefined),
+    [resolvedUrl],
+  );
 
   const hasOverride =
     typeof overrideWidth === 'number' && typeof overrideHeight === 'number';
@@ -51,14 +78,12 @@ export function TvMediaPlayer({
     );
   }
 
-  const resolvedUrl = getMediaUrl(media.url)!;
-
   if (media.type === MediaType.IMAGE) {
     return (
       <View style={hasOverride ? frameStyle : [styles.frame]}>
         <Image
           resizeMode="cover"
-          source={{ uri: resolvedUrl }}
+          source={{ uri: resolvedUrl! }}
           style={styles.image}
         />
       </View>
@@ -69,6 +94,22 @@ export function TvMediaPlayer({
   const endSeconds =
     typeof media.endMs === 'number' ? media.endMs / 1000 : undefined;
   const isAudio = media.type === MediaType.AUDIO;
+
+  const handleLoad = () => {
+    if (!didSeekRef.current && startSeconds > 0) {
+      didSeekRef.current = true;
+      videoRef.current?.seek(startSeconds);
+    }
+  };
+
+  const handleProgress = (event: { currentTime: number }) => {
+    if (endSeconds != null && event.currentTime >= endSeconds) {
+      setPausedState(current => {
+        if (current.mediaKey === mediaKey && current.paused) return current;
+        return { mediaKey, paused: true };
+      });
+    }
+  };
 
   return (
     <View style={frameStyle}>
@@ -93,39 +134,26 @@ export function TvMediaPlayer({
           </View>
           <Text style={[styles.mediaHint]}>AUDIO</Text>
           <Video
+            key={mediaKey}
             paused={paused}
             ref={videoRef}
-            source={{ uri: resolvedUrl }}
+            source={videoSource!}
             style={styles.hiddenVideo}
-            onLoad={() => {
-              if (!didSeekRef.current && startSeconds > 0) {
-                didSeekRef.current = true;
-                videoRef.current?.seek(startSeconds);
-              }
-            }}
-            onProgress={event => {
-              if (endSeconds && event.currentTime >= endSeconds)
-                setPaused(true);
-            }}
+            onLoad={handleLoad}
+            onProgress={handleProgress}
           />
         </View>
       ) : (
         <Video
+          key={mediaKey}
           controls
           paused={paused}
           ref={videoRef}
           resizeMode="cover"
-          source={{ uri: resolvedUrl }}
+          source={videoSource!}
           style={styles.video}
-          onLoad={() => {
-            if (!didSeekRef.current && startSeconds > 0) {
-              didSeekRef.current = true;
-              videoRef.current?.seek(startSeconds);
-            }
-          }}
-          onProgress={event => {
-            if (endSeconds && event.currentTime >= endSeconds) setPaused(true);
-          }}
+          onLoad={handleLoad}
+          onProgress={handleProgress}
         />
       )}
     </View>

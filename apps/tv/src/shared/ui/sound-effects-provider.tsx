@@ -2,16 +2,22 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ImageRequireSource } from 'react-native';
 import Video from 'react-native-video';
+import type { ReactVideoSource } from 'react-native-video/lib/types/video';
 import {
   soundButtonSubmit,
   soundError,
   soundFocus,
 } from '@shared/assets/sounds';
+
+function toVideoSource(source: ImageRequireSource): ReactVideoSource {
+  return source as unknown as ReactVideoSource;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Context
@@ -42,9 +48,13 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
   const playFocus = useCallback(() => setFocusKey(k => k + 1), []);
   const playSubmit = useCallback(() => setSubmitKey(k => k + 1), []);
   const playError = useCallback(() => setErrorKey(k => k + 1), []);
+  const value = useMemo(
+    () => ({ playFocus, playSubmit, playError }),
+    [playError, playFocus, playSubmit],
+  );
 
   return (
-    <SoundEffectsContext.Provider value={{ playFocus, playSubmit, playError }}>
+    <SoundEffectsContext.Provider value={value}>
       {children}
       {focusKey > 0 ? (
         <Video
@@ -52,7 +62,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
           disableFocus
           mixWithOthers="mix"
           paused={false}
-          source={soundFocus}
+          source={toVideoSource(soundFocus)}
           style={styles.hidden}
         />
       ) : null}
@@ -62,7 +72,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
           disableFocus
           mixWithOthers="mix"
           paused={false}
-          source={soundButtonSubmit}
+          source={toVideoSource(soundButtonSubmit)}
           style={styles.hidden}
         />
       ) : null}
@@ -72,7 +82,7 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
           disableFocus
           mixWithOthers="mix"
           paused={false}
-          source={soundError}
+          source={toVideoSource(soundError)}
           style={styles.hidden}
         />
       ) : null}

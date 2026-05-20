@@ -1,5 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import {
   AdminQuizList,
   AdminQuizListFilters,
@@ -23,8 +29,17 @@ import {
 } from '@quizparty/shared';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { basename, isAbsolute, join, normalize, resolve } from 'node:path';
+import { basename, join, normalize } from 'node:path';
+import { resolveUploadRoot } from '../../config/upload';
+import {
+  toPrismaDifficulty,
+  toPrismaMediaType,
+  toPrismaQuizCategory,
+  toPrismaQuizStatus,
+  type WritableQuizCategory,
+} from '../../database/prisma-enums';
 import { PrismaService } from '../../database/prisma.service';
+import { fileMatchesMime } from './media-signature';
 import { mapQuizCard, mapQuizDetail, mapQuizDraft, validateQuizDraft } from './quiz.mapper';
 
 type UploadedMediaFile = {
@@ -54,11 +69,20 @@ export class QuizzesService {
     private readonly prisma: PrismaService,
   ) {}
 
+  /** ADMIN видит/правит любой квиз; AUTHOR — только свой. */
+  private assertCanManageQuiz(quiz: { authorId: string }, actor: UserSummary): void {
+    if (actor.role !== Role.ADMIN && quiz.authorId !== actor.id) {
+      throw new ForbiddenException('You do not have access to this quiz');
+    }
+  }
+
   async listApproved(query: QuizBrowserQuery): Promise<QuizDetail[]> {
     const where = {
-      status: QuizStatus.APPROVED as any,
-      ...(query.category !== QuizCategory.ALL ? { category: query.category as any } : {}),
-      ...(query.difficulty ? { difficulty: query.difficulty as any } : {}),
+      status: toPrismaQuizStatus[QuizStatus.APPROVED],
+      ...(query.category !== QuizCategory.ALL
+        ? { category: toPrismaQuizCategory[query.category] }
+        : {}),
+      ...(query.difficulty ? { difficulty: toPrismaDifficulty[query.difficulty] } : {}),
       ...(query.search
         ? {
             OR: [
@@ -72,6 +96,9 @@ export class QuizzesService {
 
     const quizzes = await this.prisma.quiz.findMany({
       where,
+      // Жёсткий потолок: каталог одобренных квизов больше не выгружается
+      // целиком (раньше findMany был без лимита — риск памяти/латентности).
+      take: 100,
       include: {
         author: true,
         _count: { select: { questions: true } },
@@ -84,7 +111,7 @@ export class QuizzesService {
 
   async getApprovedDetail(quizId: string): Promise<QuizDetail> {
     const quiz = await this.prisma.quiz.findFirst({
-      where: { id: quizId, status: QuizStatus.APPROVED as any },
+      where: { id: quizId, status: toPrismaQuizStatus[QuizStatus.APPROVED] },
       include: {
         author: true,
         _count: { select: { questions: true } },
@@ -97,7 +124,7 @@ export class QuizzesService {
 
   async getApprovedQuizForRoom(quizId: string) {
     const quiz = await this.prisma.quiz.findFirst({
-      where: { id: quizId, status: QuizStatus.APPROVED as any },
+      where: { id: quizId, status: toPrismaQuizStatus[QuizStatus.APPROVED] },
       include: {
         author: true,
         questions: { orderBy: { order: 'asc' } },
@@ -110,19 +137,33 @@ export class QuizzesService {
   }
 
   async getDashboard(currentUser: UserSummary): Promise<AdminDashboard> {
-    const [totalQuizzes, pendingReview, drafts, approved, rejected, recentQuizzes] =
-      await Promise.all([
-        this.prisma.quiz.count(),
-        this.prisma.quiz.count({ where: { status: QuizStatus.PENDING_REVIEW as any } }),
-        this.prisma.quiz.count({ where: { status: QuizStatus.DRAFT as any } }),
-        this.prisma.quiz.count({ where: { status: QuizStatus.APPROVED as any } }),
-        this.prisma.quiz.count({ where: { status: QuizStatus.REJECTED as any } }),
-        this.prisma.quiz.findMany({
-          take: 8,
-          include: { author: true, _count: { select: { questions: true } } },
-          orderBy: { updatedAt: 'desc' },
-        }),
-      ]);
+    // ADMIN видит метрики по всем квизам; AUTHOR — только по своим.
+    const scope = currentUser.role === Role.ADMIN ? {} : { authorId: currentUser.id };
+
+    const [
+      totalQuizzes,
+      pendingReview,
+      drafts,
+      approved,
+      rejected,
+      recentQuizzes,
+      missingCover,
+      tooFewQuestions,
+    ] = await Promise.all([
+      this.prisma.quiz.count({ where: scope }),
+      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.PENDING_REVIEW] } }),
+      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.DRAFT] } }),
+      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.APPROVED] } }),
+      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.REJECTED] } }),
+      this.prisma.quiz.findMany({
+        where: scope,
+        take: 8,
+        include: { author: true, _count: { select: { questions: true } } },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.quiz.count({ where: { ...scope, coverUrl: null } }),
+      this.prisma.quiz.count({ where: { ...scope, questions: { none: {} } } }),
+    ]);
 
     return {
       stats: { totalQuizzes, pendingReview, drafts, approved, rejected },
@@ -132,26 +173,30 @@ export class QuizzesService {
           code: QualityWarningCode.MISSING_COVER,
           label: 'Нет обложки',
           description: 'Квизы без обложки хуже смотрятся на TV.',
-          count: await this.prisma.quiz.count({ where: { coverUrl: null } }),
+          count: missingCover,
         },
         {
           code: QualityWarningCode.TOO_FEW_QUESTIONS,
           label: 'Мало вопросов',
           description: 'Для публикации нужно минимум 5 вопросов.',
-          count: await this.prisma.quiz.count({ where: { questions: { none: {} } } }),
+          count: tooFewQuestions,
         },
       ],
       currentUser,
     };
   }
 
-  async listAdminQuizzes(filters: AdminQuizListFilters): Promise<AdminQuizList> {
+  async listAdminQuizzes(
+    filters: AdminQuizListFilters,
+    actor: UserSummary,
+  ): Promise<AdminQuizList> {
     const where = {
-      ...(filters.status ? { status: filters.status as any } : {}),
+      ...(actor.role !== Role.ADMIN ? { authorId: actor.id } : {}),
+      ...(filters.status ? { status: toPrismaQuizStatus[filters.status] } : {}),
       ...(filters.category && filters.category !== QuizCategory.ALL
-        ? { category: filters.category as any }
+        ? { category: toPrismaQuizCategory[filters.category] }
         : {}),
-      ...(filters.difficulty ? { difficulty: filters.difficulty as any } : {}),
+      ...(filters.difficulty ? { difficulty: toPrismaDifficulty[filters.difficulty] } : {}),
       ...(filters.tags.length ? { tags: { hasEvery: filters.tags } } : {}),
       ...(filters.search
         ? {
@@ -187,20 +232,21 @@ export class QuizzesService {
     };
   }
 
-  async createMediaAsset(media: Media): Promise<MediaUploadResponse> {
+  async createMediaAsset(media: Media, ownerId: string): Promise<MediaUploadResponse> {
     const saved = await this.prisma.mediaAsset.create({
       data: {
         url: media.url,
-        type: media.type as any,
+        type: toPrismaMediaType[media.type],
         alt: media.alt ?? null,
         sizeBytes: media.sizeBytes ?? null,
+        ownerId,
       },
     });
 
     return {
       media: {
         url: saved.url,
-        type: saved.type as any,
+        type: saved.type as MediaType,
         ...(saved.alt ? { alt: saved.alt } : {}),
         ...(saved.sizeBytes ? { sizeBytes: saved.sizeBytes } : {}),
       },
@@ -223,6 +269,9 @@ export class QuizzesService {
     if (!metadata) {
       throw new BadRequestException('Unsupported media type');
     }
+    if (!fileMatchesMime(file.mimetype, file.buffer)) {
+      throw new BadRequestException('Media content does not match its declared type');
+    }
 
     const uploadDir = this.getQuizMediaUploadDir();
     await mkdir(uploadDir, { recursive: true });
@@ -242,7 +291,7 @@ export class QuizzesService {
       .create({
         data: {
           url: media.url,
-          type: media.type as any,
+          type: toPrismaMediaType[media.type],
           alt: media.alt ?? null,
           sizeBytes: media.sizeBytes ?? null,
           ownerId,
@@ -260,118 +309,137 @@ export class QuizzesService {
     };
   }
 
-  async getDraft(quizId: string): Promise<QuizDraft> {
+  async getDraft(quizId: string, actor: UserSummary): Promise<QuizDraft> {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
       include: { questions: true, author: true },
     });
 
     if (!quiz) throw new NotFoundException('Quiz not found');
+    this.assertCanManageQuiz(quiz, actor);
     return mapQuizDraft(quiz);
   }
 
-  async saveDraft(draft: QuizDraft, authorId: string): Promise<SaveQuizDraftResponse> {
+  async saveDraft(draft: QuizDraft, actor: UserSummary): Promise<SaveQuizDraftResponse> {
     const previousQuiz = draft.id
       ? await this.prisma.quiz.findUnique({
           where: { id: draft.id },
           include: { questions: true },
         })
       : null;
+
+    if (draft.id) {
+      if (!previousQuiz) throw new NotFoundException('Quiz not found');
+      this.assertCanManageQuiz(previousQuiz, actor);
+    }
+
     const previousMediaUrls = previousQuiz
       ? this.collectQuizMediaUrls(previousQuiz)
       : new Set<string>();
 
-    const saved = draft.id
-      ? await this.prisma.quiz.update({
-          where: { id: draft.id },
-          data: {
-            title: draft.title,
-            description: draft.description ?? null,
-            category: draft.category as any,
-            difficulty: draft.difficulty as any,
-            status: draft.status as any,
-            coverUrl: draft.coverUrl ?? null,
-            themeColor: draft.themeColor ?? null,
-            recommendedPlayersMin: draft.recommendedPlayersMin ?? null,
-            recommendedPlayersMax: draft.recommendedPlayersMax ?? null,
-            estimatedMinutes: draft.estimatedMinutes ?? null,
-            tags: draft.tags,
-          },
-          include: { questions: true, author: true },
-        })
-      : await this.prisma.quiz.create({
-          data: {
-            title: draft.title,
-            description: draft.description ?? null,
-            category: draft.category as any,
-            difficulty: draft.difficulty as any,
-            status: QuizStatus.DRAFT as any,
-            coverUrl: draft.coverUrl ?? null,
-            themeColor: draft.themeColor ?? null,
-            recommendedPlayersMin: draft.recommendedPlayersMin ?? null,
-            recommendedPlayersMax: draft.recommendedPlayersMax ?? null,
-            estimatedMinutes: draft.estimatedMinutes ?? null,
-            tags: draft.tags,
-            authorId,
-          },
-          include: { questions: true, author: true },
-        });
+    // Все записи (квиз + вопросы) — в одной транзакции: при сбое посередине
+    // черновик не остаётся в полусохранённом состоянии.
+    const savedWithQuestions = await this.prisma.$transaction(async (tx) => {
+      const saved = draft.id
+        ? await tx.quiz.update({
+            where: { id: draft.id },
+            data: {
+              // status намеренно НЕ берётся из тела запроса: смена статуса —
+              // только через submitForReview / reviewQuiz (анти-самопубликация).
+              title: draft.title,
+              description: draft.description ?? null,
+              category: toPrismaQuizCategory[draft.category as WritableQuizCategory],
+              difficulty: toPrismaDifficulty[draft.difficulty],
+              coverUrl: draft.coverUrl ?? null,
+              themeColor: draft.themeColor ?? null,
+              recommendedPlayersMin: draft.recommendedPlayersMin ?? null,
+              recommendedPlayersMax: draft.recommendedPlayersMax ?? null,
+              estimatedMinutes: draft.estimatedMinutes ?? null,
+              tags: draft.tags,
+            },
+            include: { questions: true, author: true },
+          })
+        : await tx.quiz.create({
+            data: {
+              title: draft.title,
+              description: draft.description ?? null,
+              category: toPrismaQuizCategory[draft.category as WritableQuizCategory],
+              difficulty: toPrismaDifficulty[draft.difficulty],
+              status: toPrismaQuizStatus[QuizStatus.DRAFT],
+              coverUrl: draft.coverUrl ?? null,
+              themeColor: draft.themeColor ?? null,
+              recommendedPlayersMin: draft.recommendedPlayersMin ?? null,
+              recommendedPlayersMax: draft.recommendedPlayersMax ?? null,
+              estimatedMinutes: draft.estimatedMinutes ?? null,
+              tags: draft.tags,
+              authorId: actor.id,
+            },
+            include: { questions: true, author: true },
+          });
 
-    const existingQuestionIds = draft.questions
-      .map((question) => question.id)
-      .filter((questionId): questionId is string => Boolean(questionId));
+      const existingQuestionIds = draft.questions
+        .map((question) => question.id)
+        .filter((questionId): questionId is string => Boolean(questionId));
 
-    await this.prisma.question.deleteMany({
-      where: {
-        quizId: saved.id,
-        ...(existingQuestionIds.length ? { id: { notIn: existingQuestionIds } } : {}),
-      },
-    });
+      await tx.question.deleteMany({
+        where: {
+          quizId: saved.id,
+          ...(existingQuestionIds.length ? { id: { notIn: existingQuestionIds } } : {}),
+        },
+      });
 
-    for (const question of draft.questions) {
-      const questionData = {
-        quizId: saved.id,
-        questionText: question.questionText,
-        mediaUrl: question.media?.url ?? null,
-        mediaType: (question.media?.type as any) ?? null,
-        mediaAlt: question.media?.alt ?? null,
-        mediaStartMs: question.media?.startMs ?? null,
-        mediaEndMs: question.media?.endMs ?? null,
-        mediaPosterUrl: question.media?.posterUrl ?? null,
-        mediaPrompt: question.media?.prompt ?? null,
-        revealMediaUrl: question.revealMedia?.url ?? null,
-        revealMediaType: (question.revealMedia?.type as any) ?? null,
-        revealMediaAlt: question.revealMedia?.alt ?? null,
-        revealMediaStartMs: question.revealMedia?.startMs ?? null,
-        revealMediaEndMs: question.revealMedia?.endMs ?? null,
-        revealMediaPosterUrl: question.revealMedia?.posterUrl ?? null,
-        revealMediaPrompt: question.revealMedia?.prompt ?? null,
-        options: question.options,
-        correctIndex: question.correctIndex,
-        explanation: question.explanation ?? null,
-        order: question.order,
-      } as any;
+      const newQuestions: Prisma.QuestionCreateManyInput[] = [];
+      for (const question of draft.questions) {
+        const questionData: Prisma.QuestionCreateManyInput = {
+          quizId: saved.id,
+          questionText: question.questionText,
+          mediaUrl: question.media?.url ?? null,
+          mediaType: question.media?.type ? toPrismaMediaType[question.media.type] : null,
+          mediaAlt: question.media?.alt ?? null,
+          mediaStartMs: question.media?.startMs ?? null,
+          mediaEndMs: question.media?.endMs ?? null,
+          mediaPosterUrl: question.media?.posterUrl ?? null,
+          mediaPrompt: question.media?.prompt ?? null,
+          revealMediaUrl: question.revealMedia?.url ?? null,
+          revealMediaType: question.revealMedia?.type
+            ? toPrismaMediaType[question.revealMedia.type]
+            : null,
+          revealMediaAlt: question.revealMedia?.alt ?? null,
+          revealMediaStartMs: question.revealMedia?.startMs ?? null,
+          revealMediaEndMs: question.revealMedia?.endMs ?? null,
+          revealMediaPosterUrl: question.revealMedia?.posterUrl ?? null,
+          revealMediaPrompt: question.revealMedia?.prompt ?? null,
+          options: question.options,
+          correctIndex: question.correctIndex,
+          explanation: question.explanation ?? null,
+          order: question.order,
+        };
 
-      if (question.id) {
-        await this.prisma.question.update({
-          where: { id: question.id },
-          data: questionData,
-        });
-      } else {
-        await this.prisma.question.create({
-          data: questionData,
-        });
+        if (question.id) {
+          // updateMany со скоупом по quizId: чужой question.id (не из этого
+          // квиза) не перезаписывается — count 0, тихо игнорируется (анти-IDOR).
+          await tx.question.updateMany({
+            where: { id: question.id, quizId: saved.id },
+            data: questionData,
+          });
+        } else {
+          newQuestions.push(questionData);
+        }
       }
-    }
+      if (newQuestions.length) {
+        await tx.question.createMany({ data: newQuestions });
+      }
 
-    const savedWithQuestions = await this.prisma.quiz.findUniqueOrThrow({
-      where: { id: saved.id },
-      include: { questions: true, author: true },
+      return tx.quiz.findUniqueOrThrow({
+        where: { id: saved.id },
+        include: { questions: true, author: true },
+      });
     });
+
     await this.cleanupReplacedMedia(
       previousMediaUrls,
       this.collectQuizMediaUrls(savedWithQuestions),
-      saved.id,
+      savedWithQuestions.id,
     );
 
     return {
@@ -381,10 +449,17 @@ export class QuizzesService {
     };
   }
 
-  async submitForReview(quizId: string): Promise<QuizDraft> {
+  async submitForReview(quizId: string, actor: UserSummary): Promise<QuizDraft> {
+    const existing = await this.prisma.quiz.findUnique({
+      where: { id: quizId },
+      select: { authorId: true },
+    });
+    if (!existing) throw new NotFoundException('Quiz not found');
+    this.assertCanManageQuiz(existing, actor);
+
     const quiz = await this.prisma.quiz.update({
       where: { id: quizId },
-      data: { status: QuizStatus.PENDING_REVIEW as any, submittedAt: new Date() },
+      data: { status: toPrismaQuizStatus[QuizStatus.PENDING_REVIEW], submittedAt: new Date() },
       include: { questions: true, author: true },
     });
 
@@ -393,11 +468,11 @@ export class QuizzesService {
 
   async getReviewQueue(filters: ReviewQueueFilters): Promise<ReviewQueue> {
     const where = {
-      status: (filters.status ?? QuizStatus.PENDING_REVIEW) as any,
+      status: toPrismaQuizStatus[filters.status ?? QuizStatus.PENDING_REVIEW],
       ...(filters.category && filters.category !== QuizCategory.ALL
-        ? { category: filters.category as any }
+        ? { category: toPrismaQuizCategory[filters.category] }
         : {}),
-      ...(filters.difficulty ? { difficulty: filters.difficulty as any } : {}),
+      ...(filters.difficulty ? { difficulty: toPrismaDifficulty[filters.difficulty] } : {}),
       ...(filters.authorId ? { authorId: filters.authorId } : {}),
       ...(filters.tags.length ? { tags: { hasEvery: filters.tags } } : {}),
       ...(filters.search
@@ -419,7 +494,7 @@ export class QuizzesService {
       this.prisma.quiz.count({ where }),
     ]);
 
-    const queueItems = items.map((quiz: any) => ({
+    const queueItems = items.map((quiz) => ({
       ...mapQuizCard(quiz),
       submittedAt: (quiz.submittedAt ?? quiz.updatedAt).toISOString(),
       author: {
@@ -442,50 +517,82 @@ export class QuizzesService {
 
   async reviewQuiz(payload: ReviewDecisionPayload, reviewerId: string): Promise<QuizDraft> {
     const nextStatus = payload.approve ? QuizStatus.APPROVED : QuizStatus.REJECTED;
-    const quiz = await this.prisma.quiz.update({
-      where: { id: payload.quizId },
-      data: {
-        status: nextStatus as any,
-        approvedAt: payload.approve ? new Date() : null,
-        rejectionReason: payload.approve ? null : (payload.comment ?? payload.reasons.join(', ')),
-      },
-      include: { questions: true, author: true },
-    });
 
-    await this.prisma.quizReview.create({
-      data: {
-        quizId: payload.quizId,
-        reviewerId,
-        fromStatus: QuizStatus.PENDING_REVIEW as any,
-        toStatus: nextStatus as any,
-        reasons: payload.reasons,
-        comment: payload.comment ?? null,
-      },
+    // Решение по ревью + запись в журнал — атомарно; решать можно только
+    // квиз, реально находящийся на ревью (нельзя «одобрить» DRAFT).
+    const quiz = await this.prisma.$transaction(async (tx) => {
+      const current = await tx.quiz.findUnique({
+        where: { id: payload.quizId },
+        select: { status: true },
+      });
+      if (!current) throw new NotFoundException('Quiz not found');
+      if (current.status !== toPrismaQuizStatus[QuizStatus.PENDING_REVIEW]) {
+        throw new BadRequestException('Quiz is not pending review');
+      }
+
+      const updated = await tx.quiz.update({
+        where: { id: payload.quizId },
+        data: {
+          status: toPrismaQuizStatus[nextStatus],
+          approvedAt: payload.approve ? new Date() : null,
+          rejectionReason: payload.approve
+            ? null
+            : (payload.comment ?? payload.reasons.join(', ')),
+        },
+        include: { questions: true, author: true },
+      });
+
+      await tx.quizReview.create({
+        data: {
+          quizId: payload.quizId,
+          reviewerId,
+          fromStatus: current.status,
+          toStatus: toPrismaQuizStatus[nextStatus],
+          reasons: payload.reasons,
+          comment: payload.comment ?? null,
+        },
+      });
+
+      return updated;
     });
 
     return mapQuizDraft(quiz);
   }
 
-  async deleteQuiz(quizId: string): Promise<void> {
+  async deleteQuiz(quizId: string, actor: UserSummary): Promise<void> {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
       include: { questions: true },
     });
 
     if (!quiz) throw new NotFoundException('Quiz not found');
+    this.assertCanManageQuiz(quiz, actor);
     const mediaUrls = this.collectQuizMediaUrls(quiz);
     await this.prisma.quiz.delete({ where: { id: quizId } });
     await this.cleanupUnusedLocalMedia(mediaUrls);
   }
 
-  async deleteUploadedMediaAsset(url: string): Promise<void> {
+  async deleteUploadedMediaAsset(url: string, actor: UserSummary): Promise<void> {
     if (!url) throw new BadRequestException('Media url is required');
+
+    // Если у медиа есть владелец — удалять может только он или ADMIN.
+    const asset = await this.prisma.mediaAsset.findFirst({
+      where: { url },
+      select: { ownerId: true },
+    });
+    if (
+      asset?.ownerId &&
+      actor.role !== Role.ADMIN &&
+      asset.ownerId !== actor.id
+    ) {
+      throw new ForbiddenException('You do not have access to this media');
+    }
+
     await this.cleanupUnusedLocalMedia([url]);
   }
 
   private getUploadRoot(): string {
-    const configured = this.config.get<string>('UPLOAD_ROOT_DIR', 'uploads');
-    return isAbsolute(configured) ? configured : resolve(process.cwd(), configured);
+    return resolveUploadRoot(this.config.get<string>('UPLOAD_ROOT_DIR', 'uploads'));
   }
 
   private getQuizMediaUploadDir(): string {

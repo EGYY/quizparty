@@ -1,98 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
-
-const STEPS = ['3', '2', '1', '🚀'];
-/** How long each step stays on screen (ms) */
-const STEP_MS = 900;
+import {
+  WAITING_STEPS,
+  useWaitingCountdown,
+} from '../model/use-waiting-countdown';
 
 export function WaitingView() {
-  const [stepIndex, setStepIndex] = useState(0);
-
-  // Label animation
-  const labelScale = useRef(new Animated.Value(0.3)).current;
-  const labelOpacity = useRef(new Animated.Value(0)).current;
-
-  // Two expanding rings
-  const ring1Scale = useRef(new Animated.Value(1)).current;
-  const ring1Opacity = useRef(new Animated.Value(0.8)).current;
-  const ring2Scale = useRef(new Animated.Value(1)).current;
-  const ring2Opacity = useRef(new Animated.Value(0.55)).current;
-
-  const playStep = useCallback(() => {
-    // Reset
-    labelScale.setValue(0.3);
-    labelOpacity.setValue(0);
-    ring1Scale.setValue(0.9);
-    ring1Opacity.setValue(0.75);
-    ring2Scale.setValue(0.9);
-    ring2Opacity.setValue(0.45);
-
-    Animated.parallel([
-      // Label bounces in
-      Animated.spring(labelScale, {
-        toValue: 1,
-        friction: 5,
-        tension: 160,
-        useNativeDriver: true,
-      }),
-      Animated.timing(labelOpacity, {
-        toValue: 1,
-        duration: 140,
-        useNativeDriver: true,
-      }),
-      // Ring 1 expands and fades
-      Animated.timing(ring1Scale, {
-        toValue: 1.85,
-        duration: STEP_MS - 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(ring1Opacity, {
-        toValue: 0,
-        duration: STEP_MS - 80,
-        useNativeDriver: true,
-      }),
-      // Ring 2 — slight delay, slower
-      Animated.sequence([
-        Animated.delay(120),
-        Animated.parallel([
-          Animated.timing(ring2Scale, {
-            toValue: 2.3,
-            duration: STEP_MS - 80,
-            useNativeDriver: true,
-          }),
-          Animated.timing(ring2Opacity, {
-            toValue: 0,
-            duration: STEP_MS - 80,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]),
-    ]).start();
-  }, [
-    labelScale,
+  const {
+    label,
     labelOpacity,
-    ring1Scale,
+    labelScale,
     ring1Opacity,
-    ring2Scale,
+    ring1Scale,
     ring2Opacity,
-  ]);
-
-  useEffect(() => {
-    playStep();
-    const id = setInterval(() => {
-      setStepIndex(i => (i + 1) % STEPS.length);
-    }, STEP_MS);
-    return () => clearInterval(id);
-  }, [playStep]);
-
-  // Re-trigger animation whenever the step changes
-  useEffect(() => {
-    playStep();
-  }, [stepIndex, playStep]);
-
-  const label = STEPS[stepIndex];
+    ring2Scale,
+    stepIndex,
+  } = useWaitingCountdown();
   const isRocket = label === '🚀';
 
   return (
@@ -146,7 +70,7 @@ export function WaitingView() {
 
       {/* Decorative dots */}
       <View style={styles.dots}>
-        {STEPS.map((_, i) => (
+        {WAITING_STEPS.map((_, i) => (
           <View
             key={i}
             style={[styles.dot, i === stepIndex && styles.dotActive]}

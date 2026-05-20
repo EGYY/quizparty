@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Difficulty, GameMode } from '@quizparty/shared';
 import type { QuizDetail } from '@quizparty/shared';
-import { useCreateRoom } from '@features/create-room';
+import { useTvNavigation } from '@app/navigation';
+import { useToast } from '@app/toast-provider';
+import { useCreateRoom, type CreateRoomSuccess } from '@features/create-room';
 import { CategoryRail } from '@widgets/category-rail';
 import { HostCharacter } from '@widgets/host-character';
 import { RemoteHints } from '@widgets/remote-hints';
@@ -20,7 +22,23 @@ import { QuizzesSection } from './ui/quizzes-section';
 export function HomePage() {
   useMusicTrack(soundMainTheme);
 
-  const { create: createDetailRoom, isCreating } = useCreateRoom();
+  const navigation = useTvNavigation();
+  const toast = useToast();
+  const handleCreateSuccess = useCallback(
+    ({ quiz, room }: CreateRoomSuccess) => {
+      toast.notify(`Комната ${room.roomCode} создана`, 'success');
+      navigation.navigate({ name: 'lobby', quiz, room });
+    },
+    [navigation, toast],
+  );
+  const handleCreateError = useCallback(() => {
+    toast.notify('Не удалось создать комнату. Проверьте backend.', 'error');
+  }, [toast]);
+
+  const { create: createDetailRoom, isCreating } = useCreateRoom({
+    onError: handleCreateError,
+    onSuccess: handleCreateSuccess,
+  });
   const { category, setCategory, quizzes, visibleQuizzes } = useHomeQuizzes();
   const {
     detailQuiz,

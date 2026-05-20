@@ -1,6 +1,7 @@
 const PLAYER_ID_KEY = 'quizparty.phone.playerId';
 const PLAYER_PROFILE_KEY = 'quizparty.phone.profile';
 const LAST_ROOM_KEY = 'quizparty.phone.lastRoom';
+const PLAYER_TOKENS_KEY = 'quizparty.phone.playerTokens';
 
 export type StoredPhoneProfile = {
   avatarId: string;
@@ -70,4 +71,35 @@ export function readLastRoom(): unknown {
 
 export function clearLastRoom(): void {
   window.localStorage.removeItem(LAST_ROOM_KEY);
+}
+
+// Player-token issued by the server on JOIN_LOBBY. Used to reclaim the same
+// playerId on reconnect/refresh (anti-spoofing). Keyed by roomCode.
+
+function readAllPlayerTokens(): Record<string, string> {
+  const raw = window.localStorage.getItem(PLAYER_TOKENS_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function readStoredPlayerToken(roomCode: string): string | undefined {
+  return readAllPlayerTokens()[roomCode];
+}
+
+export function saveStoredPlayerToken(roomCode: string, token: string): void {
+  const all = readAllPlayerTokens();
+  all[roomCode] = token;
+  window.localStorage.setItem(PLAYER_TOKENS_KEY, JSON.stringify(all));
+}
+
+export function clearStoredPlayerToken(roomCode: string): void {
+  const all = readAllPlayerTokens();
+  if (!(roomCode in all)) return;
+  delete all[roomCode];
+  window.localStorage.setItem(PLAYER_TOKENS_KEY, JSON.stringify(all));
 }

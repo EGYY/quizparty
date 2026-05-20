@@ -4,7 +4,7 @@ export const MAX_PLAYERS = 10;
 export const ROOM_TTL_SECONDS = 30 * 60;
 export const REACTION_WINDOW_SECONDS = 10;
 export const REACTION_RATE_LIMIT = {
-  maxEvents: 3,
+  maxEvents: 10,
   windowSeconds: 5,
 } as const;
 

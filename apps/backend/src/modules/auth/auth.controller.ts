@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { authSessionSchema, loginRequestSchema } from '@quizparty/shared';
 import type { AuthSession, LoginRequest } from '@quizparty/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -30,6 +31,7 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async login(
     @Body(new ZodValidationPipe(loginRequestSchema)) body: LoginRequest,
     @Req() request: RequestLike,

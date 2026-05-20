@@ -3,29 +3,37 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type ImageRequireSource } from 'react-native';
 import Video from 'react-native-video';
+import type { ReactVideoSource } from 'react-native-video/lib/types/video';
 import { soundMainTheme } from '@shared/assets/sounds';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Context
 // ─────────────────────────────────────────────────────────────────────────────
 
+type SoundSource = ImageRequireSource;
+
 type TrackState = {
-  source: any;
+  source: SoundSource;
   loop: boolean;
   /** Incrementing key forces Video remount (= restart) when source changes */
   key: number;
 } | null;
 
 type MusicContextValue = {
-  setTrack: (source: unknown, loop?: boolean) => void;
+  setTrack: (source: SoundSource | null | undefined, loop?: boolean) => void;
 };
 
 const MusicContext = createContext<MusicContextValue>({ setTrack: () => {} });
+
+function toVideoSource(source: ImageRequireSource): ReactVideoSource {
+  return source as unknown as ReactVideoSource;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider — renders a single persistent Video at the app level.
@@ -40,21 +48,25 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     loop: true,
     key: 0,
   });
-  const setTrack = useCallback((source: unknown, loop = true) => {
-    if (source == null) {
-      setTrackState(null);
-      return;
-    }
-    setTrackState(prev => {
-      // Same source and same loop mode → don't restart, continue playing
-      if (prev != null && prev.source === source && prev.loop === loop)
-        return prev;
-      return { source, loop, key: (prev?.key ?? 0) + 1 };
-    });
-  }, []);
+  const setTrack = useCallback(
+    (source: SoundSource | null | undefined, loop = true) => {
+      if (source == null) {
+        setTrackState(null);
+        return;
+      }
+      setTrackState(prev => {
+        // Same source and same loop mode → don't restart, continue playing
+        if (prev != null && prev.source === source && prev.loop === loop)
+          return prev;
+        return { source, loop, key: (prev?.key ?? 0) + 1 };
+      });
+    },
+    [],
+  );
+  const value = useMemo(() => ({ setTrack }), [setTrack]);
 
   return (
-    <MusicContext.Provider value={{ setTrack }}>
+    <MusicContext.Provider value={value}>
       {children}
       {track != null ? (
         <Video
@@ -64,7 +76,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           paused={false}
           playInBackground
           repeat={track.loop}
-          source={track.source}
+          source={toVideoSource(track.source)}
           style={styles.hidden}
         />
       ) : null}
@@ -79,7 +91,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 // No cleanup needed: the next screen will set its own track.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useMusicTrack(source: unknown, loop = true) {
+export function useMusicTrack(
+  source: SoundSource | null | undefined,
+  loop = true,
+) {
   const { setTrack } = useContext(MusicContext);
   useEffect(() => {
     setTrack(source, loop);

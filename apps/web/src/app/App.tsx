@@ -11,6 +11,7 @@ const EditorPage = lazy(() => import('@pages/editor'));
 const ReviewPage = lazy(() => import('@pages/review'));
 const LoginPage = lazy(() => import('@pages/login'));
 const PhoneControllerPage = lazy(() => import('@pages/phone-controller'));
+const NotFoundPage = lazy(() => import('@pages/not-found'));
 
 function LoginRoute() {
   const accessToken = useAppStore((state) => state.accessToken);
@@ -36,7 +37,7 @@ export function App() {
               <Route element={<ReviewPage />} path="review" />
             </Route>
           </Route>
-          <Route element={<Navigate replace to="/" />} path="*" />
+          <Route element={<NotFoundPage />} path="*" />
         </Routes>
       </Suspense>
     </BrowserRouter>

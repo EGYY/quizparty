@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { ClipboardList, FilePenLine, Gauge, LogOut, ShieldCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { logoutAdmin } from '@shared/api/auth';
+import { logoutAdmin } from '@features/auth';
 import { logoMarkUrl } from '@shared/lib/assets';
 
 const NAV_ITEMS: Array<{ path: string; label: string; icon: ReactNode; exact?: boolean }> = [

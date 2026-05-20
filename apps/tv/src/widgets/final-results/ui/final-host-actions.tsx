@@ -18,7 +18,7 @@ export function FinalHostActions({
   const visibleReactions = reactions.slice(-6);
 
   return (
-    <>
+    <View style={[styles.wrap]}>
       <View style={[styles.hostStage]}>
         <View style={[styles.reactionLayer]}>
           {visibleReactions.map(reaction => (
@@ -52,43 +52,52 @@ export function FinalHostActions({
           </Text>
         </Focusable>
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    width: '100%',
+    maxWidth: s(650),
+    minHeight: sv(238),
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: s(16),
+  },
   hostStage: {
-    width: s(430),
-    height: sv(330),
+    width: s(230),
+    height: sv(238),
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: sv(4),
-    marginBottom: sv(-10),
+    flexShrink: 0,
   },
   reactionLayer: {
     position: 'absolute',
-    top: sv(8),
-    right: 0,
-    width: s(420),
-    height: sv(245),
+    top: sv(2),
+    right: s(-10),
+    width: s(250),
+    height: sv(180),
     zIndex: 4,
   },
   hostCrop: {
-    width: s(430),
-    height: sv(330),
+    width: s(230),
+    height: sv(238),
     alignItems: 'center',
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   hostImage: {
-    width: s(430),
-    height: sv(470),
-    marginBottom: sv(-88),
+    width: s(270),
+    height: sv(320),
+    marginBottom: sv(-60),
   },
   actions: {
-    width: '100%',
-    maxWidth: s(590),
-    gap: s(14),
+    flex: 1,
+    minWidth: 0,
+    maxWidth: s(400),
+    gap: s(10),
   },
   primaryButton: {
     alignItems: 'center',
@@ -96,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: s(4),
     backgroundColor: '#ffd166',
-    paddingVertical: sv(24),
+    paddingVertical: sv(18),
     shadowColor: colors.gold,
     shadowOpacity: 0.65,
     shadowRadius: s(20),
@@ -104,7 +113,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: colors.textDark,
-    fontSize: sf(38),
+    fontSize: sf(30),
     fontWeight: '900',
   },
   secondaryButton: {
@@ -113,7 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: s(4),
     backgroundColor: 'rgba(130, 65, 220, 0.9)',
-    paddingVertical: sv(21),
+    paddingVertical: sv(15),
     shadowColor: '#b174ff',
     shadowOpacity: 0.85,
     shadowRadius: s(18),
@@ -121,7 +130,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: colors.text,
-    fontSize: sf(30),
+    fontSize: sf(24),
     fontWeight: '900',
   },
 });

@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getDashboard } from '@shared/api/admin';
+import { getDashboard } from '@features/admin-dashboard';
+import { queryKeys } from '@shared/api/query-keys';
 import { popcornMascotUrl } from '@shared/lib/assets';
 import { PageStatus } from '@shared/ui/page-status';
 import { QualityPanel } from '@widgets/quality-panel';
@@ -10,7 +11,10 @@ import { QuizTable } from '@widgets/quiz-table';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard });
+  const dashboard = useQuery({
+    queryKey: queryKeys.dashboard(),
+    queryFn: ({ signal }) => getDashboard(signal),
+  });
 
   const openEditor = useCallback(
     (quizId?: string) => {

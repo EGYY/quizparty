@@ -2,7 +2,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -26,14 +28,28 @@ const ToastContext = createContext<ToastApi | null>(null);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const { playError } = useSoundEffects();
+  const removeTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(
+    new Set(),
+  );
+
+  useEffect(
+    () => () => {
+      removeTimersRef.current.forEach(clearTimeout);
+      removeTimersRef.current.clear();
+    },
+    [],
+  );
+
   const notify = useCallback(
     (message: string, tone: Toast['tone'] = 'info') => {
       const id = `${Date.now()}-${Math.random()}`;
       setToasts(current => [...current, { id, message, tone }].slice(-3));
       if (tone === 'error') playError();
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
+        removeTimersRef.current.delete(timeoutId);
         setToasts(current => current.filter(toast => toast.id !== id));
       }, 3600);
+      removeTimersRef.current.add(timeoutId);
     },
     [playError],
   );

@@ -33,8 +33,11 @@ import type {
   ReviewDecisionBody,
   ReviewQueue,
 } from '@quizparty/shared';
+import { Role } from '@quizparty/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import type { AuthenticatedRequest } from '../auth/auth.types';
 import { QuizzesService } from './quizzes.service';
 
@@ -61,17 +64,21 @@ export class QuizzesController {
 
   @Get('admin/quizzes')
   @UseGuards(JwtAuthGuard)
-  async listAdminQuizzes(@Query() query: unknown): Promise<AdminQuizList> {
+  async listAdminQuizzes(
+    @Query() query: unknown,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<AdminQuizList> {
     const parsed = adminQuizListFiltersSchema.parse(query);
-    return adminQuizListSchema.parse(await this.quizzes.listAdminQuizzes(parsed));
+    return adminQuizListSchema.parse(await this.quizzes.listAdminQuizzes(parsed, request.user));
   }
 
   @Post('admin/media')
   @UseGuards(JwtAuthGuard)
   async createMediaAsset(
     @Body(new ZodValidationPipe(mediaSchema)) body: Media,
+    @Req() request: AuthenticatedRequest,
   ): Promise<MediaUploadResponse> {
-    return this.quizzes.createMediaAsset(body);
+    return this.quizzes.createMediaAsset(body, request.user.id);
   }
 
   @Post('admin/media/upload')
@@ -87,20 +94,25 @@ export class QuizzesController {
 
   @Delete('admin/media')
   @UseGuards(JwtAuthGuard)
-  async deleteMediaAsset(@Body('url') url: string): Promise<{ deleted: true }> {
-    await this.quizzes.deleteUploadedMediaAsset(url);
+  async deleteMediaAsset(
+    @Body('url') url: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<{ deleted: true }> {
+    await this.quizzes.deleteUploadedMediaAsset(url, request.user);
     return { deleted: true };
   }
 
   @Get('admin/review')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getReviewQueue(@Query() query: unknown): Promise<ReviewQueue> {
     const parsed = reviewQueueFiltersSchema.parse(query);
     return this.quizzes.getReviewQueue(parsed);
   }
 
   @Post('admin/review/:quizId/decision')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async reviewQuiz(
     @Param('quizId') quizId: string,
     @Body(new ZodValidationPipe(reviewDecisionBodySchema)) body: ReviewDecisionBody,
@@ -111,8 +123,11 @@ export class QuizzesController {
 
   @Get('quizzes/:quizId/draft')
   @UseGuards(JwtAuthGuard)
-  async getDraft(@Param('quizId') quizId: string): Promise<QuizDraft> {
-    return this.quizzes.getDraft(quizId);
+  async getDraft(
+    @Param('quizId') quizId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<QuizDraft> {
+    return this.quizzes.getDraft(quizId, request.user);
   }
 
   @Put('quizzes/draft')
@@ -121,19 +136,25 @@ export class QuizzesController {
     @Body(new ZodValidationPipe(quizDraftSchema)) body: QuizDraft,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.quizzes.saveDraft(body, request.user.id);
+    return this.quizzes.saveDraft(body, request.user);
   }
 
   @Delete('quizzes/:quizId')
   @UseGuards(JwtAuthGuard)
-  async deleteQuiz(@Param('quizId') quizId: string): Promise<{ deleted: true }> {
-    await this.quizzes.deleteQuiz(quizId);
+  async deleteQuiz(
+    @Param('quizId') quizId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<{ deleted: true }> {
+    await this.quizzes.deleteQuiz(quizId, request.user);
     return { deleted: true };
   }
 
   @Post('quizzes/:quizId/submit-review')
   @UseGuards(JwtAuthGuard)
-  async submitForReview(@Param('quizId') quizId: string): Promise<QuizDraft> {
-    return this.quizzes.submitForReview(quizId);
+  async submitForReview(
+    @Param('quizId') quizId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<QuizDraft> {
+    return this.quizzes.submitForReview(quizId, request.user);
   }
 }

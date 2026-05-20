@@ -27,12 +27,15 @@ export const AnswerStats = memo(function AnswerStats({
   const statFills = useRef(
     Array.from({ length: 4 }, () => new Animated.Value(0)),
   ).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
+    animationRef.current?.stop();
+    animationRef.current = null;
     statFills.forEach(v => v.setValue(0));
 
     const id = setTimeout(() => {
-      Animated.parallel(
+      const animation = Animated.parallel(
         answerStats.map((stat, i) =>
           Animated.timing(statFills[i]!, {
             toValue: stat.percentage,
@@ -41,11 +44,21 @@ export const AnswerStats = memo(function AnswerStats({
             isInteraction: false,
           }),
         ),
-      ).start();
+      );
+      animationRef.current = animation;
+      animation.start(({ finished }) => {
+        if (finished && animationRef.current === animation) {
+          animationRef.current = null;
+        }
+      });
     }, 450);
 
-    return () => clearTimeout(id);
-  }, [roundNumber]);
+    return () => {
+      clearTimeout(id);
+      animationRef.current?.stop();
+      animationRef.current = null;
+    };
+  }, [answerStats, roundNumber, statFills]);
 
   return (
     <View style={[styles.panel]}>

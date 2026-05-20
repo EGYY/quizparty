@@ -1,13 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import type { AuthSession, LoginRequest, UserSummary } from '@quizparty/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { RedisService } from '../../infrastructure/redis.service';
-import { hashPassword, hashToken, signJwt, verifyJwt, verifyPassword } from './auth.crypto';
+import { hashPassword, hashToken, verifyPassword } from './auth.crypto';
 import type { AccessTokenPayload, AuthUser, RefreshTokenPayload } from './auth.types';
 
 const REFRESH_PREFIX = 'auth:refresh:';
+const JWT_ISSUER = 'quizparty';
+const JWT_AUDIENCE = 'quizparty-app';
 
 type RefreshSessionRecord = {
   userId: string;
@@ -27,6 +30,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly jwt: JwtService,
   ) {
     this.accessTtlMs = parseDurationMs(this.config.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'));
     this.refreshTtlMs = parseDurationMs(this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'));
@@ -50,14 +54,14 @@ export class AuthService {
       where: { email: credentials.email.toLowerCase() },
     });
 
-    if (!user || !verifyPassword(credentials.password, user.passwordHash)) {
+    if (!user || !(await verifyPassword(credentials.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (user.passwordHash === 'local-dev-placeholder') {
+    if (process.env.NODE_ENV !== 'production' && user.passwordHash === 'local-dev-placeholder') {
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { passwordHash: hashPassword(credentials.password) },
+        data: { passwordHash: await hashPassword(credentials.password) },
       });
     }
 
@@ -67,7 +71,7 @@ export class AuthService {
   async refresh(refreshToken: string | undefined): Promise<AuthSession & { refreshToken: string }> {
     if (!refreshToken) throw new UnauthorizedException('Missing refresh token');
 
-    const payload = verifyJwt<RefreshTokenPayload>(refreshToken, this.refreshSecret);
+    const payload = this.verifyToken<RefreshTokenPayload>(refreshToken, this.refreshSecret);
     if (payload.type !== 'refresh') throw new UnauthorizedException('Invalid refresh token');
 
     const sessionKey = this.sessionKey(payload.sid);
@@ -78,7 +82,7 @@ export class AuthService {
     if (
       session.userId !== payload.sub ||
       session.expiresAt < Date.now() ||
-      session.tokenHash !== hashToken(refreshToken)
+      session.tokenHash !== hashToken(refreshToken, this.refreshSecret)
     ) {
       await this.redis.client.del(sessionKey);
       throw new UnauthorizedException('Refresh session revoked');
@@ -96,7 +100,7 @@ export class AuthService {
     if (!refreshToken) return;
 
     try {
-      const payload = verifyJwt<RefreshTokenPayload>(refreshToken, this.refreshSecret);
+      const payload = this.verifyToken<RefreshTokenPayload>(refreshToken, this.refreshSecret);
       if (payload.type === 'refresh') {
         await this.redis.client.del(this.sessionKey(payload.sid));
       }
@@ -106,7 +110,7 @@ export class AuthService {
   }
 
   async verifyAccessToken(accessToken: string): Promise<AuthUser> {
-    const payload = verifyJwt<AccessTokenPayload>(accessToken, this.accessSecret);
+    const payload = this.verifyToken<AccessTokenPayload>(accessToken, this.accessSecret);
     if (payload.type !== 'access') throw new UnauthorizedException('Invalid access token');
 
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
@@ -116,28 +120,19 @@ export class AuthService {
 
   private async createSession(user: AuthUser): Promise<AuthSession & { refreshToken: string }> {
     const sessionId = randomUUID();
-    const accessToken = signJwt(
-      {
-        type: 'access',
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      },
+    const accessToken = this.signToken(
+      { type: 'access', sub: user.id, email: user.email, role: user.role },
       this.accessSecret,
       this.accessTtlMs,
     );
-    const refreshToken = signJwt(
-      {
-        type: 'refresh',
-        sub: user.id,
-        sid: sessionId,
-      },
+    const refreshToken = this.signToken(
+      { type: 'refresh', sub: user.id, sid: sessionId },
       this.refreshSecret,
       this.refreshTtlMs,
     );
     const session: RefreshSessionRecord = {
       userId: user.id,
-      tokenHash: hashToken(refreshToken),
+      tokenHash: hashToken(refreshToken, this.refreshSecret),
       expiresAt: Date.now() + this.refreshTtlMs,
       createdAt: Date.now(),
     };
@@ -150,6 +145,29 @@ export class AuthService {
     );
 
     return { accessToken, refreshToken, user };
+  }
+
+  private signToken(payload: object, secret: string, ttlMs: number): string {
+    return this.jwt.sign(payload, {
+      secret,
+      algorithm: 'HS256',
+      expiresIn: Math.max(1, Math.floor(ttlMs / 1000)),
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
+  }
+
+  private verifyToken<T extends object>(token: string, secret: string): T {
+    try {
+      return this.jwt.verify<T>(token, {
+        secret,
+        algorithms: ['HS256'],
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   private sessionKey(sessionId: string): string {

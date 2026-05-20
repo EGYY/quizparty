@@ -1,8 +1,4 @@
 import type { TvRoute } from '@app/navigation';
-import { useTvNavigation } from '@app/navigation';
-import { useToast } from '@app/toast-provider';
-import { useLobbyRealtime } from '@entities/room';
-import { GamePhase, PlayerConnectionStatus } from '@quizparty/shared';
 import { soundMainTheme } from '@shared/assets/sounds';
 import { s, sv } from '@shared/config/scale';
 import { AnimatedReactionBubble } from '@shared/ui/animated-reaction-bubble';
@@ -13,18 +9,11 @@ import { PlayerRoster } from '@widgets/player-roster';
 import { QrPanel } from '@widgets/qr-panel';
 import { RemoteHints } from '@widgets/remote-hints';
 import { StageBackground } from '@widgets/stage-background';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useLobbyPage } from './model/use-lobby-page';
 import { LobbyActions } from './ui/lobby-actions';
 import { LobbyHeader } from './ui/lobby-header';
 import { LobbyStatusRow } from './ui/lobby-status-row';
-
-function getMascotSpeech(count: number, max: number): string {
-  if (count === 0) return 'Ждём первых\nигроков!\nЗови друзей 🎉';
-  if (count < Math.min(max, 3)) return `Уже ${count}!\nЗовём ещё\nребят 🚀`;
-  if (count < max) return 'Отличная\nкомпания!\nМожно начинать ▶';
-  return 'Все на месте!\nЗапускаем\nигру! 🎮';
-}
 
 export function LobbyPage({
   route,
@@ -32,64 +21,14 @@ export function LobbyPage({
   route: Extract<TvRoute, { name: 'lobby' }>;
 }) {
   useMusicTrack(soundMainTheme);
-  const navigation = useTvNavigation();
-  const toast = useToast();
-  const lobby = useLobbyRealtime({ quiz: route.quiz, room: route.room });
-  const didNavigate = useRef(false);
-
-  const connectedPlayers = useMemo(
-    () =>
-      lobby.state.players.filter(
-        p => p.connectionStatus === PlayerConnectionStatus.CONNECTED,
-      ),
-    [lobby.state.players],
-  );
-
-  const isStarting =
-    lobby.state.phase === GamePhase.STARTING ||
-    lobby.liveStatus.kind === 'starting';
-
-  const startLabel = useMemo(() => {
-    if (lobby.liveStatus.kind === 'starting')
-      return `Старт через ${lobby.liveStatus.remainingSeconds}с`;
-    if (lobby.liveStatus.kind === 'question')
-      return `Раунд: ${lobby.liveStatus.remainingSeconds}с`;
-    if (isStarting) return 'Игра стартует...';
-    return '▶  Начать игру';
-  }, [lobby.liveStatus, isStarting]);
-
-  const mascotSpeech = useMemo(
-    () => getMascotSpeech(connectedPlayers.length, lobby.state.maxPlayers),
-    [connectedPlayers.length, lobby.state.maxPlayers],
-  );
-
-  const handleBack = useCallback(() => navigation.back(), [navigation]);
-
-  useEffect(() => {
-    if (lobby.error) toast.notify(lobby.error, 'error');
-  }, [lobby.error, toast]);
-
-  useEffect(() => {
-    if (
-      lobby.liveStatus.kind !== 'starting' ||
-      !lobby.playerId ||
-      didNavigate.current
-    )
-      return;
-    didNavigate.current = true;
-    navigation.navigate({
-      name: 'game',
-      playerId: lobby.playerId,
-      quiz: route.quiz,
-      room: route.room,
-    });
-  }, [
-    lobby.liveStatus.kind,
-    lobby.playerId,
-    navigation,
-    route.quiz,
-    route.room,
-  ]);
+  const {
+    connectedCount,
+    handleBack,
+    isStarting,
+    lobby,
+    mascotSpeech,
+    startLabel,
+  } = useLobbyPage(route);
 
   return (
     <Screen>
@@ -107,7 +46,7 @@ export function LobbyPage({
             <LobbyHeader connectionStatus={lobby.connectionStatus} />
 
             <LobbyStatusRow
-              connectedCount={connectedPlayers.length}
+              connectedCount={connectedCount}
               error={lobby.error}
               liveStatus={lobby.liveStatus}
               maxPlayers={lobby.state.maxPlayers}

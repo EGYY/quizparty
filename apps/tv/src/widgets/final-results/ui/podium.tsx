@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     bottom: sv(258),
   },
   winner_second: {
-    left: s(106),
+    left: s(90),
     bottom: sv(205),
   },
   winner_third: {
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: sf(31),
     fontWeight: '900',
+    maxWidth: s(220),
   },
   winnerScore: {
     color: colors.gold,

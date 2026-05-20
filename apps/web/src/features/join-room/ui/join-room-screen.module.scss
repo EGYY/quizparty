@@ -1,0 +1,607 @@
+.shell {
+  --join-card-gap: clamp(8px, 1.6dvh, 16px);
+  --join-card-padding: clamp(12px, 2dvh, 18px);
+
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100vh;
+  max-height: 100svh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(6px, 1.2dvh, 10px) 14px;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5dvh, 22px));
+  background:
+    linear-gradient(180deg, rgba(6, 7, 19, 0.06), rgba(6, 7, 19, 0.76)),
+    url('/assets/phone/web-game-bg.png') center / cover fixed,
+    #070817;
+}
+
+.baseCard {
+  width: min(430px, 100%);
+  border: 2px solid rgba(255, 205, 129, 0.42);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(15, 19, 40, 0.97), rgba(8, 12, 28, 0.97));
+  padding: var(--join-card-padding);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.field {
+  display: grid;
+  justify-items: center;
+  gap: clamp(6px, 1dvh, 9px);
+  color: #ffc96c;
+  font-size: clamp(18px, 3dvh, 24px);
+  font-weight: 800;
+
+  span {
+    color: #ffc96c;
+    text-align: center;
+    text-shadow: 0 3px 12px rgba(255, 159, 58, 0.18);
+  }
+
+  input {
+    width: 100%;
+    min-height: clamp(50px, 8dvh, 70px);
+    border: 2px solid rgba(255, 205, 129, 0.82);
+    border-radius: 16px;
+    outline: 0;
+    color: #fff;
+    background: linear-gradient(180deg, rgba(37, 42, 68, 0.9), rgba(19, 24, 45, 0.96));
+    padding: 0 18px;
+    font-size: clamp(18px, 2.8dvh, 24px);
+    font-weight: 800;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 12px 28px rgba(255, 201, 108, 0.13);
+  }
+
+  small {
+    color: #b9bfd5;
+    font-size: clamp(12px, 1.8dvh, 15px);
+    font-weight: 700;
+  }
+}
+
+.primary {
+  min-height: clamp(54px, 8.5dvh, 76px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #ffdf77;
+  border-radius: 8px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7855, #ee5638);
+  box-shadow:
+    0 0 0 4px rgba(255, 110, 66, 0.3),
+    0 0 28px rgba(255, 207, 83, 0.6);
+  font-size: clamp(20px, 3.2dvh, 28px);
+  font-weight: 900;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero {
+  width: min(430px, 100%);
+  height: clamp(170px, 34dvh, 300px);
+  min-height: 132px;
+  flex: 0 1 auto;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding-top: clamp(12px, 2.8dvh, 26px);
+  color: #fff8de;
+  text-align: center;
+
+  h1 {
+    width: min(330px, 90%);
+    margin: clamp(6px, 1.4dvh, 16px) 0 0;
+    color: #fff;
+    font-size: clamp(15px, 2.8dvh, 23px);
+    line-height: 1.26;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.62);
+  }
+}
+
+.logo {
+  width: min(clamp(160px, 36dvh, 330px), 86vw);
+  height: auto;
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.38));
+}
+
+.tip {
+  position: relative;
+  width: clamp(190px, 52vw, 246px);
+  min-height: clamp(58px, 11dvh, 94px);
+  display: grid;
+  place-items: center;
+  margin: clamp(14px, 3.5dvh, 30px) auto 0 18px;
+  padding: clamp(8px, 1.8dvh, 14px) 14px;
+  border-radius: 18px;
+  color: #17101b;
+  background: linear-gradient(180deg, #ffe189, #ffd078);
+  font-size: clamp(14px, 2.6dvh, 20px);
+  font-weight: 900;
+  line-height: 1.26;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    right: -11px;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    background: #ffd078;
+  }
+}
+
+.mascot {
+  position: absolute;
+  right: -16px;
+  bottom: clamp(-40px, -4dvh, -20px);
+  width: clamp(120px, 22dvh, 180px);
+  height: auto;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.42));
+}
+
+.card {
+  display: grid;
+  gap: var(--join-card-gap);
+  margin-top: -10px;
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.title {
+  margin: 2px 0 -4px;
+  color: #ffc96c;
+  text-align: center;
+  text-shadow: 0 3px 12px rgba(255, 159, 58, 0.18);
+  font-size: clamp(16px, 2.6dvh, 22px);
+}
+
+.safety {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: clamp(8px, 1.4dvh, 12px) 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 16px;
+  color: #c3c7dc;
+  background: rgba(255, 255, 255, 0.045);
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    color: #ffc96c;
+  }
+
+  small {
+    margin-top: 2px;
+  }
+}
+
+@media (max-height: 650px) {
+  .shell {
+    --join-card-gap: clamp(6px, 1.1dvh, 9px);
+    --join-card-padding: clamp(9px, 1.5dvh, 12px);
+  }
+
+  .field input {
+    min-height: clamp(42px, 7dvh, 54px);
+  }
+
+  .primary {
+    min-height: clamp(44px, 7.5dvh, 58px);
+    font-size: clamp(17px, 2.8dvh, 22px);
+  }
+
+  .hero {
+    height: clamp(126px, 25dvh, 170px);
+    min-height: 118px;
+
+    h1 {
+      font-size: clamp(13px, 2.2dvh, 17px);
+      margin-top: 4px;
+    }
+  }
+
+  .tip {
+    min-height: clamp(44px, 9dvh, 64px);
+    font-size: clamp(12px, 2dvh, 15px);
+    margin-top: clamp(8px, 2dvh, 16px);
+  }
+
+  .mascot {
+    width: clamp(90px, 18dvh, 130px);
+  }
+
+  .card {
+    gap: clamp(6px, 1.2dvh, 10px);
+  }
+}
+
+@media (max-width: 460px) {
+  .shell {
+    padding: 0 8px 10px;
+    background-attachment: scroll;
+  }
+
+  .hero {
+    width: 100%;
+    height: clamp(180px, 30dvh, 236px);
+    min-height: 148px;
+    padding-top: clamp(9px, 1.7dvh, 14px);
+
+    h1 {
+      width: min(300px, 86%);
+      margin-top: clamp(5px, 1.1dvh, 10px);
+      font-size: clamp(16px, 4.7vw, 19px);
+      line-height: 1.18;
+    }
+  }
+
+  .logo {
+    width: min(clamp(176px, 28dvh, 244px), 68vw);
+  }
+
+  .tip {
+    width: clamp(176px, 54vw, 210px);
+    min-height: clamp(52px, 9.5dvh, 74px);
+    margin: clamp(10px, 2.3dvh, 24px) auto 0 clamp(4px, 2vw, 8px);
+    padding: clamp(7px, 1.5dvh, 10px) 12px;
+    border-radius: 16px;
+    font-size: clamp(13px, 4vw, 16px);
+    line-height: 1.18;
+
+    &::after {
+      width: clamp(14px, 4vw, 22px);
+      height: clamp(14px, 4vw, 22px);
+      right: -8px;
+      top: 50%;
+    }
+  }
+
+  .mascot {
+    right: -10px;
+    bottom: clamp(-18px, -2.2dvh, -8px);
+    width: clamp(96px, 16dvh, 132px);
+  }
+
+  .card {
+    width: 100%;
+    margin-top: clamp(-12px, -1.8dvh, -7px);
+    border-radius: 22px;
+  }
+
+  .title {
+    margin: 0 0 -3px;
+    font-size: 18px;
+  }
+
+  .safety {
+    gap: 9px;
+    padding: 9px 11px;
+    border-radius: 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .shell {
+    --join-card-gap: clamp(5px, 1dvh, 8px);
+    --join-card-padding: clamp(8px, 1.4dvh, 10px);
+  }
+
+  .hero {
+    height: clamp(126px, 23dvh, 176px);
+    min-height: 116px;
+    padding-top: clamp(5px, 1.1dvh, 8px);
+
+    h1 {
+      width: min(270px, 84%);
+      margin-top: clamp(3px, 0.8dvh, 6px);
+      font-size: clamp(13px, 4vw, 16px);
+    }
+  }
+
+  .logo {
+    width: min(clamp(138px, 23dvh, 190px), 58vw);
+  }
+
+  .tip {
+    width: clamp(150px, 50vw, 178px);
+    min-height: clamp(42px, 7.8dvh, 54px);
+    margin-top: clamp(7px, 1.7dvh, 15px);
+    padding: clamp(6px, 1.2dvh, 8px) 10px;
+    border-radius: 13px;
+    font-size: clamp(11px, 3.5vw, 13px);
+
+    &::after {
+      width: 14px;
+      height: 14px;
+      right: -7px;
+      top: 50%;
+    }
+  }
+
+  .mascot {
+    right: -8px;
+    bottom: clamp(-14px, -2dvh, -8px);
+    width: clamp(76px, 13dvh, 96px);
+  }
+
+  .card {
+    margin-top: -8px;
+  }
+
+  .safety {
+    gap: 7px;
+    padding: 6px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 560px) and (max-width: 460px) {
+  .shell {
+    --join-card-gap: 5px;
+    --join-card-padding: 8px;
+  }
+
+  .hero {
+    height: clamp(104px, 21dvh, 122px);
+    min-height: 104px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'logo mascot'
+      'title mascot'
+      'tip tip';
+    align-content: start;
+    column-gap: 8px;
+    padding: 5px 6px 0;
+
+    h1 {
+      grid-area: title;
+      width: 100%;
+      margin-top: 0;
+      font-size: 12px;
+      line-height: 1.12;
+      text-align: left;
+    }
+  }
+
+  .logo {
+    grid-area: logo;
+    justify-self: start;
+    width: min(124px, 38vw);
+  }
+
+  .tip {
+    grid-area: tip;
+    justify-self: start;
+    width: min(244px, 72vw);
+    min-height: 32px;
+    margin: 3px 0 0;
+    padding: 5px 9px;
+    border-radius: 11px;
+    font-size: 11px;
+    line-height: 1.12;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .mascot {
+    grid-area: mascot;
+    position: static;
+    align-self: end;
+    width: min(76px, 22vw);
+  }
+
+  .field {
+    gap: 4px;
+    font-size: 15px;
+
+    input {
+      min-height: 38px;
+      border-radius: 12px;
+      padding: 0 12px;
+      font-size: 16px;
+    }
+
+    small {
+      font-size: 11px;
+    }
+  }
+
+  .primary {
+    min-height: 40px;
+    font-size: 17px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .safety {
+    font-size: 11px;
+  }
+}
+
+@media (max-height: 520px) and (min-width: 560px) {
+  .shell {
+    --join-card-gap: clamp(5px, 1.5dvh, 8px);
+    --join-card-padding: clamp(8px, 2dvh, 12px);
+
+    flex-direction: row;
+    justify-content: center;
+    gap: clamp(10px, 2.4vw, 18px);
+    padding: clamp(8px, 2dvh, 12px);
+  }
+
+  .hero {
+    width: min(38vw, 280px);
+    height: 100%;
+    min-height: 0;
+    align-content: center;
+    padding-top: 0;
+
+    h1 {
+      width: min(230px, 92%);
+      font-size: clamp(13px, 3.4dvh, 17px);
+    }
+  }
+
+  .logo {
+    width: min(210px, 30vw);
+  }
+
+  .tip {
+    width: min(220px, 32vw);
+    min-height: clamp(40px, 12dvh, 54px);
+    margin: clamp(8px, 2dvh, 14px) auto 0;
+    padding: 7px 10px;
+    font-size: clamp(12px, 3.2dvh, 14px);
+  }
+
+  .mascot {
+    right: -6px;
+    bottom: clamp(2px, 2dvh, 10px);
+    width: min(104px, 15vw);
+  }
+
+  .card {
+    width: min(390px, 58vw);
+    height: 100%;
+    margin-top: 0;
+    border-radius: 20px;
+  }
+
+  .field {
+    gap: 4px;
+    font-size: clamp(15px, 4dvh, 18px);
+
+    input {
+      min-height: clamp(36px, 10dvh, 44px);
+      border-radius: 12px;
+      font-size: clamp(15px, 4dvh, 17px);
+    }
+  }
+
+  .primary {
+    min-height: clamp(38px, 10dvh, 46px);
+    font-size: clamp(16px, 4dvh, 19px);
+  }
+
+  .title {
+    font-size: clamp(14px, 3.7dvh, 17px);
+  }
+
+  .safety {
+    padding: 6px 9px;
+    border-radius: 12px;
+    font-size: clamp(11px, 3dvh, 12px);
+  }
+}
+
+@media (max-height: 820px) and (min-width: 900px) {
+  .shell {
+    --join-card-gap: clamp(7px, 1.3dvh, 10px);
+    --join-card-padding: clamp(10px, 1.8dvh, 14px);
+
+    flex-direction: row;
+    justify-content: center;
+    gap: clamp(18px, 3vw, 36px);
+    padding: clamp(8px, 1.4dvh, 12px) clamp(20px, 4vw, 48px);
+  }
+
+  .hero {
+    width: min(36vw, 360px);
+    height: 100%;
+    min-height: 0;
+    align-content: center;
+    padding-top: 0;
+
+    h1 {
+      width: min(310px, 92%);
+      font-size: clamp(17px, 2.9dvh, 22px);
+    }
+  }
+
+  .logo {
+    width: min(300px, 30vw);
+  }
+
+  .tip {
+    width: min(260px, 30vw);
+    min-height: clamp(54px, 10dvh, 74px);
+    margin: clamp(14px, 2.4dvh, 20px) auto 0;
+    font-size: clamp(14px, 2.3dvh, 17px);
+  }
+
+  .mascot {
+    right: clamp(-12px, -1vw, -4px);
+    bottom: clamp(26px, 6dvh, 54px);
+    width: min(156px, 13vw);
+  }
+
+  .card {
+    width: min(430px, 42vw);
+    max-height: 100%;
+    margin-top: 0;
+  }
+
+  .field {
+    gap: clamp(4px, 0.8dvh, 6px);
+    font-size: clamp(17px, 2.7dvh, 21px);
+
+    input {
+      min-height: clamp(48px, 7dvh, 58px);
+    }
+  }
+
+  .title {
+    margin: 0 0 -3px;
+    font-size: clamp(16px, 2.4dvh, 19px);
+  }
+
+  .primary {
+    min-height: clamp(50px, 7.2dvh, 60px);
+    font-size: clamp(18px, 2.8dvh, 23px);
+  }
+
+  .safety {
+    padding: clamp(7px, 1.1dvh, 9px) 11px;
+    border-radius: 13px;
+    font-size: clamp(12px, 1.9dvh, 14px);
+  }
+}

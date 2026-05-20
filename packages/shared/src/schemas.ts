@@ -142,6 +142,11 @@ export const lobbyStateSchema = z.object({
   hostPlayerId: uuidSchema.optional(),
   players: z.array(playerSchema).max(MAX_PLAYERS),
   maxPlayers: z.literal(MAX_PLAYERS),
+  // Серверные поля, отправляются ТОЛЬКО присоединившемуся сокету (не
+  // транслируются в комнату). Подтверждённый playerId и подписанный токен,
+  // которым клиент авторизует последующие JOIN_LOBBY/reconnect (анти-спуфинг).
+  playerId: uuidSchema.optional(),
+  playerToken: z.string().optional(),
 });
 
 export const hostTransferredEventSchema = z.object({
@@ -160,6 +165,9 @@ export const joinLobbyPayloadSchema = z.object({
   playerId: uuidSchema.optional(),
   nickname: z.string().min(1).max(24),
   avatarId: z.string().min(1).max(48),
+  // Подписанный сервером токен (выдан на первом успешном JOIN_LOBBY).
+  // Требуется для повторного захвата playerId — анти-спуфинг.
+  playerToken: z.string().min(1).max(512).optional(),
 });
 
 export const setPlayerInfoPayloadSchema = z.object({

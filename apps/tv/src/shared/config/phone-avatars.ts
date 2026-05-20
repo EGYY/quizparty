@@ -1,15 +1,26 @@
 import type { ImageSourcePropType } from 'react-native';
+import {
+  avatar01,
+  avatar02,
+  avatar03,
+  avatar04,
+  avatar05,
+  avatar06,
+  avatar07,
+  avatar08,
+  hostPresenter,
+} from '@shared/assets/images';
 
 const avatarImages: Record<string, ImageSourcePropType> = {
-  'avatar-01': require('@shared/assets/images/avatars/avatar-01.png'),
-  'avatar-02': require('@shared/assets/images/avatars/avatar-02.png'),
-  'avatar-03': require('@shared/assets/images/avatars/avatar-03.png'),
-  'avatar-04': require('@shared/assets/images/avatars/avatar-04.png'),
-  'avatar-05': require('@shared/assets/images/avatars/avatar-05.png'),
-  'avatar-06': require('@shared/assets/images/avatars/avatar-06.png'),
-  'avatar-07': require('@shared/assets/images/avatars/avatar-07.png'),
-  'avatar-08': require('@shared/assets/images/avatars/avatar-08.png'),
-  'popcorn-mascot': require('@shared/assets/images/popcorn-mascot.png'),
+  'avatar-01': avatar01,
+  'avatar-02': avatar02,
+  'avatar-03': avatar03,
+  'avatar-04': avatar04,
+  'avatar-05': avatar05,
+  'avatar-06': avatar06,
+  'avatar-07': avatar07,
+  'avatar-08': avatar08,
+  'popcorn-mascot': hostPresenter,
 };
 
 export function getPhoneAvatarSource(

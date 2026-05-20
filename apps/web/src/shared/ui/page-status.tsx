@@ -1,4 +1,5 @@
 import { Eye, RotateCcw } from 'lucide-react';
+import styles from './page-status.module.scss';
 
 export function PageStatus({
   text,
@@ -10,7 +11,7 @@ export function PageStatus({
   onRetry?: () => void;
 }) {
   return (
-    <div className={`page-status ${tone}`}>
+    <div className={`${styles.root}${tone === 'error' ? ` ${styles.error}` : ''}`}>
       <Eye size={20} />
       <span>{text}</span>
       {onRetry ? (

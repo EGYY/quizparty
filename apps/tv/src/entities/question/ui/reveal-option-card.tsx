@@ -17,6 +17,12 @@ type Props = {
   option: string;
 };
 
+function getOptionTextStyle(option: string) {
+  if (option.length > 92) return styles.optionText_dense;
+  if (option.length > 54) return styles.optionText_long;
+  return undefined;
+}
+
 export const RevealOptionCard = memo(function RevealOptionCard({
   correctIndex,
   index,
@@ -26,7 +32,9 @@ export const RevealOptionCard = memo(function RevealOptionCard({
   const crownSpin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!isCorrect) return;
+    crownSpin.stopAnimation();
+    crownSpin.setValue(0);
+    if (!isCorrect) return undefined;
 
     const anim = Animated.sequence([
       Animated.delay(index * 70 + 420),
@@ -57,7 +65,7 @@ export const RevealOptionCard = memo(function RevealOptionCard({
 
     anim.start();
     return () => anim.stop();
-  }, []);
+  }, [crownSpin, index, isCorrect]);
 
   // Memoized: interpolate() creates a new AnimatedInterpolation node each call.
   // crownSpin is a stable ref, so this runs exactly once per card instance.
@@ -97,7 +105,7 @@ export const RevealOptionCard = memo(function RevealOptionCard({
       </View>
 
       <View style={styles.textWrap}>
-        <Text numberOfLines={2} style={[styles.optionText]}>
+        <Text style={[styles.optionText, getOptionTextStyle(option)]}>
           {option}
         </Text>
       </View>
@@ -118,6 +126,7 @@ const styles = StyleSheet.create({
   option: {
     width: '48%',
     minHeight: sv(110),
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: s(16),
@@ -175,15 +184,24 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
-  textWrap: { flex: 1, justifyContent: 'center' },
+  textWrap: { flex: 1, minWidth: 0, justifyContent: 'center' },
   optionText: {
     color: colors.text,
-    fontSize: sf(38),
+    fontSize: sf(28),
     lineHeight: sv(46),
     fontWeight: '900',
+    flexShrink: 1,
     textShadowColor: 'rgba(0, 0, 0, 0.45)',
     textShadowOffset: { width: 0, height: sv(3) },
     textShadowRadius: s(4),
+  },
+  optionText_long: {
+    fontSize: sf(31),
+    lineHeight: sv(37),
+  },
+  optionText_dense: {
+    fontSize: sf(25),
+    lineHeight: sv(31),
   },
 
   resultIcon: {

@@ -1,12 +1,33 @@
 import { useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { loginRequestSchema } from '@quizparty/shared';
 import type { LoginRequest } from '@quizparty/shared';
-import { loginAdmin } from '@shared/api/auth';
+import { loginAdmin } from '@features/auth';
 import { logoMarkUrl } from '@shared/lib/assets';
 import { useToastStore } from '@shared/ui/toast';
+
+const loginResolver: Resolver<LoginRequest> = (values) => {
+  const parsed = loginRequestSchema.safeParse(values);
+  if (parsed.success) {
+    return { values: parsed.data, errors: {} };
+  }
+
+  const fieldErrors = parsed.error.flatten().fieldErrors;
+  return {
+    values: {},
+    errors: {
+      ...(fieldErrors.email?.length
+        ? { email: { type: 'validation', message: 'Введите корректный email' } }
+        : {}),
+      ...(fieldErrors.password?.length
+        ? { password: { type: 'validation', message: 'Пароль не короче 6 символов' } }
+        : {}),
+    },
+  };
+};
 
 export default function LoginPage() {
   const location = useLocation();
@@ -36,11 +57,13 @@ export default function LoginPage() {
 
   const onLogin = useCallback((values: LoginRequest) => login.mutate(values), [login]);
 
-  const { register, handleSubmit } = useForm<LoginRequest>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginRequest>({
+    defaultValues: { email: '', password: '' },
+    resolver: loginResolver,
   });
 
   return (
@@ -60,11 +83,31 @@ export default function LoginPage() {
         </div>
         <label>
           Email
-          <input {...register('email')} type="email" />
+          <input
+            {...register('email')}
+            type="email"
+            autoComplete="email"
+            aria-invalid={errors.email ? true : undefined}
+          />
+          {errors.email ? (
+            <small className="field-error" role="alert">
+              {errors.email.message}
+            </small>
+          ) : null}
         </label>
         <label>
           Password
-          <input {...register('password')} type="password" />
+          <input
+            {...register('password')}
+            type="password"
+            autoComplete="current-password"
+            aria-invalid={errors.password ? true : undefined}
+          />
+          {errors.password ? (
+            <small className="field-error" role="alert">
+              {errors.password.message}
+            </small>
+          ) : null}
         </label>
         <button className="primary-button" disabled={login.isPending} type="submit">
           <ShieldCheck size={18} />

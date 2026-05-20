@@ -64,6 +64,14 @@ export default tseslint.config(
       'no-console': 'off',
     },
   },
+  // ── apps/backend: возврат no-explicit-any (касты на границе shared↔Prisma
+  //    enum вынесены в типизированный маппер apps/backend/src/database/prisma-enums.ts).
+  {
+    files: ['apps/backend/src/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
   {
     files: ['apps/tv/**/*.js', 'scripts/**/*.js'],
     languageOptions: {
@@ -73,6 +81,101 @@ export default tseslint.config(
         process: 'readonly',
         require: 'readonly',
       },
+    },
+  },
+  // ── apps/web: типизация по собственному tsconfig (резолвит alias @shared/* и
+  //    т.д., совпадает с `tsc -p apps/web/tsconfig.json`), возврат no-explicit-any
+  {
+    files: ['apps/web/src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: ['./apps/web/tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  // ── Границы слоёв FSD: слой не импортирует вышестоящие слои ────────────────
+  {
+    files: ['apps/web/src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@app/*', '@pages/*', '@widgets/*', '@features/*', '@entities/*'],
+              message: 'FSD: слой shared не импортирует вышестоящие слои.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/web/src/entities/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@app/*', '@pages/*', '@widgets/*', '@features/*'],
+              message: 'FSD: слой entities не импортирует вышестоящие слои.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/web/src/features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@app/*', '@pages/*', '@widgets/*'],
+              message: 'FSD: слой features не импортирует вышестоящие слои.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/web/src/widgets/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@app/*', '@pages/*'],
+              message: 'FSD: слой widgets не импортирует вышестоящие слои.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/web/src/pages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@app/*'],
+              message: 'FSD: слой pages не импортирует слой app.',
+            },
+          ],
+        },
+      ],
     },
   },
 );

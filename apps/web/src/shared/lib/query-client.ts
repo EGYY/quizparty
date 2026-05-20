@@ -1,4 +1,5 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import { describeRequestError } from '../api/request-error';
 import { useToastStore } from '../ui/toast';
 
 const notifyError = (message: string) => {
@@ -11,10 +12,16 @@ const notifyError = (message: string) => {
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: () => notifyError('Проверьте backend или повторите действие.'),
+    onError: (error) => {
+      const message = describeRequestError(error, 'Проверьте backend или повторите действие.');
+      if (message) notifyError(message);
+    },
   }),
   mutationCache: new MutationCache({
-    onError: () => notifyError('Изменение не применилось. Попробуйте еще раз.'),
+    onError: (error) => {
+      const message = describeRequestError(error, 'Изменение не применилось. Попробуйте еще раз.');
+      if (message) notifyError(message);
+    },
   }),
   defaultOptions: {
     queries: {

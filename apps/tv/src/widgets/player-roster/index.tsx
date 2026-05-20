@@ -8,12 +8,16 @@
  * Логика buildPlayerSlots живёт здесь: это presentation-логика виджета.
  */
 import { memo, useMemo } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { type Player } from '@quizparty/shared';
 import { PlayerCard, type PlayerSlot } from '@entities/player';
 import { s } from '@shared/config/scale';
 
 const MIN_VISIBLE = 10; // минимальное число слотов (чтобы сетка выглядела заполненной)
+const EMPTY_SLOTS = Array.from({ length: 100 }, (_, index) => ({
+  kind: 'empty' as const,
+  index,
+}));
 
 function buildPlayerSlots(players: Player[], maxPlayers: number): PlayerSlot[] {
   const playerItems = players.map(player => ({
@@ -25,10 +29,7 @@ function buildPlayerSlots(players: Player[], maxPlayers: number): PlayerSlot[] {
     maxPlayers,
   );
   const emptyCount = totalVisible - playerItems.length;
-  const emptyItems = Array.from({ length: emptyCount }, (_, i) => ({
-    kind: 'empty' as const,
-    index: i,
-  }));
+  const emptyItems = EMPTY_SLOTS.slice(0, emptyCount);
   return [...playerItems, ...emptyItems];
 }
 
@@ -41,13 +42,18 @@ export const PlayerRoster = memo(function PlayerRoster({
   players,
   maxPlayers,
 }: Props) {
+  const { width } = useWindowDimensions();
   const slots = useMemo(
     () => buildPlayerSlots(players, maxPlayers),
     [players, maxPlayers],
   );
+  const gridStyle = useMemo(
+    () => [styles.grid, { maxWidth: width / 2 }],
+    [width],
+  );
 
   return (
-    <View style={styles.grid}>
+    <View style={gridStyle}>
       {slots.map((slot, index) => (
         <PlayerCard
           key={
@@ -65,7 +71,6 @@ export const PlayerRoster = memo(function PlayerRoster({
 
 const styles = StyleSheet.create({
   grid: {
-    maxWidth: Dimensions.get('screen').width / 2,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: s(10),

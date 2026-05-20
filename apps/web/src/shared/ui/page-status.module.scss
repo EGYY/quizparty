@@ -1,0 +1,12 @@
+.root {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: #aeb5d4;
+}
+
+.error {
+  color: #ff9aa7;
+}

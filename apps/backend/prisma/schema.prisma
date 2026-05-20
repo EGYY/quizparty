@@ -85,6 +85,10 @@ model Quiz {
 
   @@index([status, category])
   @@index([authorId, status])
+  @@index([status, updatedAt])
+  @@index([status, submittedAt])
+  @@index([status, playCount, updatedAt])
+  @@index([authorId, updatedAt])
 }
 
 model Question {

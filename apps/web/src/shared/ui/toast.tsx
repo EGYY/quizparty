@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 import { CheckCircle2, X, XCircle } from 'lucide-react';
 import { create } from 'zustand';
+import styles from './toast.module.scss';
 
 type ToastTone = 'success' | 'error';
 
@@ -35,9 +36,12 @@ export const ToastViewport = memo(function ToastViewport() {
   const onDismiss = useCallback((id: string) => dismiss(id), [dismiss]);
 
   return (
-    <div className="toast-viewport">
+    <div className={styles.viewport}>
       {toasts.map((toast) => (
-        <div className={`toast toast-${toast.tone}`} key={toast.id}>
+        <div
+          className={`${styles.toast} ${toast.tone === 'success' ? styles.success : styles.error}`}
+          key={toast.id}
+        >
           {toast.tone === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
           <div>
             <strong>{toast.title}</strong>

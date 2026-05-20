@@ -1,7 +1,7 @@
 import { Difficulty, QuizCategory, QuizStatus } from '@quizparty/shared';
-import type { QuizDetail } from '@quizparty/shared';
+import type { TvQuiz } from '@shared/types/tv';
 
-export type TvQuiz = QuizDetail;
+export type { TvQuiz };
 
 export const fallbackQuizzes: TvQuiz[] = [
   {

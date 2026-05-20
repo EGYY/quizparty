@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { createRoomRequestSchema } from '@quizparty/shared';
 import type {
   CreateRoomRequest,
@@ -14,6 +15,7 @@ export class RoomsController {
   constructor(private readonly rooms: RoomsService) {}
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async createRoom(
     @Body(new ZodValidationPipe(createRoomRequestSchema)) body: CreateRoomRequest,
   ): Promise<CreateRoomResponse> {

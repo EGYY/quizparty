@@ -7,7 +7,12 @@ import { Dimensions } from 'react-native';
 const DESIGN_WIDTH = 1920;
 const DESIGN_HEIGHT = 1080;
 
-const { width: W, height: H } = Dimensions.get('window');
+let { width: W, height: H } = Dimensions.get('window');
+
+Dimensions.addEventListener('change', ({ window }) => {
+  W = window.width;
+  H = window.height;
+});
 
 /** Scale a horizontal / general size value to the current screen. */
 export const s = (n: number): number => Math.round((n * W) / DESIGN_WIDTH);

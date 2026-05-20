@@ -18,7 +18,7 @@ export function resolveAssetUrl(url: string | undefined): string | undefined {
   return url;
 }
 
-export const defaultCoverUrl = 'http://localhost:5173/assets/covers/party.svg';
+export const defaultCoverUrl = '/assets/covers/party.svg';
 export const adminAvatarUrl = '/assets/avatars/admin.svg';
 export const logoMarkUrl = '/assets/brand/logo-mark.svg';
 export const popcornMascotUrl = '/assets/brand/popcorn-mascot.svg';

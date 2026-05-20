@@ -22,6 +22,16 @@ export const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
+
+  // Player-token: серверная подпись для анти-спуфинга playerId по сокету.
+  PLAYER_TOKEN_SECRET: z.string().min(16),
+  PLAYER_TOKEN_EXPIRES_IN: z.string().default('1d'),
+  // Lax по умолчанию (legacy без токена принимается с предупреждением).
+  // STRICT=true — отвергать JOIN_LOBBY без токена для уже известного playerId.
+  PLAYER_TOKEN_STRICT: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((v) => (typeof v === 'boolean' ? v : v === 'true'))
+    .default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

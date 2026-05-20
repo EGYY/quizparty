@@ -1,13 +1,18 @@
 import { WsException } from '@nestjs/websockets';
 import { ErrorCode, ServerEvent } from '@quizparty/shared';
-import type { Socket } from 'socket.io';
+import type { DefaultEventsMap, Socket } from 'socket.io';
 
 export type QuizPartySocketData = {
   roomCode?: string;
   playerId?: string;
 };
 
-export type QuizPartySocket = Socket<any, any, any, QuizPartySocketData>;
+export type QuizPartySocket = Socket<
+  DefaultEventsMap,
+  DefaultEventsMap,
+  DefaultEventsMap,
+  QuizPartySocketData
+>;
 
 export function requireSession(socket: QuizPartySocket): { roomCode: string; playerId: string } {
   const { roomCode, playerId } = socket.data;

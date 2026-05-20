@@ -1,15 +1,22 @@
 import { PrismaClient } from '@prisma/client';
-import { scryptSync } from 'node:crypto';
+import { randomBytes, scryptSync } from 'node:crypto';
 import { allQuizzes } from './seed-data/index';
 
 const prisma = new PrismaClient();
 
-// Fixed salt — deterministic hashes for local dev (not for production)
+// Fixed salt — deterministic hashes for local dev only (never production).
 const DEV_SALT = 'quizparty-dev-2026';
 
 function hashPassword(password: string): string {
   const key = scryptSync(password, DEV_SALT, 64).toString('base64url');
   return `scrypt:${DEV_SALT}:${key}`;
+}
+
+// Random per-user salt — used for production admin seeding.
+function hashPasswordSecure(password: string): string {
+  const salt = randomBytes(16).toString('base64url');
+  const key = scryptSync(password, salt, 64).toString('base64url');
+  return `scrypt:${salt}:${key}`;
 }
 
 function stableQuizId(title: string): string {
@@ -18,36 +25,63 @@ function stableQuizId(title: string): string {
 }
 
 async function main() {
-  // ── Users ──────────────────────────────────────────────────────────────────
-  await prisma.user.upsert({
-    where: { email: 'admin@quizparty.local' },
-    update: {
-      passwordHash: hashPassword('local-dev'),
-      displayName: 'QuizParty Admin',
-      role: 'ADMIN',
-    },
-    create: {
-      email: 'admin@quizparty.local',
-      passwordHash: hashPassword('local-dev'),
-      displayName: 'QuizParty Admin',
-      role: 'ADMIN',
-      avatarUrl: 'http://localhost:5173/assets/avatars/admin.svg',
-    },
-  });
+  const isProd = process.env.NODE_ENV === 'production';
+  let quizAuthorId: string;
 
-  const author = await prisma.user.upsert({
-    where: { email: 'author@quizparty.local' },
-    update: {
-      passwordHash: hashPassword('local-dev'),
-      displayName: 'QuizMaster',
-    },
-    create: {
-      email: 'author@quizparty.local',
-      passwordHash: hashPassword('local-dev'),
-      displayName: 'QuizMaster',
-      role: 'AUTHOR',
-    },
-  });
+  // ── Users ──────────────────────────────────────────────────────────────────
+  if (isProd) {
+    // No default/known credentials in production. Require explicit admin creds.
+    const email = process.env.SEED_ADMIN_EMAIL;
+    const password = process.env.SEED_ADMIN_PASSWORD;
+    if (!email || !password) {
+      console.warn(
+        'Production seed skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to seed an admin.',
+      );
+      return;
+    }
+    const admin = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        passwordHash: hashPasswordSecure(password),
+        displayName: 'QuizParty Admin',
+        role: 'ADMIN',
+      },
+    });
+    quizAuthorId = admin.id;
+  } else {
+    await prisma.user.upsert({
+      where: { email: 'admin@quizparty.local' },
+      update: {
+        passwordHash: hashPassword('local-dev'),
+        displayName: 'QuizParty Admin',
+        role: 'ADMIN',
+      },
+      create: {
+        email: 'admin@quizparty.local',
+        passwordHash: hashPassword('local-dev'),
+        displayName: 'QuizParty Admin',
+        role: 'ADMIN',
+        avatarUrl: 'http://localhost:5173/assets/avatars/admin.svg',
+      },
+    });
+
+    const author = await prisma.user.upsert({
+      where: { email: 'author@quizparty.local' },
+      update: {
+        passwordHash: hashPassword('local-dev'),
+        displayName: 'QuizMaster',
+      },
+      create: {
+        email: 'author@quizparty.local',
+        passwordHash: hashPassword('local-dev'),
+        displayName: 'QuizMaster',
+        role: 'AUTHOR',
+      },
+    });
+    quizAuthorId = author.id;
+  }
 
   // ── Quizzes ────────────────────────────────────────────────────────────────
   for (const quiz of allQuizzes) {
@@ -68,7 +102,7 @@ async function main() {
         estimatedMinutes: quiz.estimatedMinutes,
         tags: quiz.tags,
         status: 'APPROVED',
-        authorId: author.id,
+        authorId: quizAuthorId,
       },
       create: {
         id: quizId,
@@ -84,7 +118,7 @@ async function main() {
         estimatedMinutes: quiz.estimatedMinutes,
         tags: quiz.tags,
         status: 'APPROVED',
-        authorId: author.id,
+        authorId: quizAuthorId,
       },
     });
 

@@ -1,3 +1,4 @@
+import { UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -17,13 +18,14 @@ import {
 } from '@quizparty/shared';
 import type { Server } from 'socket.io';
 import {
-  type QuizPartySocket,
-  emitSocketError,
-  requireSession,
-} from '../../common/gateways/socket-session';
+  WsExceptionFilter,
+  WsFallbackExceptionFilter,
+} from '../../common/filters/ws-exception.filter';
+import { type QuizPartySocket, requireSession } from '../../common/gateways/socket-session';
 import { GameRealtimeService } from './game-realtime.service';
 import { LobbyService } from './lobby.service';
 
+@UseFilters(WsExceptionFilter, WsFallbackExceptionFilter)
 @WebSocketGateway({ namespace: 'lobby' })
 export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
@@ -56,16 +58,12 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
     @ConnectedSocket() socket: QuizPartySocket,
     @MessageBody() payload: unknown,
   ): Promise<void> {
-    try {
-      const parsed = joinLobbyPayloadSchema.parse(payload);
-      const { state, playerId } = await this.lobby.joinLobby(parsed);
-      socket.data.roomCode = state.roomCode;
-      socket.data.playerId = playerId;
-      await socket.join(state.roomCode);
-      socket.emit(ServerEvent.LOBBY_STATE, { ...state, playerId });
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const parsed = joinLobbyPayloadSchema.parse(payload);
+    const { state, playerId, playerToken } = await this.lobby.joinLobby(parsed);
+    socket.data.roomCode = state.roomCode;
+    socket.data.playerId = playerId;
+    await socket.join(state.roomCode);
+    socket.emit(ServerEvent.LOBBY_STATE, { ...state, playerId, playerToken });
   }
 
   @SubscribeMessage(ClientEvent.SET_PLAYER_INFO)
@@ -73,12 +71,8 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
     @ConnectedSocket() socket: QuizPartySocket,
     @MessageBody() payload: unknown,
   ): Promise<void> {
-    try {
-      const { roomCode, playerId } = requireSession(socket);
-      await this.lobby.setPlayerInfo(roomCode, playerId, setPlayerInfoPayloadSchema.parse(payload));
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const { roomCode, playerId } = requireSession(socket);
+    await this.lobby.setPlayerInfo(roomCode, playerId, setPlayerInfoPayloadSchema.parse(payload));
   }
 
   @SubscribeMessage(ClientEvent.SET_READY)
@@ -86,12 +80,8 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
     @ConnectedSocket() socket: QuizPartySocket,
     @MessageBody() payload: unknown,
   ): Promise<void> {
-    try {
-      const { roomCode, playerId } = requireSession(socket);
-      await this.lobby.setReady(roomCode, playerId, setReadyPayloadSchema.parse(payload));
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const { roomCode, playerId } = requireSession(socket);
+    await this.lobby.setReady(roomCode, playerId, setReadyPayloadSchema.parse(payload));
   }
 
   @SubscribeMessage(ClientEvent.SEND_REACTION)
@@ -99,32 +89,20 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
     @ConnectedSocket() socket: QuizPartySocket,
     @MessageBody() payload: unknown,
   ): Promise<void> {
-    try {
-      const { roomCode, playerId } = requireSession(socket);
-      const parsed = reactionPayloadSchema.parse(payload);
-      await this.lobby.sendReaction(roomCode, playerId, parsed.emoji);
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const { roomCode, playerId } = requireSession(socket);
+    const parsed = reactionPayloadSchema.parse(payload);
+    await this.lobby.sendReaction(roomCode, playerId, parsed.emoji);
   }
 
   @SubscribeMessage(ClientEvent.HIDE_QR)
   async hideQr(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
-    try {
-      const { roomCode, playerId } = requireSession(socket);
-      await this.lobby.hideQr(roomCode, playerId);
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const { roomCode, playerId } = requireSession(socket);
+    await this.lobby.hideQr(roomCode, playerId);
   }
 
   @SubscribeMessage(ClientEvent.START_GAME)
   async startGame(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
-    try {
-      const { roomCode, playerId } = requireSession(socket);
-      await this.lobby.startGame(roomCode, playerId);
-    } catch (error) {
-      emitSocketError(socket, error);
-    }
+    const { roomCode, playerId } = requireSession(socket);
+    await this.lobby.startGame(roomCode, playerId);
   }
 }

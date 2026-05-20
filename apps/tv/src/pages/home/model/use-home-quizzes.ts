@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { QuizCategory } from '@quizparty/shared';
 import type { QuizDetail } from '@quizparty/shared';
-import { fallbackQuizzes } from '@entities/quiz';
-import { listApprovedQuizzes } from '@shared/api/tv';
+import { fallbackQuizzes, listApprovedQuizzes } from '@entities/quiz';
 import { useAsyncResource } from '@shared/lib/use-async-resource';
 
 export function useHomeQuizzes() {

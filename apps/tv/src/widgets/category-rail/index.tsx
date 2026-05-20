@@ -4,8 +4,42 @@ import { categoryIcons, categoryLabels } from '@shared/config/labels';
 import { colors, spacing } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 import { Focusable } from '@shared/ui/focusable';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
+type CategoryRailItemProps = {
+  active: boolean;
+  category: QuizCategory;
+  hasTVPreferredFocus: boolean;
+  onSelect: (category: QuizCategory) => void;
+};
+
+const CategoryRailItem = memo(function CategoryRailItem({
+  active,
+  category,
+  hasTVPreferredFocus,
+  onSelect,
+}: CategoryRailItemProps) {
+  const handlePress = useCallback(
+    () => onSelect(category),
+    [category, onSelect],
+  );
+
+  return (
+    <Focusable
+      hasTVPreferredFocus={hasTVPreferredFocus}
+      onPress={handlePress}
+      style={[styles.item, active && styles.active]}
+    >
+      <Text style={[styles.icon, active && styles.activeText]}>
+        {categoryIcons[category]}
+      </Text>
+      <Text style={[styles.label, active && styles.activeText]}>
+        {categoryLabels[category]}
+      </Text>
+    </Focusable>
+  );
+});
 
 export const CategoryRail = memo(function CategoryRail({
   selected,
@@ -26,19 +60,13 @@ export const CategoryRail = memo(function CategoryRail({
       {tvCategories.map((category, index) => {
         const active = selected === category;
         return (
-          <Focusable
+          <CategoryRailItem
+            active={active}
+            category={category}
             hasTVPreferredFocus={preferInitialFocus && index === 0}
             key={category}
-            onPress={() => onSelect(category)}
-            style={[styles.item, active && styles.active]}
-          >
-            <Text style={[styles.icon, active && styles.activeText]}>
-              {categoryIcons[category]}
-            </Text>
-            <Text style={[styles.label, active && styles.activeText]}>
-              {categoryLabels[category]}
-            </Text>
-          </Focusable>
+            onSelect={onSelect}
+          />
         );
       })}
     </View>
