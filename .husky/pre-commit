@@ -1,1 +1,8 @@
+echo "lint-staged (ESLint + Prettier on staged files)..."
 pnpm lint-staged
+
+echo "Build shared (required for typecheck)..."
+pnpm --filter @quizparty/shared build
+
+echo "TypeScript typecheck..."
+pnpm typecheck

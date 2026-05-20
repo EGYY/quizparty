@@ -128,9 +128,7 @@ export function RoundTimer({ timer }: Props) {
   );
 
   return (
-    <Animated.View
-      style={[frameStyle, { transform: [{ scale: timerPulse }] }]}
-    >
+    <Animated.View style={[frameStyle, { transform: [{ scale: timerPulse }] }]}>
       <View style={styles.segments}>
         {segmentStyles.map((segStyle, i) => (
           <View key={i} style={segStyle} />

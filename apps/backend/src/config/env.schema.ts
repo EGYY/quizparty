@@ -9,10 +9,9 @@ export const envSchema = z.object({
 
   WEB_ORIGIN: z
     .string()
-    .refine(
-      (v) => v.split(',').every((o) => z.string().url().safeParse(o.trim()).success),
-      { message: 'Invalid url' },
-    )
+    .refine((v) => v.split(',').every((o) => z.string().url().safeParse(o.trim()).success), {
+      message: 'Invalid url',
+    })
     .default('http://localhost:5173'),
   TV_JOIN_BASE_URL: z.string().url().default('http://localhost:5173/join'),
   BACKEND_PUBLIC_URL: z.string().url().default('http://localhost:3001'),

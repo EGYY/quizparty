@@ -28,9 +28,7 @@ const ToastContext = createContext<ToastApi | null>(null);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const { playError } = useSoundEffects();
-  const removeTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(
-    new Set(),
-  );
+  const removeTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   useEffect(
     () => () => {

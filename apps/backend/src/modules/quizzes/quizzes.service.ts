@@ -151,10 +151,16 @@ export class QuizzesService {
       tooFewQuestions,
     ] = await Promise.all([
       this.prisma.quiz.count({ where: scope }),
-      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.PENDING_REVIEW] } }),
+      this.prisma.quiz.count({
+        where: { ...scope, status: toPrismaQuizStatus[QuizStatus.PENDING_REVIEW] },
+      }),
       this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.DRAFT] } }),
-      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.APPROVED] } }),
-      this.prisma.quiz.count({ where: { ...scope, status: toPrismaQuizStatus[QuizStatus.REJECTED] } }),
+      this.prisma.quiz.count({
+        where: { ...scope, status: toPrismaQuizStatus[QuizStatus.APPROVED] },
+      }),
+      this.prisma.quiz.count({
+        where: { ...scope, status: toPrismaQuizStatus[QuizStatus.REJECTED] },
+      }),
       this.prisma.quiz.findMany({
         where: scope,
         take: 8,
@@ -535,9 +541,7 @@ export class QuizzesService {
         data: {
           status: toPrismaQuizStatus[nextStatus],
           approvedAt: payload.approve ? new Date() : null,
-          rejectionReason: payload.approve
-            ? null
-            : (payload.comment ?? payload.reasons.join(', ')),
+          rejectionReason: payload.approve ? null : (payload.comment ?? payload.reasons.join(', ')),
         },
         include: { questions: true, author: true },
       });
@@ -580,11 +584,7 @@ export class QuizzesService {
       where: { url },
       select: { ownerId: true },
     });
-    if (
-      asset?.ownerId &&
-      actor.role !== Role.ADMIN &&
-      asset.ownerId !== actor.id
-    ) {
+    if (asset?.ownerId && actor.role !== Role.ADMIN && asset.ownerId !== actor.id) {
       throw new ForbiddenException('You do not have access to this media');
     }
 

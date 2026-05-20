@@ -170,7 +170,6 @@
     min-height: clamp(44px, 7.5dvh, 58px);
     font-size: clamp(17px, 2.8dvh, 22px);
   }
-
 }
 
 .phone-helper,
@@ -2446,7 +2445,6 @@
 }
 
 @media (max-height: 760px) and (max-width: 460px) {
-
   .game-controller-shell {
     padding: 6px;
   }
@@ -2783,5 +2781,4 @@
     padding: 7px;
     font-size: 13px;
   }
-
 }

@@ -8,7 +8,9 @@ import styles from './phone-game-shell.module.scss';
 type RankedLeaderboardEntry = LeaderboardEntry & { displayRank: number };
 
 function isTvHostEntry(entry: LeaderboardEntry): boolean {
-  return entry.avatarId === 'popcorn-mascot' && entry.nickname.trim().toLowerCase() === 'tv ведущий';
+  return (
+    entry.avatarId === 'popcorn-mascot' && entry.nickname.trim().toLowerCase() === 'tv ведущий'
+  );
 }
 
 function getSortedPlayers(leaderboard: LeaderboardEntry[]): RankedLeaderboardEntry[] {

@@ -1,9 +1,4 @@
-import {
-  io,
-  type ManagerOptions,
-  type Socket,
-  type SocketOptions,
-} from 'socket.io-client';
+import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client';
 import { clientEventSchemas, serverEventSchemas } from '@quizparty/shared';
 import type { ClientEvent, ServerEvent } from '@quizparty/shared';
 import type { z } from 'zod';
@@ -21,9 +16,8 @@ export type ServerEventData<E extends ServerEvent> = E extends keyof ServerSchem
   ? Inferred<ServerSchemaMap[E]>
   : never;
 
-type EmitArgs<E extends ClientEvent> = ClientEventPayload<E> extends undefined
-  ? []
-  : [payload: ClientEventPayload<E>];
+type EmitArgs<E extends ClientEvent> =
+  ClientEventPayload<E> extends undefined ? [] : [payload: ClientEventPayload<E>];
 
 // socket.io-client типизирует .on() через перегрузки, которые не сужаются для
 // динамически выбираемого имени события. Каст локализован здесь — публичный API

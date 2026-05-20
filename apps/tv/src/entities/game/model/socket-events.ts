@@ -12,9 +12,7 @@ import {
 } from '@quizparty/shared';
 import type { RoundStartEvent } from '@quizparty/shared';
 import type { Socket } from 'socket.io-client';
-import {
-  readGameSocketError,
-} from './event-mappers';
+import { readGameSocketError } from './event-mappers';
 import type { TvGameRealtimeAction } from './reducer';
 
 type AttachTvGameEventsParams = {

@@ -23,7 +23,5 @@ export function computeErrors(draft: QuizDraft): DraftErrors {
 export function questionErrorCount(errors: DraftErrors, index: number): number {
   const questionErrors = errors.questions[index];
   if (!questionErrors) return 0;
-  return (
-    (questionErrors.questionText ? 1 : 0) + questionErrors.options.filter(Boolean).length
-  );
+  return (questionErrors.questionText ? 1 : 0) + questionErrors.options.filter(Boolean).length;
 }

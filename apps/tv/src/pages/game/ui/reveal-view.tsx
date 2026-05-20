@@ -64,18 +64,17 @@ export const RevealView = memo(function RevealView({
     state.roundEnd.revealMedia?.type !== MediaType.AUDIO;
   useMusicTrack(playMusic ? soundReveal : null, false);
 
-  const mediaCardW = useMemo(
-    () => {
-      const contentWidth = width - GAME_PADDING_H * 2;
-      const correctCardOuterWidth =
-        (contentWidth - MAIN_ROW_GAP) * CORRECT_CARD_WIDTH_RATIO;
-      const correctCardInnerWidth =
-        correctCardOuterWidth - CORRECT_CARD_PADDING_H * 2 - CORRECT_CARD_BORDER_W * 2;
+  const mediaCardW = useMemo(() => {
+    const contentWidth = width - GAME_PADDING_H * 2;
+    const correctCardOuterWidth =
+      (contentWidth - MAIN_ROW_GAP) * CORRECT_CARD_WIDTH_RATIO;
+    const correctCardInnerWidth =
+      correctCardOuterWidth -
+      CORRECT_CARD_PADDING_H * 2 -
+      CORRECT_CARD_BORDER_W * 2;
 
-      return Math.max(s(300), Math.floor(correctCardInnerWidth));
-    },
-    [width],
-  );
+    return Math.max(s(300), Math.floor(correctCardInnerWidth));
+  }, [width]);
   const mediaCardH = useMemo(() => Math.round(height * 0.5), [height]);
 
   return (

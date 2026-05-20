@@ -545,7 +545,6 @@ th {
   max-width: 100%;
 }
 
-
 @media (max-width: 1180px) {
   .stat-grid {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
@@ -554,7 +553,6 @@ th {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-
 }
 
 @media (max-width: 760px) {
@@ -586,6 +584,4 @@ th {
   .table-wrap {
     overflow-x: auto;
   }
-
 }
-

@@ -10,23 +10,19 @@ import {
 import type { LobbyState, Player } from '@quizparty/shared';
 import { dedupeLobbyStatePlayers } from './lobby-state';
 
-const player = (
-  playerId: string,
-  overrides: Partial<Player> = {},
-): Player =>
-  ({
-    playerId,
-    nickname: 'Player',
-    avatarId: 'avatar-01',
-    score: 0,
-    streak: 0,
-    isReady: false,
-    isHost: false,
-    joinedAt: '2026-05-20T00:00:00.000Z',
-    connectionStatus: PlayerConnectionStatus.CONNECTED,
-    lobbyStatus: LobbyPlayerStatus.WAITING,
-    ...overrides,
-  });
+const player = (playerId: string, overrides: Partial<Player> = {}): Player => ({
+  playerId,
+  nickname: 'Player',
+  avatarId: 'avatar-01',
+  score: 0,
+  streak: 0,
+  isReady: false,
+  isHost: false,
+  joinedAt: '2026-05-20T00:00:00.000Z',
+  connectionStatus: PlayerConnectionStatus.CONNECTED,
+  lobbyStatus: LobbyPlayerStatus.WAITING,
+  ...overrides,
+});
 
 const lobbyState = (players: Player[]): LobbyState =>
   ({

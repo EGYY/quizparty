@@ -32,10 +32,7 @@ export function GamePage({
           ) : null}
 
           {game.error ? (
-            <GameErrorBanner
-              error={game.error}
-              onReconnect={game.reconnect}
-            />
+            <GameErrorBanner error={game.error} onReconnect={game.reconnect} />
           ) : null}
 
           <GameSurface

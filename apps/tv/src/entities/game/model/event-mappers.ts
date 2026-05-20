@@ -31,4 +31,3 @@ export function buildInitialTimer(round: RoundStartEvent): TimerTickEvent {
     serverTime: Date.now(),
   };
 }
-

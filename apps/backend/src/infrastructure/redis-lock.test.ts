@@ -11,9 +11,7 @@ describe('withRedisLock', () => {
     const result = await withRedisLock(asClient(fake), 'k', () => Promise.resolve('value'));
     expect(result).toBe('value');
     // Лок снят — повторный захват того же ключа возможен.
-    expect(await withRedisLock(asClient(fake), 'k', () => Promise.resolve('again'))).toBe(
-      'again',
-    );
+    expect(await withRedisLock(asClient(fake), 'k', () => Promise.resolve('again'))).toBe('again');
   });
 
   it('serializes concurrent critical sections on the same key', async () => {

@@ -32,4 +32,3 @@ export function buildQrSvgPath(qrMatrix: QrMatrix): string {
 export function getJoinUrlLabel(joinUrl: string): string {
   return joinUrl.replace(/^https?:\/\//, '')?.split('/')?.[0] ?? joinUrl;
 }
-

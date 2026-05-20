@@ -43,10 +43,7 @@ export const QuizDetailInfoRow = memo(function QuizDetailInfoRow({
         </View>
 
         <View
-          style={[
-            styles.statCard,
-            { borderColor: `${difficultyColor}55` },
-          ]}
+          style={[styles.statCard, { borderColor: `${difficultyColor}55` }]}
         >
           <SignalBarsIcon size={s(30)} color={difficultyColor} />
           <View>

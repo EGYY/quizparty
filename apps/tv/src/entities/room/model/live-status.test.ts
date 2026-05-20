@@ -13,21 +13,20 @@ import {
 
 const roundStart = (
   overrides: Partial<RoundStartEvent> = {},
-): RoundStartEvent =>
-  ({
-    roundNumber: 2,
-    totalRounds: 7,
-    serverTime: 10_000,
-    roundEndTime: 55_000,
-    question: {
-      id: '00000000-0000-4000-8000-000000000101',
-      quizId: '00000000-0000-4000-8000-000000000001',
-      questionText: 'Question?',
-      options: ['A', 'B', 'C', 'D'],
-      order: 0,
-    },
-    ...overrides,
-  });
+): RoundStartEvent => ({
+  roundNumber: 2,
+  totalRounds: 7,
+  serverTime: 10_000,
+  roundEndTime: 55_000,
+  question: {
+    id: '00000000-0000-4000-8000-000000000101',
+    quizId: '00000000-0000-4000-8000-000000000001',
+    questionText: 'Question?',
+    options: ['A', 'B', 'C', 'D'],
+    order: 0,
+  },
+  ...overrides,
+});
 
 describe('lobby live status builders', () => {
   beforeEach(() => {
@@ -96,9 +95,10 @@ describe('lobby live status builders', () => {
     expect(buildRevealLive(nextRound)).toMatchObject({
       remainingSeconds: 11,
     });
-    expect(buildRevealLive({ ...roundEnd, nextRoundStartsAt: undefined }))
-      .toMatchObject({
-        remainingSeconds: 0,
-      });
+    expect(
+      buildRevealLive({ ...roundEnd, nextRoundStartsAt: undefined }),
+    ).toMatchObject({
+      remainingSeconds: 0,
+    });
   });
 });

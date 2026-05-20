@@ -8,10 +8,7 @@ import type { Socket } from 'socket.io-client';
 import { createTvSocket } from '@shared/lib/socket';
 import type { TvQuiz } from '@shared/types/tv';
 import type { TvRoom } from './model';
-import {
-  parseLobbyEnvelope,
-  readLobbySocketError,
-} from './model/live-status';
+import { parseLobbyEnvelope, readLobbySocketError } from './model/live-status';
 import {
   createInitialLobbyRealtimeState,
   lobbyRealtimeReducer,
@@ -47,7 +44,9 @@ export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
       nickname: 'TV ведущий',
       avatarId: 'popcorn-mascot',
       ...(playerIdRef.current ? { playerId: playerIdRef.current } : {}),
-      ...(playerTokenRef.current ? { playerToken: playerTokenRef.current } : {}),
+      ...(playerTokenRef.current
+        ? { playerToken: playerTokenRef.current }
+        : {}),
     }),
     [roomCode],
   );

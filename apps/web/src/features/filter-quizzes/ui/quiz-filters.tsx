@@ -31,7 +31,10 @@ export function QuizFilters({
           onChange={(event) => setSearch(event.target.value)}
         />
       </label>
-      <select value={category} onChange={(event) => setCategory(event.target.value as QuizCategory)}>
+      <select
+        value={category}
+        onChange={(event) => setCategory(event.target.value as QuizCategory)}
+      >
         <option value={QuizCategory.ALL}>Все категории</option>
         {categoryOptions.map((item) => (
           <option key={item} value={item}>

@@ -19,4 +19,3 @@ export function dedupeLobbyStatePlayers(state: LobbyState): LobbyState {
       .filter((player): player is Player => Boolean(player)),
   };
 }
-

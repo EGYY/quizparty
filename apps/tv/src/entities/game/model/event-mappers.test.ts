@@ -3,21 +3,20 @@ import { buildInitialTimer } from './event-mappers';
 
 const roundStart = (
   overrides: Partial<RoundStartEvent> = {},
-): RoundStartEvent =>
-  ({
-    roundNumber: 1,
-    totalRounds: 5,
-    serverTime: 10_000,
-    roundEndTime: 40_000,
-    question: {
-      id: '00000000-0000-4000-8000-000000000101',
-      quizId: '00000000-0000-4000-8000-000000000001',
-      questionText: 'Question?',
-      options: ['A', 'B', 'C', 'D'],
-      order: 0,
-    },
-    ...overrides,
-  });
+): RoundStartEvent => ({
+  roundNumber: 1,
+  totalRounds: 5,
+  serverTime: 10_000,
+  roundEndTime: 40_000,
+  question: {
+    id: '00000000-0000-4000-8000-000000000101',
+    quizId: '00000000-0000-4000-8000-000000000001',
+    questionText: 'Question?',
+    options: ['A', 'B', 'C', 'D'],
+    order: 0,
+  },
+  ...overrides,
+});
 
 describe('buildInitialTimer', () => {
   beforeEach(() => {

@@ -1,7 +1,10 @@
 import type { LeaderboardEntry } from '@quizparty/shared';
 
 function isTvHostEntry(player: LeaderboardEntry): boolean {
-  return player.avatarId === 'popcorn-mascot' && player.nickname.trim().toLowerCase() === 'tv ведущий';
+  return (
+    player.avatarId === 'popcorn-mascot' &&
+    player.nickname.trim().toLowerCase() === 'tv ведущий'
+  );
 }
 
 export function getFinalLeaderboard(leaderboard: LeaderboardEntry[]) {

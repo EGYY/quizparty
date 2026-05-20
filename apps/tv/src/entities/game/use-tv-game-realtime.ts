@@ -5,9 +5,7 @@ import {
   lobbyStateSchema,
   reactionEventSchema,
 } from '@quizparty/shared';
-import type {
-  RoundStartEvent,
-} from '@quizparty/shared';
+import type { RoundStartEvent } from '@quizparty/shared';
 import type { Socket } from 'socket.io-client';
 import { dedupeLobbyStatePlayers } from '@shared/lib/lobby-state';
 import { createTvSocket } from '@shared/lib/socket';

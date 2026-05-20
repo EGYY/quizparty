@@ -58,4 +58,3 @@ const styles = StyleSheet.create({
   },
   reactionPaletteText: { fontSize: sf(30) },
 });
-

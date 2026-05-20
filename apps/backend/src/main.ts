@@ -14,9 +14,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3001);
   const rawOrigin = config.get<string>('WEB_ORIGIN', 'http://localhost:5173');
-  const webOrigin = rawOrigin.includes(',')
-    ? rawOrigin.split(',').map((o) => o.trim())
-    : rawOrigin;
+  const webOrigin = rawOrigin.includes(',') ? rawOrigin.split(',').map((o) => o.trim()) : rawOrigin;
   const uploadRoot = resolveUploadRoot(config.get<string>('UPLOAD_ROOT_DIR', 'uploads'));
 
   app.enableCors({ origin: webOrigin, credentials: true });

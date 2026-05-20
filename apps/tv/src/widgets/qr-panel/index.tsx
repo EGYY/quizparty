@@ -1,11 +1,7 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { s, sf, sv } from '@shared/config/scale';
-import {
-  PANEL_H,
-  PANEL_W,
-  qrPanelPalette as palette,
-} from './config';
+import { PANEL_H, PANEL_W, qrPanelPalette as palette } from './config';
 import { buildQrSvgPath, createQrMatrix, getJoinUrlLabel } from './lib/qr';
 import { PhoneIcon } from './ui/phone-icon';
 import { QrCodeView } from './ui/qr-code-view';
@@ -24,10 +20,7 @@ export const QrPanel = memo(
     const svgPath = useMemo(() => buildQrSvgPath(qrMatrix), [qrMatrix]);
     const joinUrlLabel = useMemo(() => getJoinUrlLabel(joinUrl), [joinUrl]);
     const rootStyle = useMemo(
-      () => [
-        styles.root,
-        { marginTop: height / 2 - PANEL_H / 2 - sv(100) },
-      ],
+      () => [styles.root, { marginTop: height / 2 - PANEL_H / 2 - sv(100) }],
       [height],
     );
 

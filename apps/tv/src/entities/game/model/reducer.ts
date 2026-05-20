@@ -32,7 +32,11 @@ export type TvGameRealtimeAction =
   | { type: 'game/roundStarted'; round: RoundStartEvent }
   | { type: 'game/timerTicked'; timer: TimerTickEvent }
   | { type: 'game/answerProgressed'; progress: AnswerProgressEvent }
-  | { type: 'game/roundEnded'; round: RoundStartEvent | undefined; roundEnd: RoundEndEvent }
+  | {
+      type: 'game/roundEnded';
+      round: RoundStartEvent | undefined;
+      roundEnd: RoundEndEvent;
+    }
   | { type: 'game/reactionWindowOpened'; reactionWindow: ReactionWindowEvent }
   | { type: 'game/nextRoundCountdown'; nextRound: NextRoundCountdownEvent }
   | { type: 'game/ended'; event: GameEndEvent };

@@ -31,9 +31,7 @@ export async function uploadPendingMedia(
   ];
 
   const [coverUpload, questionUploads] = await Promise.all([
-    pendingMedia.cover
-      ? getOrUpload(pendingMedia.cover, source.title)
-      : Promise.resolve(undefined),
+    pendingMedia.cover ? getOrUpload(pendingMedia.cover, source.title) : Promise.resolve(undefined),
     Promise.all(
       questionTasks.map(async (task) => ({
         field: task.field,

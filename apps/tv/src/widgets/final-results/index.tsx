@@ -41,12 +41,7 @@ export function FinalResults({
       <FinalConfetti screenHeight={height} />
       <FinalHeader />
 
-      <Animated.View
-        style={[
-          styles.content,
-          contentAnimationStyle,
-        ]}
-      >
+      <Animated.View style={[styles.content, contentAnimationStyle]}>
         <WinnersPodium first={first} second={second} third={third} />
         <View style={[styles.side]}>
           <FinalRating players={rest} />

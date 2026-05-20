@@ -50,13 +50,13 @@ export function parseLobbyEnvelope(
   return {
     state: dedupeLobbyStatePlayers(parsed.data),
     ...(parsed.data.playerId ? { playerId: parsed.data.playerId } : {}),
-    ...(parsed.data.playerToken ? { playerToken: parsed.data.playerToken } : {}),
+    ...(parsed.data.playerToken
+      ? { playerToken: parsed.data.playerToken }
+      : {}),
   };
 }
 
-export function buildStartingLive(
-  event: GameStartingEvent,
-): LobbyLiveStatus {
+export function buildStartingLive(event: GameStartingEvent): LobbyLiveStatus {
   const remainingSeconds = Math.max(
     0,
     Math.ceil((event.startsAt - Date.now()) / 1000),
@@ -101,4 +101,3 @@ export function buildRevealLive(
       : 0,
   };
 }
-

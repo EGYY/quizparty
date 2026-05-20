@@ -20,8 +20,8 @@ export const QuizDetailCover = memo(function QuizDetailCover({
   const { height } = useWindowDimensions();
   const canUseCover = Boolean(
     quiz.coverUrl &&
-      !quiz.coverUrl.endsWith('.svg') &&
-      !quiz.coverUrl.includes('assets.quizparty.local'),
+    !quiz.coverUrl.endsWith('.svg') &&
+    !quiz.coverUrl.includes('assets.quizparty.local'),
   );
 
   return (

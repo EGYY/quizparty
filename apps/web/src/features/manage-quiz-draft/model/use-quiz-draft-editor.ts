@@ -16,11 +16,7 @@ type UseQuizDraftEditorParams = {
   onDeleted: () => void;
 };
 
-export function useQuizDraftEditor({
-  quizId,
-  onCreated,
-  onDeleted,
-}: UseQuizDraftEditorParams) {
+export function useQuizDraftEditor({ quizId, onCreated, onDeleted }: UseQuizDraftEditorParams) {
   const queryClient = useQueryClient();
   const notify = useToastStore((state) => state.notify);
   const [draft, setDraft] = useState<QuizDraft>(() => createNewDraft());

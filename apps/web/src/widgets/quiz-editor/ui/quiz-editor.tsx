@@ -183,9 +183,7 @@ export const QuizEditor = memo(function QuizEditor({
               onMediaFileChange={(file) => onQuestionMediaFileChange(safeIndex, file)}
               onNavigate={setSelectedIndex}
               onRemove={() => removeQuestion(safeIndex)}
-              onRevealMediaFileChange={(file) =>
-                onQuestionRevealMediaFileChange(safeIndex, file)
-              }
+              onRevealMediaFileChange={(file) => onQuestionRevealMediaFileChange(safeIndex, file)}
             />
           ) : (
             <div className={styles.empty}>

@@ -15,7 +15,11 @@ export function FinalRating({ players }: { players: LeaderboardEntry[] }) {
       </View>
       {players.length ? (
         players.map(player => (
-          <FinalRatingRow density={density} key={player.playerId} player={player} />
+          <FinalRatingRow
+            density={density}
+            key={player.playerId}
+            player={player}
+          />
         ))
       ) : (
         <Text style={styles.empty}>Все игроки уже на пьедестале</Text>
@@ -35,13 +39,25 @@ function FinalRatingRow({
   const isUltra = density === 'ultra';
 
   return (
-    <View style={[styles.row, isDense && styles.row_dense, isUltra && styles.row_ultra]}>
+    <View
+      style={[
+        styles.row,
+        isDense && styles.row_dense,
+        isUltra && styles.row_ultra,
+      ]}
+    >
       <PlayerAvatar
         player={player}
-        style={[styles.avatar, isDense && styles.avatar_dense, isUltra && styles.avatar_ultra]}
+        style={[
+          styles.avatar,
+          isDense && styles.avatar_dense,
+          isUltra && styles.avatar_ultra,
+        ]}
         textStyle={[styles.initial, isDense && styles.initial_dense]}
       />
-      <Text style={[styles.rank, isDense && styles.rank_dense]}>{player.rank}</Text>
+      <Text style={[styles.rank, isDense && styles.rank_dense]}>
+        {player.rank}
+      </Text>
       <View style={styles.info}>
         <Text
           adjustsFontSizeToFit
@@ -51,7 +67,9 @@ function FinalRatingRow({
         >
           {player.nickname}
         </Text>
-        <Text style={[styles.score, isDense && styles.score_dense]}>{player.score}</Text>
+        <Text style={[styles.score, isDense && styles.score_dense]}>
+          {player.score}
+        </Text>
       </View>
     </View>
   );

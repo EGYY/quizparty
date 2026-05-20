@@ -4,11 +4,7 @@ import { fileMatchesMime } from './media-signature';
 const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 const gif = Buffer.from('GIF89a');
-const webp = Buffer.concat([
-  Buffer.from('RIFF'),
-  Buffer.from([0, 0, 0, 0]),
-  Buffer.from('WEBP'),
-]);
+const webp = Buffer.concat([Buffer.from('RIFF'), Buffer.from([0, 0, 0, 0]), Buffer.from('WEBP')]);
 const ogg = Buffer.from('OggS....');
 const mp3Id3 = Buffer.from('ID3....');
 const mp3Sync = Buffer.from([0xff, 0xfb, 0x90, 0x00]);

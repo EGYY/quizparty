@@ -27,4 +27,3 @@ export const PhoneIcon = memo(function PhoneIcon(props: SvgProps) {
     </Svg>
   );
 });
-

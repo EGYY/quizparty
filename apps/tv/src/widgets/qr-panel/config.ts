@@ -18,4 +18,3 @@ export const qrPanelPalette = {
   qrBg: '#FFF6E8',
   qrDark: '#080812',
 } as const;
-

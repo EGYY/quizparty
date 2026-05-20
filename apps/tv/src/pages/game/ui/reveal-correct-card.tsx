@@ -69,7 +69,9 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
             variant="reveal"
           />
           <Text style={styles.correctLabel}>Правильный ответ:</Text>
-          <Text style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}>
+          <Text
+            style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}
+          >
             {correctAnswer}
           </Text>
         </>
@@ -77,13 +79,20 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
         <>
           <Text style={styles.correctStar}>★</Text>
           <Text style={styles.correctLabel}>Правильный ответ:</Text>
-          <Text style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}>
+          <Text
+            style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}
+          >
             {correctAnswer}
           </Text>
           {explanation ? (
             <>
               <View style={styles.correctDivider} />
-              <Text style={[styles.correctExplanation, getExplanationStyle(explanation)]}>
+              <Text
+                style={[
+                  styles.correctExplanation,
+                  getExplanationStyle(explanation),
+                ]}
+              >
                 {explanation}
               </Text>
             </>

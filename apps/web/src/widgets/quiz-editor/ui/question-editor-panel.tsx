@@ -35,9 +35,7 @@ export const QuestionEditorPanel = memo(function QuestionEditorPanel({
   const setOption = useCallback(
     (optionIndex: number, value: string) => {
       onChange({
-        options: question.options.map((option, index) =>
-          index === optionIndex ? value : option,
-        ),
+        options: question.options.map((option, index) => (index === optionIndex ? value : option)),
       });
     },
     [onChange, question.options],

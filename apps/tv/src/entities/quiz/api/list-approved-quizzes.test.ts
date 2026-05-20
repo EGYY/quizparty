@@ -41,7 +41,9 @@ describe('listApprovedQuizzes cache', () => {
     await expect(first).resolves.toBe(data);
     await expect(second).resolves.toBe(data);
     expect(requestMock).toHaveBeenCalledTimes(1);
-    expect(requestMock).toHaveBeenCalledWith('/quizzes/approved?category=MUSIC');
+    expect(requestMock).toHaveBeenCalledWith(
+      '/quizzes/approved?category=MUSIC',
+    );
   });
 
   it('serves cached data until TTL expires', async () => {

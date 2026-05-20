@@ -83,14 +83,9 @@ export class LobbyService {
       // Анти-спуфинг под локом: повторный захват известного playerId без токена.
       if (existingPlayer && !trustedFromToken) {
         if (this.playerTokens.isStrict) {
-          throw wsError(
-            ErrorCode.UNAUTHORIZED,
-            'Player token required to reclaim this player id',
-          );
+          throw wsError(ErrorCode.UNAUTHORIZED, 'Player token required to reclaim this player id');
         }
-        this.logger.warn(
-          `legacy token-less re-join: playerId=${playerId} roomCode=${roomCode}`,
-        );
+        this.logger.warn(`legacy token-less re-join: playerId=${playerId} roomCode=${roomCode}`);
       }
 
       if (!existingPlayer && normalized.players.length >= MAX_PLAYERS) {

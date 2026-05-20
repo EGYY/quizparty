@@ -1,13 +1,12 @@
 import type { ReactionEvent } from '@quizparty/shared';
 import { prependRecentReaction } from './reactions';
 
-const reaction = (id: string, emoji = '🔥'): ReactionEvent =>
-  ({
-    id,
-    emoji,
-    playerId: `00000000-0000-4000-8000-0000000000${id}`,
-    createdAt: '2026-05-20T00:00:00.000Z',
-  });
+const reaction = (id: string, emoji = '🔥'): ReactionEvent => ({
+  id,
+  emoji,
+  playerId: `00000000-0000-4000-8000-0000000000${id}`,
+  createdAt: '2026-05-20T00:00:00.000Z',
+});
 
 describe('prependRecentReaction', () => {
   it('prepends a new reaction and keeps existing order', () => {

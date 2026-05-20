@@ -16,4 +16,3 @@ export type LobbyLiveStatus =
     }
   | { kind: 'reveal'; label: string; remainingSeconds: number }
   | { kind: 'finished'; label: string };
-

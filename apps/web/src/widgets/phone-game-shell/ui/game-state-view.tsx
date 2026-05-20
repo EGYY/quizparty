@@ -168,10 +168,7 @@ export const GameStateView = memo(function GameStateView({
             {media?.prompt ? <small>{media.prompt}</small> : null}
           </div>
         ) : null}
-        <h1
-          className={`${styles['question-title']} ${questionTextClass}`}
-          aria-live="polite"
-        >
+        <h1 className={`${styles['question-title']} ${questionTextClass}`} aria-live="polite">
           {questionText}
         </h1>
 

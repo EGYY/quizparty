@@ -35,8 +35,7 @@ export function TvMediaPlayer({
     didSeekRef.current = false;
   }
 
-  const paused =
-    pausedState.mediaKey === mediaKey ? pausedState.paused : false;
+  const paused = pausedState.mediaKey === mediaKey ? pausedState.paused : false;
 
   useEffect(() => {
     setPausedState(current => {

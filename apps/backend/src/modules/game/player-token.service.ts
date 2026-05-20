@@ -54,10 +54,7 @@ export class PlayerTokenService {
     });
   }
 
-  verify(
-    token: string,
-    expected: { playerId: string; roomCode: string },
-  ): PlayerTokenVerification {
+  verify(token: string, expected: { playerId: string; roomCode: string }): PlayerTokenVerification {
     let payload: PlayerTokenPayload;
     try {
       payload = this.jwt.verify<PlayerTokenPayload>(token, {
