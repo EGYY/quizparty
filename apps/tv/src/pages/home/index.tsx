@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Difficulty, GameMode } from '@quizparty/shared';
 import type { QuizDetail } from '@quizparty/shared';
@@ -50,9 +50,6 @@ export function HomePage() {
     panelX,
   } = useDetailPanel();
 
-  const [selectedQuiz, setSelectedQuiz] = useState<QuizDetail | undefined>();
-  const selected = selectedQuiz ?? visibleQuizzes[0];
-
   const handleCreateRoom = useCallback(
     (quiz: QuizDetail, mode: GameMode) => {
       void createDetailRoom({
@@ -81,10 +78,10 @@ export function HomePage() {
           <CategoryRail selected={category} onSelect={setCategory} />
 
           <QuizzesSection
-            quizzes={quizzes}
+            isLoading={quizzes.isLoading}
+            loadError={quizzes.error}
+            onRefetch={quizzes.refetch}
             visibleQuizzes={visibleQuizzes}
-            selectedQuizId={selected?.id}
-            onFocusQuiz={setSelectedQuiz}
             onOpenQuiz={openQuiz}
           />
         </View>

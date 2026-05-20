@@ -5,7 +5,7 @@
  * Мемоизирован — перерисовывается только при смене номеров раунда.
  */
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
 import { s, sf } from '@shared/config/scale';
 
@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: sf(28),
     fontWeight: '900',
-    marginLeft: s(20),
+    marginLeft: Platform.OS === 'android' ? s(-45) : s(20),
   },
 });

@@ -5,7 +5,7 @@
  * Опциональный prop `speech` рендерит речевой пузырь над головой персонажа.
  */
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'react-native';
 import { hostPresenter } from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
@@ -59,22 +59,33 @@ export const HostCharacter = memo(function HostCharacter({
   );
 
   const isRight = placement !== 'left';
+  const isTopRight = placement === 'topRight';
+
+  // Memoized: prevents a new array + object allocation on every parent re-render.
+  // translateY is a stable AnimatedInterpolation (from useMemo above), so this
+  // array only recreates when placement or mood changes.
+  const wrapStyle = useMemo(
+    () => [
+      styles.wrap,
+      isRight ? styles.rightWrap : styles.leftWrap,
+      isTopRight ? styles.topRightWrap : undefined,
+      { transform: [{ translateY }] },
+    ],
+    [isRight, isTopRight, translateY],
+  );
 
   return (
-    <Animated.View
-      style={[
-        styles.wrap,
-        isRight ? styles.rightWrap : styles.leftWrap,
-        placement === 'topRight' && { top: sv(-120) },
-        { transform: [{ translateY }] },
-      ]}
-    >
+    <Animated.View style={wrapStyle}>
       {/* Речевой пузырь */}
       {speech ? (
         <View
           style={[
             styles.bubble,
-            isRight ? styles.bubble_right : styles.bubble_left,
+            isTopRight
+              ? styles.bubble_topRight
+              : isRight
+                ? styles.bubble_right
+                : styles.bubble_left,
           ]}
         >
           <Text style={styles.bubbleText}>{speech}</Text>
@@ -103,6 +114,13 @@ const styles = StyleSheet.create({
     // что даёт правильный порядок без хардкода.
   },
   rightWrap: { right: s(-14) },
+  topRightWrap: {
+    top: sv(5),
+    right: s(64),
+    bottom: undefined,
+    width: s(320),
+    height: sv(430),
+  },
   leftWrap: {
     left: s(-80),
     bottom: sv(-92),
@@ -122,16 +140,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(22, 20, 40, 0.96)',
     paddingHorizontal: s(16),
     paddingVertical: sv(13),
-    shadowColor: colors.gold,
-    shadowOpacity: 0.45,
-    shadowRadius: s(16),
-    shadowOffset: { width: 0, height: 0 },
+    ...Platform.select({
+      android: { elevation: 6 },
+      default: {
+        shadowColor: colors.gold,
+        shadowOpacity: 0.45,
+        shadowRadius: s(16),
+        shadowOffset: { width: 0, height: 0 },
+      },
+    }),
     zIndex: 10,
   },
   bubble_right: {
     // Над головой персонажа (голова примерно в верхней четверти wrap)
     top: sv(170),
     right: s(300),
+  },
+  bubble_topRight: {
+    top: sv(10),
+    right: s(210),
   },
   bubble_left: {
     top: sv(100),

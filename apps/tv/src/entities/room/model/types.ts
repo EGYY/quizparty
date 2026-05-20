@@ -1,3 +1,10 @@
+import type { TvQuiz, TvRoom } from '@shared/types/tv';
+
+export type UseLobbyRealtimeParams = {
+  quiz: TvQuiz;
+  room: TvRoom;
+};
+
 export type LobbyConnectionStatus =
   | 'connecting'
   | 'connected'

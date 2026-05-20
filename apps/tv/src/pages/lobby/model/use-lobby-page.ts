@@ -44,6 +44,7 @@ export function useLobbyPage(route: LobbyRoute) {
     if (
       lobby.liveStatus.kind !== 'starting' ||
       !lobby.playerId ||
+      !lobby.playerToken ||
       didNavigate.current
     )
       return;
@@ -51,12 +52,14 @@ export function useLobbyPage(route: LobbyRoute) {
     navigation.navigate({
       name: 'game',
       playerId: lobby.playerId,
+      playerToken: lobby.playerToken,
       quiz: route.quiz,
       room: route.room,
     });
   }, [
     lobby.liveStatus.kind,
     lobby.playerId,
+    lobby.playerToken,
     navigation,
     route.quiz,
     route.room,

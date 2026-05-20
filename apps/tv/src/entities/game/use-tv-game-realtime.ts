@@ -1,19 +1,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import {
-  ClientEvent,
-  ServerEvent,
-  lobbyStateSchema,
-  reactionEventSchema,
-} from '@quizparty/shared';
+import { ClientEvent, ServerEvent } from '@quizparty/shared';
 import type { RoundStartEvent } from '@quizparty/shared';
-import type { Socket } from 'socket.io-client';
 import { dedupeLobbyStatePlayers } from '@shared/lib/lobby-state';
 import { createTvSocket } from '@shared/lib/socket';
+import type { TvSocket } from '@shared/lib/socket';
 import type { TvRoom } from '@shared/types/tv';
-import {
-  makeTvGameJoinPayload,
-  readGameSocketError,
-} from './model/event-mappers';
+import { makeTvGameJoinPayload } from './model/event-mappers';
 import {
   initialTvGameRealtimeState,
   tvGameRealtimeReducer,
@@ -22,92 +14,75 @@ import { attachTvGameEvents } from './model/socket-events';
 
 type UseTvGameRealtimeParams = {
   playerId: string;
+  playerToken?: string;
   room: TvRoom;
 };
 
-export function useTvGameRealtime({ playerId, room }: UseTvGameRealtimeParams) {
+export function useTvGameRealtime({
+  playerId,
+  playerToken,
+  room,
+}: UseTvGameRealtimeParams) {
   const [state, dispatch] = useReducer(
     tvGameRealtimeReducer,
     initialTvGameRealtimeState,
   );
-  const gameSocketRef = useRef<Socket | null>(null);
-  const lobbySocketRef = useRef<Socket | null>(null);
+  const gameSocketRef = useRef<TvSocket>(null);
+  const lobbySocketRef = useRef<TvSocket>(null);
   const currentRoundRef = useRef<RoundStartEvent | undefined>(undefined);
 
   const joinPayload = useMemo(
-    () => makeTvGameJoinPayload(room, playerId),
-    [playerId, room],
+    () => makeTvGameJoinPayload(room, playerId, playerToken),
+    [playerId, playerToken, room],
   );
 
-  const applyLobbyState = useCallback((payload: unknown) => {
-    const parsed = lobbyStateSchema.safeParse(payload);
-    if (!parsed.success) return;
-    dispatch({
-      type: 'lobby/stateReceived',
-      state: dedupeLobbyStatePlayers(parsed.data),
-    });
+  const attachGameEvents = useCallback((socket: TvSocket) => {
+    attachTvGameEvents(socket, { currentRoundRef, dispatch });
   }, []);
-
-  const applyReaction = useCallback((payload: unknown) => {
-    const parsed = reactionEventSchema.safeParse(payload);
-    if (!parsed.success) return;
-    dispatch({ type: 'reaction/received', reaction: parsed.data });
-  }, []);
-
-  const attachGameEvents = useCallback(
-    (socket: Socket) => {
-      attachTvGameEvents(socket, {
-        applyLobbyState,
-        applyReaction,
-        currentRoundRef,
-        dispatch,
-      });
-    },
-    [applyLobbyState, applyReaction],
-  );
 
   useEffect(() => {
     const gameSocket = createTvSocket('game');
     const lobbySocket = createTvSocket('lobby');
     gameSocketRef.current = gameSocket;
     lobbySocketRef.current = lobbySocket;
-    const gameManager = gameSocket.io;
-    const handleReconnectAttempt = () =>
-      dispatch({ type: 'connection/statusChanged', status: 'reconnecting' });
-    const handleReconnect = () =>
-      dispatch({ type: 'connection/statusChanged', status: 'connected' });
 
     attachGameEvents(gameSocket);
-    lobbySocket.on(ServerEvent.ERROR, (payload: unknown) =>
-      dispatch({
-        type: 'connection/error',
-        message: readGameSocketError(payload),
-      }),
-    );
 
-    gameSocket.on('connect', () => {
+    lobbySocket.on(ServerEvent.LOBBY_STATE, data => {
+      dispatch({
+        type: 'lobby/stateReceived',
+        state: dedupeLobbyStatePlayers(data),
+      });
+    });
+    lobbySocket.on(ServerEvent.ERROR, data => {
+      dispatch({ type: 'connection/error', message: data.message });
+    });
+
+    gameSocket.onConnect(() => {
       dispatch({ type: 'connection/statusChanged', status: 'connected' });
       dispatch({ type: 'connection/errorCleared' });
       gameSocket.emit(ClientEvent.JOIN_LOBBY, joinPayload);
     });
-    lobbySocket.on('connect', () => {
+    lobbySocket.onConnect(() => {
       lobbySocket.emit(ClientEvent.JOIN_LOBBY, joinPayload);
     });
-    gameSocket.on('disconnect', () =>
-      dispatch({ type: 'connection/statusChanged', status: 'offline' }),
-    );
-    gameSocket.on('connect_error', (event: Error) => {
+    gameSocket.onDisconnect(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'offline' });
+    });
+    gameSocket.onConnectError(event => {
       dispatch({
         type: 'connection/error',
         message: `Game socket: ${event.message}`,
       });
     });
-    gameManager.on('reconnect_attempt', handleReconnectAttempt);
-    gameManager.on('reconnect', handleReconnect);
+    gameSocket.onReconnectAttempt(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'reconnecting' });
+    });
+    gameSocket.onReconnect(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'connected' });
+    });
 
     return () => {
-      gameManager.off('reconnect_attempt', handleReconnectAttempt);
-      gameManager.off('reconnect', handleReconnect);
       gameSocket.disconnect();
       lobbySocket.disconnect();
       gameSocketRef.current = null;
@@ -131,7 +106,6 @@ export function useTvGameRealtime({ playerId, room }: UseTvGameRealtimeParams) {
       socket?.connect();
       return;
     }
-
     socket.emit(ClientEvent.START_GAME);
   }, []);
 

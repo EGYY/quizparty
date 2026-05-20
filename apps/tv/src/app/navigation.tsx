@@ -10,10 +10,16 @@ import type { TvRoom } from '@entities/room';
 export type TvRoute =
   | { name: 'home' }
   | { name: 'lobby'; quiz: TvQuiz; room: TvRoom }
-  | { name: 'game'; playerId: string; quiz: TvQuiz; room: TvRoom };
+  | {
+      name: 'game';
+      playerId: string;
+      playerToken: string;
+      quiz: TvQuiz;
+      room: TvRoom;
+    };
 
 export type TvStackParamList = {
-  Game: { playerId: string; quiz: TvQuiz; room: TvRoom };
+  Game: { playerId: string; playerToken: string; quiz: TvQuiz; room: TvRoom };
   Home: undefined;
   Lobby: { quiz: TvQuiz; room: TvRoom };
 };
@@ -48,6 +54,7 @@ function navigateWithNativeStack(
 
   navigation.navigate('Game', {
     playerId: route.playerId,
+    playerToken: route.playerToken,
     quiz: route.quiz,
     room: route.room,
   });

@@ -6,60 +6,61 @@ import { colors, spacing } from '@shared/config/theme';
 import { sf } from '@shared/config/scale';
 import { PageState } from '@shared/ui/page-state';
 
-type AsyncState = {
-  isLoading: boolean;
-  error: Error | undefined;
-  refetch: () => void;
-};
-
+// Props are flat primitives/stable refs instead of an object so that
+// React.memo shallow-equality check works correctly.
+// Previously `quizzes: AsyncState` was passed as a prop — useAsyncResource
+// returns a new object reference on every call even when values are unchanged,
+// causing QuizzesSection to re-render on every HomePage state change
+// (e.g. detailMode D-pad, overlay open/close) even though data hadn't changed.
 type Props = {
-  quizzes: AsyncState;
+  isLoading: boolean;
+  loadError: Error | undefined;
+  onRefetch: () => void;
   visibleQuizzes: QuizDetail[];
-  selectedQuizId: string | undefined;
-  onFocusQuiz: (quiz: QuizDetail) => void;
   onOpenQuiz: (quiz: QuizDetail) => void;
 };
 
 export const QuizzesSection = memo(function QuizzesSection({
-  quizzes,
+  isLoading,
+  loadError,
+  onRefetch,
   visibleQuizzes,
-  selectedQuizId,
-  onFocusQuiz,
   onOpenQuiz,
 }: Props) {
+  if (isLoading) {
+    return (
+      <PageState
+        title="Загружаем квизы"
+        message="Подтягиваем одобренные подборки с backend."
+      />
+    );
+  }
   return (
     <>
-      {quizzes.isLoading ? (
-        <PageState
-          title="Загружаем квизы"
-          message="Подтягиваем одобренные подборки с backend."
-        />
-      ) : null}
-
-      {quizzes.error && !visibleQuizzes.length ? (
+      {loadError && !visibleQuizzes.length ? (
         <PageState
           actionLabel="Повторить"
           message="Backend недоступен или вернул ошибку. Проверьте сервер и попробуйте еще раз."
           title="Не удалось загрузить квизы"
-          onAction={quizzes.refetch}
+          onAction={onRefetch}
         />
       ) : null}
 
       {visibleQuizzes.length ? (
         <>
-          {quizzes.error ? (
+          {loadError ? (
             <Text style={styles.offlineNote}>
               Backend недоступен, показаны локальные демо-квизы.
             </Text>
           ) : null}
-          <QuizCarousel
-            quizzes={visibleQuizzes}
-            selectedQuizId={selectedQuizId}
-            onFocusQuiz={onFocusQuiz}
-            onOpenQuiz={onOpenQuiz}
-          />
+          <QuizCarousel quizzes={visibleQuizzes} onOpenQuiz={onOpenQuiz} />
         </>
-      ) : null}
+      ) : (
+        <PageState
+          title="Список квизов пуст"
+          message="Для этой категории не нашлось подходящих квизов."
+        />
+      )}
     </>
   );
 });

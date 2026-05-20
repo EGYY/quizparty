@@ -1,9 +1,4 @@
-import {
-  GamePhase,
-  MAX_PLAYERS,
-  lobbyStateSchema,
-  wsErrorEventSchema,
-} from '@quizparty/shared';
+import { GamePhase, MAX_PLAYERS } from '@quizparty/shared';
 import type {
   GameStartingEvent,
   LobbyState,
@@ -12,7 +7,6 @@ import type {
   RoundEndEvent,
   RoundStartEvent,
 } from '@quizparty/shared';
-import { dedupeLobbyStatePlayers } from '@shared/lib/lobby-state';
 import type { TvQuiz, TvRoom } from '@shared/types/tv';
 import type { LobbyLiveStatus } from './types';
 
@@ -36,24 +30,16 @@ export function readLobbySocketError(
   payload: unknown,
   fallback: string,
 ): string {
-  const parsed = wsErrorEventSchema.safeParse(payload);
-  if (parsed.success) return parsed.data.message;
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'message' in payload &&
+    typeof payload.message === 'string'
+  ) {
+    return payload.message;
+  }
   if (payload instanceof Error) return payload.message;
   return fallback;
-}
-
-export function parseLobbyEnvelope(
-  payload: unknown,
-): { state: LobbyState; playerId?: string; playerToken?: string } | null {
-  const parsed = lobbyStateSchema.safeParse(payload);
-  if (!parsed.success) return null;
-  return {
-    state: dedupeLobbyStatePlayers(parsed.data),
-    ...(parsed.data.playerId ? { playerId: parsed.data.playerId } : {}),
-    ...(parsed.data.playerToken
-      ? { playerToken: parsed.data.playerToken }
-      : {}),
-  };
 }
 
 export function buildStartingLive(event: GameStartingEvent): LobbyLiveStatus {

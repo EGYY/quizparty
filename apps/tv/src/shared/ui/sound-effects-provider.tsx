@@ -3,11 +3,12 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
+  useRef,
+  type MutableRefObject,
   type ReactNode,
 } from 'react';
 import { StyleSheet, type ImageRequireSource } from 'react-native';
-import Video from 'react-native-video';
+import Video, { type VideoRef } from 'react-native-video';
 import type { ReactVideoSource } from 'react-native-video/lib/types/video';
 import {
   soundButtonSubmit,
@@ -15,19 +16,13 @@ import {
   soundFocus,
 } from '@shared/assets/sounds';
 
-function toVideoSource(source: ImageRequireSource): ReactVideoSource {
-  return source as unknown as ReactVideoSource;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Context
-// ─────────────────────────────────────────────────────────────────────────────
-
 type SoundEffectsContextValue = {
   playFocus: () => void;
   playSubmit: () => void;
   playError: () => void;
 };
+
+type SoundRef = MutableRefObject<VideoRef | null>;
 
 const SoundEffectsContext = createContext<SoundEffectsContextValue>({
   playFocus: () => {},
@@ -35,19 +30,34 @@ const SoundEffectsContext = createContext<SoundEffectsContextValue>({
   playError: () => {},
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider — each sound gets its own counter; incrementing the counter changes
-// the Video `key`, which remounts it and plays from the start.
-// ─────────────────────────────────────────────────────────────────────────────
+function toVideoSource(source: ImageRequireSource): ReactVideoSource {
+  return source as unknown as ReactVideoSource;
+}
+
+function createPlaySound(ref: SoundRef, minIntervalMs = 0) {
+  let lastPlayedAt = 0;
+
+  return () => {
+    const now = Date.now();
+    if (now - lastPlayedAt < minIntervalMs) return;
+    lastPlayedAt = now;
+
+    ref.current?.seek(0);
+    ref.current?.resume();
+  };
+}
 
 export function SoundEffectsProvider({ children }: { children: ReactNode }) {
-  const [focusKey, setFocusKey] = useState(0);
-  const [submitKey, setSubmitKey] = useState(0);
-  const [errorKey, setErrorKey] = useState(0);
+  const focusRef = useRef<VideoRef | null>(null);
+  const submitRef = useRef<VideoRef | null>(null);
+  const errorRef = useRef<VideoRef | null>(null);
 
-  const playFocus = useCallback(() => setFocusKey(k => k + 1), []);
-  const playSubmit = useCallback(() => setSubmitKey(k => k + 1), []);
-  const playError = useCallback(() => setErrorKey(k => k + 1), []);
+  const playFocus = useMemo(() => createPlaySound(focusRef, 45), []);
+  const playSubmit = useMemo(() => createPlaySound(submitRef), []);
+  const playError = useMemo(() => createPlaySound(errorRef), []);
+  const pauseFocus = useCallback(() => focusRef.current?.pause(), []);
+  const pauseSubmit = useCallback(() => submitRef.current?.pause(), []);
+  const pauseError = useCallback(() => errorRef.current?.pause(), []);
   const value = useMemo(
     () => ({ playFocus, playSubmit, playError }),
     [playError, playFocus, playSubmit],
@@ -56,43 +66,36 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
   return (
     <SoundEffectsContext.Provider value={value}>
       {children}
-      {focusKey > 0 ? (
-        <Video
-          key={`focus-${focusKey}`}
-          disableFocus
-          mixWithOthers="mix"
-          paused={false}
-          source={toVideoSource(soundFocus)}
-          style={styles.hidden}
-        />
-      ) : null}
-      {submitKey > 0 ? (
-        <Video
-          key={`submit-${submitKey}`}
-          disableFocus
-          mixWithOthers="mix"
-          paused={false}
-          source={toVideoSource(soundButtonSubmit)}
-          style={styles.hidden}
-        />
-      ) : null}
-      {errorKey > 0 ? (
-        <Video
-          key={`error-${errorKey}`}
-          disableFocus
-          mixWithOthers="mix"
-          paused={false}
-          source={toVideoSource(soundError)}
-          style={styles.hidden}
-        />
-      ) : null}
+      <Video
+        disableFocus
+        mixWithOthers="mix"
+        paused
+        ref={focusRef}
+        source={toVideoSource(soundFocus)}
+        style={styles.hidden}
+        onEnd={pauseFocus}
+      />
+      <Video
+        disableFocus
+        mixWithOthers="mix"
+        paused
+        ref={submitRef}
+        source={toVideoSource(soundButtonSubmit)}
+        style={styles.hidden}
+        onEnd={pauseSubmit}
+      />
+      <Video
+        disableFocus
+        mixWithOthers="mix"
+        paused
+        ref={errorRef}
+        source={toVideoSource(soundError)}
+        style={styles.hidden}
+        onEnd={pauseError}
+      />
     </SoundEffectsContext.Provider>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Hook
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function useSoundEffects() {
   return useContext(SoundEffectsContext);

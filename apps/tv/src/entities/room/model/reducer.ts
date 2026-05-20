@@ -9,6 +9,7 @@ export type LobbyRealtimeState = {
   error: string | null;
   liveStatus: LobbyLiveStatus;
   playerId: string | undefined;
+  playerToken: string | undefined;
   recentReactions: ReactionEvent[];
   state: LobbyState;
 };
@@ -19,7 +20,12 @@ export type LobbyRealtimeAction =
   | { type: 'error/set'; message: string }
   | { type: 'error/cleared' }
   | { type: 'lobby/invalidState' }
-  | { type: 'lobby/stateReceived'; playerId?: string; state: LobbyState }
+  | {
+      type: 'lobby/stateReceived';
+      playerId?: string;
+      playerToken?: string;
+      state: LobbyState;
+    }
   | { type: 'live/statusChanged'; liveStatus: LobbyLiveStatus }
   | { type: 'reaction/received'; reaction: ReactionEvent };
 
@@ -35,6 +41,7 @@ export function createInitialLobbyRealtimeState(
       label: 'Ожидаем игроков',
     },
     playerId: undefined,
+    playerToken: undefined,
     recentReactions: [],
     state: createInitialLobbyState(room, quiz),
   };
@@ -67,6 +74,7 @@ export function lobbyRealtimeReducer(
         ...state,
         error: null,
         playerId: action.playerId ?? state.playerId,
+        playerToken: action.playerToken ?? state.playerToken,
         state: action.state,
       };
     case 'live/statusChanged':

@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { homeBackground } from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
 import { s, sv } from '@shared/config/scale';
@@ -9,19 +9,23 @@ export const StageBackground = memo(function StageBackground({
 }: {
   children: ReactNode;
 }) {
+  // Plain View + absolute Image instead of ImageBackground.
+  // ImageBackground wraps children in an extra View internally (root → Image →
+  // children container = 3 nodes). This layout saves one View in the hierarchy.
   return (
-    <ImageBackground
-      resizeMode="cover"
-      source={homeBackground}
-      style={styles.root}
-    >
+    <View style={styles.root}>
+      <Image
+        resizeMode="cover"
+        source={homeBackground}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View style={styles.vignette} />
       <View style={styles.leftShade} />
       <View style={styles.starOne} />
       <View style={styles.starTwo} />
       <View style={styles.starThree} />
       {children}
-    </ImageBackground>
+    </View>
   );
 });
 

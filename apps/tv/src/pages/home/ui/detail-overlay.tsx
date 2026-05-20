@@ -28,8 +28,8 @@ export const DetailOverlay = memo(function DetailOverlay({
   onModeChange,
 }: Props) {
   // Stable callback: quiz and mode are the identity of this overlay instance.
-  // Without useCallback, QuizDetailPanel (memo'd) would re-render every time
-  // HomePage re-renders due to selectedQuiz changes during carousel navigation.
+  // Without useCallback, QuizDetailPanel (memo'd) would re-render whenever this
+  // overlay receives unrelated parent updates.
   const handleCreateRoom = useCallback(
     () => onCreateRoom(quiz, mode),
     [onCreateRoom, quiz, mode],

@@ -1,5 +1,12 @@
-import { memo, useCallback } from 'react';
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useMemo } from 'react';
+import {
+  ImageBackground,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { Difficulty } from '@quizparty/shared';
 import type { TvQuiz } from '@entities/quiz';
 import {
@@ -13,7 +20,9 @@ import { Focusable } from '@shared/ui/focusable';
 import { getMediaUrl } from '@shared/lib/media';
 
 // Stable constant outside component — no recreation per render
-const ROTATE_Y = '5deg';
+const ROTATE_Y = '15deg';
+const ACTIVE_SCALE = 1;
+const INACTIVE_SCALE = 0.9;
 
 const difficultyColors: Record<Difficulty, string> = {
   [Difficulty.EASY]: '#7ff2ad',
@@ -48,14 +57,42 @@ export const QuizCard = memo(function QuizCard({
 
   const quizDifficulty = quiz.difficulty ?? Difficulty.MEDIUM;
 
-  const cardInnerStyle = [
-    styles.card,
-    isActive && styles.activeCard,
-    {
-      backgroundColor: quiz.themeColor ?? colors.purple,
-      transform: [{ perspective: 950 }, { rotateY: ROTATE_Y }],
-    },
-  ];
+  // Memoized: prevents new array + object allocation on every render.
+  // Only recreates when isActive or themeColor change — i.e. max 2 cards per D-pad press.
+  const cardInnerStyle = useMemo(
+    () => [
+      styles.card,
+      isActive ? styles.activeCard : null,
+      {
+        backgroundColor: quiz.themeColor ?? colors.purple,
+        transform: [
+          { perspective: 950 },
+          { rotateY: ROTATE_Y },
+          { scale: isActive ? ACTIVE_SCALE : INACTIVE_SCALE },
+        ],
+      },
+    ],
+    [isActive, quiz.themeColor],
+  );
+
+  const frameStyle = useMemo(
+    () => [styles.frame, isActive ? styles.activeFrame : styles.inactiveFrame],
+    [isActive],
+  );
+
+  const categoryChipStyle = useMemo(
+    () => [styles.categoryChip, isActive ? styles.categoryChipActive : null],
+    [isActive],
+  );
+
+  // difficultyColors values are stable string constants — safe dep.
+  const difficultyBadgeStyle = useMemo(
+    () => [
+      styles.difficultyBadge,
+      { backgroundColor: difficultyColors[quizDifficulty] },
+    ],
+    [quizDifficulty],
+  );
 
   // Extracted as a variable to avoid duplication between ImageBackground and View branches.
   // Not a component — avoids reconciler overhead for this leaf content.
@@ -68,36 +105,26 @@ export const QuizCard = memo(function QuizCard({
           <View style={styles.coverShine} />
         </View>
       ) : null}
-      <View
-        style={[styles.categoryChip, isActive && styles.categoryChipActive]}
-      >
+      <View style={categoryChipStyle}>
         <Text style={styles.categoryChipText}>
           {categoryIcons[quiz.category]}{' '}
           {categoryLabels[quiz.category].toUpperCase()}
         </Text>
       </View>
-      <View style={styles.bottomScrimDark} />
+      <LinearGradient
+        colors={['rgba(4,6,19,0)', 'rgba(4,6,19,1)']}
+        style={styles.bottomScrimDark}
+      />
       <View style={styles.cardBody}>
-        <Text
-          numberOfLines={3}
-          style={[styles.title, isActive && styles.titleActive]}
-        >
+        <Text numberOfLines={3} style={styles.title}>
           {quiz.title}
         </Text>
-        <Text
-          numberOfLines={2}
-          style={[styles.description, isActive && styles.descriptionActive]}
-        >
+        <Text numberOfLines={2} style={styles.description}>
           {quiz.description}
         </Text>
         <View style={styles.divider} />
         <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.difficultyBadge,
-              { backgroundColor: difficultyColors[quizDifficulty] },
-            ]}
-          >
+          <View style={difficultyBadgeStyle}>
             <Text style={styles.difficultyText}>
               {difficultyLabels[quizDifficulty]}
             </Text>
@@ -109,24 +136,27 @@ export const QuizCard = memo(function QuizCard({
   );
 
   return (
-    <Focusable
-      onFocus={handleFocus}
-      onPress={handlePress}
-      style={[
-        styles.frame,
-        isActive ? styles.activeFrame : styles.inactiveFrame,
-      ]}
-    >
+    <Focusable onFocus={handleFocus} onPress={handlePress} style={frameStyle}>
+      {/* renderToHardwareTextureAndroid merges ImageBackground + LinearGradient
+          + all overlay Views into one GPU texture per card, keeping the total
+          compositing layer count within Android's hardware budget.
+          ImageBackground's TS types don't include this prop, so we place it on
+          a wrapping View instead — the effect is identical since the entire
+          subtree (image + overlays) is captured into the texture. */}
       {canUseCover && quiz.coverUrl ? (
-        <ImageBackground
-          resizeMode="cover"
-          source={{ uri: getMediaUrl(quiz.coverUrl) }}
-          style={cardInnerStyle}
-        >
-          {posterContent}
-        </ImageBackground>
+        <View renderToHardwareTextureAndroid style={cardInnerStyle}>
+          <ImageBackground
+            resizeMode="cover"
+            source={{ uri: getMediaUrl(quiz.coverUrl) }}
+            style={StyleSheet.absoluteFillObject}
+          >
+            {posterContent}
+          </ImageBackground>
+        </View>
       ) : (
-        <View style={cardInnerStyle}>{posterContent}</View>
+        <View renderToHardwareTextureAndroid style={cardInnerStyle}>
+          {posterContent}
+        </View>
       )}
     </Focusable>
   );
@@ -135,21 +165,20 @@ export const QuizCard = memo(function QuizCard({
 const styles = StyleSheet.create({
   frame: {
     justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 0,
-    paddingHorizontal: s(8),
+    width: s(432),
+    height: sv(590),
   },
   activeFrame: {
-    width: s(456),
-    height: sv(590),
     zIndex: 2,
   },
   inactiveFrame: {
-    width: s(340),
-    height: sv(500),
     opacity: 0.78,
   },
   card: {
-    flex: 1,
+    width: s(456),
+    height: '100%',
     borderRadius: s(30),
     overflow: 'hidden',
     borderColor: 'rgba(255, 224, 168, 0.22)',
@@ -157,11 +186,15 @@ const styles = StyleSheet.create({
   },
   activeCard: {
     borderColor: '#fff0b2',
-    borderWidth: s(3),
-    shadowColor: '#ffe8a3',
-    shadowOpacity: 0.62,
-    shadowRadius: s(26),
-    shadowOffset: { width: 0, height: 0 },
+    ...Platform.select({
+      android: { elevation: 12 },
+      default: {
+        shadowColor: '#ffe8a3',
+        shadowOpacity: 0.62,
+        shadowRadius: s(26),
+        shadowOffset: { width: 0, height: 0 },
+      },
+    }),
   },
   posterDim: {
     ...StyleSheet.absoluteFillObject,
@@ -213,8 +246,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: sv(250),
-    experimental_backgroundImage:
-      'linear-gradient(180deg, rgba(4, 6, 19, 0) 0%, rgba(4, 6, 19, 1) 100%)',
   },
   cardBody: {
     position: 'absolute',
@@ -228,23 +259,15 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: sf(33),
-    lineHeight: sv(38),
+    fontSize: sf(42),
+    lineHeight: sv(48),
     fontWeight: '900',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: sv(4) },
     textShadowRadius: s(9),
   },
-  titleActive: {
-    fontSize: sf(42),
-    lineHeight: sv(48),
-  },
   description: {
     color: colors.textSecondary,
-    fontSize: sf(18),
-    lineHeight: sv(25),
-  },
-  descriptionActive: {
     fontSize: sf(20),
     lineHeight: sv(28),
   },

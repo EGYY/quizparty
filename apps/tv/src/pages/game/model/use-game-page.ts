@@ -9,6 +9,7 @@ export function useGamePage(route: GameRoute) {
   const navigation = useTvNavigation();
   const game = useTvGameRealtime({
     playerId: route.playerId,
+    playerToken: route.playerToken,
     room: route.room,
   });
 

@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import {
-  ClientEvent,
-  ServerEvent,
-  reactionEventSchema,
-} from '@quizparty/shared';
-import type { Socket } from 'socket.io-client';
+import { ClientEvent, ServerEvent } from '@quizparty/shared';
+import type { LobbyState } from '@quizparty/shared';
 import { createTvSocket } from '@shared/lib/socket';
-import type { TvQuiz } from '@shared/types/tv';
-import type { TvRoom } from './model';
-import { parseLobbyEnvelope, readLobbySocketError } from './model/live-status';
+import type { TvSocket } from '@shared/lib/socket';
+import { dedupeLobbyStatePlayers } from '@shared/lib/lobby-state';
+import { readLobbySocketError } from './model/live-status';
 import {
   createInitialLobbyRealtimeState,
   lobbyRealtimeReducer,
@@ -17,11 +13,7 @@ import {
   attachRoomGameEvents,
   attachRoomLobbyLiveEvents,
 } from './model/socket-events';
-
-type UseLobbyRealtimeParams = {
-  quiz: TvQuiz;
-  room: TvRoom;
-};
+import type { UseLobbyRealtimeParams } from './model/types';
 
 export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
   const roomCode = room.roomCode;
@@ -31,11 +23,12 @@ export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
     ({ room: initialRoom, quiz: initialQuiz }) =>
       createInitialLobbyRealtimeState(initialRoom, initialQuiz),
   );
-  const lobbySocketRef = useRef<Socket | null>(null);
-  const gameSocketRef = useRef<Socket | null>(null);
-  const playerIdRef = useRef<string | undefined>(undefined);
+  const lobbySocketRef = useRef<TvSocket>(null);
+  const gameSocketRef = useRef<TvSocket>(null);
+
   // Server-issued player-token (анти-спуфинг). На TV храним в памяти — сессия
   // живёт пока запущено приложение; на повторный JOIN_LOBBY токен пробрасываем.
+  const playerIdRef = useRef<string | undefined>(undefined);
   const playerTokenRef = useRef<string | undefined>(undefined);
 
   const joinPayload = useCallback(
@@ -51,63 +44,53 @@ export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
     [roomCode],
   );
 
-  const applyLobbyState = useCallback((payload: unknown) => {
-    const parsed = parseLobbyEnvelope(payload);
-    if (!parsed) {
-      dispatch({ type: 'lobby/invalidState' });
-      return;
+  // Обработчик личного LOBBY_STATE (содержит playerId + playerToken).
+  // Используется как для lobby-, так и для game-сокета при первом JOIN_LOBBY.
+  const applyPersonalLobbyState = useCallback((data: LobbyState) => {
+    if (data.playerId) {
+      playerIdRef.current = data.playerId;
     }
-
-    if (parsed.playerId) {
-      playerIdRef.current = parsed.playerId;
+    if (data.playerToken) {
+      playerTokenRef.current = data.playerToken;
     }
-    if (parsed.playerToken) {
-      playerTokenRef.current = parsed.playerToken;
-    }
-
     dispatch({
       type: 'lobby/stateReceived',
-      playerId: parsed.playerId,
-      state: parsed.state,
+      playerId: data.playerId,
+      playerToken: data.playerToken,
+      state: dedupeLobbyStatePlayers(data),
     });
   }, []);
 
-  const applyReaction = useCallback((payload: unknown) => {
-    const parsed = reactionEventSchema.safeParse(payload);
-    if (!parsed.success) return;
-    dispatch({ type: 'reaction/received', reaction: parsed.data });
-  }, []);
-
-  const applyError = useCallback((payload: unknown) => {
+  // Обработчик broadcast-событий (PLAYER_JOINED / PLAYER_LEFT / PLAYER_UPDATED).
+  // Эти события рассылаются всей комнате и НЕ содержат playerId/playerToken,
+  // поэтому не должны трогать refs — только обновляют состояние лобби.
+  const applyBroadcastLobbyState = useCallback((data: LobbyState) => {
     dispatch({
-      type: 'connection/error',
-      message: readLobbySocketError(payload, 'Ошибка websocket-соединения'),
+      type: 'lobby/stateReceived',
+      state: dedupeLobbyStatePlayers(data),
     });
   }, []);
 
   const attachGameEvents = useCallback(
-    (socket: Socket) => {
+    (socket: TvSocket) => {
       attachRoomGameEvents(socket, {
-        applyError,
-        applyLobbyState,
-        applyReaction,
+        onLobbyState: applyPersonalLobbyState,
         dispatch,
       });
     },
-    [applyError, applyLobbyState, applyReaction],
+    [applyPersonalLobbyState],
   );
 
   const ensureGameSocket = useCallback(() => {
     if (!playerIdRef.current || gameSocketRef.current) return;
 
     const socket = createTvSocket('game');
-
     gameSocketRef.current = socket;
     attachGameEvents(socket);
-    socket.on('connect', () => {
+    socket.onConnect(() => {
       socket.emit(ClientEvent.JOIN_LOBBY, joinPayload());
     });
-    socket.on('connect_error', (event: Error) => {
+    socket.onConnectError(event => {
       dispatch({
         type: 'error/set',
         message: `Game socket: ${event.message}`,
@@ -118,54 +101,58 @@ export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
   useEffect(() => {
     dispatch({ type: 'connection/statusChanged', status: 'connecting' });
     const socket = createTvSocket('lobby');
-    const manager = socket.io;
     lobbySocketRef.current = socket;
 
-    const handleReconnectAttempt = () =>
-      dispatch({ type: 'connection/statusChanged', status: 'reconnecting' });
-    const handleReconnect = () =>
-      dispatch({ type: 'connection/statusChanged', status: 'connected' });
-
-    socket.on('connect', () => {
+    socket.onConnect(() => {
       dispatch({ type: 'connection/statusChanged', status: 'connected' });
       dispatch({ type: 'error/cleared' });
       socket.emit(ClientEvent.JOIN_LOBBY, joinPayload());
     });
-    socket.on('disconnect', () =>
-      dispatch({ type: 'connection/statusChanged', status: 'offline' }),
-    );
-    socket.on('connect_error', (event: Error) => {
+    socket.onDisconnect(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'offline' });
+    });
+    socket.onConnectError(event => {
       dispatch({
         type: 'connection/error',
         message: `Lobby socket: ${event.message}`,
       });
     });
-    manager.on('reconnect_attempt', handleReconnectAttempt);
-    manager.on('reconnect', handleReconnect);
+    socket.onReconnectAttempt(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'reconnecting' });
+    });
+    socket.onReconnect(() => {
+      dispatch({ type: 'connection/statusChanged', status: 'connected' });
+    });
 
-    socket.on(ServerEvent.LOBBY_STATE, (payload: unknown) => {
-      applyLobbyState(payload);
+    // Личный ответ сервера на JOIN_LOBBY — содержит playerId и playerToken.
+    socket.on(ServerEvent.LOBBY_STATE, data => {
+      applyPersonalLobbyState(data);
       ensureGameSocket();
     });
-    socket.on(ServerEvent.PLAYER_JOINED, applyLobbyState);
-    socket.on(ServerEvent.PLAYER_LEFT, applyLobbyState);
-    socket.on(ServerEvent.PLAYER_UPDATED, applyLobbyState);
-    socket.on(ServerEvent.REACTION_RECEIVED, applyReaction);
-    socket.on(ServerEvent.ERROR, applyError);
+    // Broadcast-события о других игроках — playerId/playerToken отсутствуют.
+    socket.on(ServerEvent.PLAYER_JOINED, applyBroadcastLobbyState);
+    socket.on(ServerEvent.PLAYER_LEFT, applyBroadcastLobbyState);
+    socket.on(ServerEvent.PLAYER_UPDATED, applyBroadcastLobbyState);
+    socket.on(ServerEvent.REACTION_RECEIVED, data => {
+      dispatch({ type: 'reaction/received', reaction: data });
+    });
+    socket.on(ServerEvent.ERROR, data => {
+      dispatch({
+        type: 'connection/error',
+        message: readLobbySocketError(data, 'Ошибка websocket-соединения'),
+      });
+    });
     attachRoomLobbyLiveEvents(socket, dispatch);
 
     return () => {
-      manager.off('reconnect_attempt', handleReconnectAttempt);
-      manager.off('reconnect', handleReconnect);
       socket.disconnect();
       gameSocketRef.current?.disconnect();
       lobbySocketRef.current = null;
       gameSocketRef.current = null;
     };
   }, [
-    applyError,
-    applyLobbyState,
-    applyReaction,
+    applyBroadcastLobbyState,
+    applyPersonalLobbyState,
     ensureGameSocket,
     joinPayload,
   ]);
@@ -215,6 +202,7 @@ export function useLobbyRealtime({ quiz, room }: UseLobbyRealtimeParams) {
     hideQr,
     liveStatus: state.liveStatus,
     playerId: state.playerId,
+    playerToken: state.playerToken,
     recentReactions: state.recentReactions,
     reconnect,
     startGame,

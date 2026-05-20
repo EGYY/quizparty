@@ -74,7 +74,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           ignoreSilentSwitch="ignore"
           mixWithOthers="mix"
           paused={false}
-          playInBackground
           repeat={track.loop}
           source={toVideoSource(track.source)}
           style={styles.hidden}

@@ -50,6 +50,7 @@ export default function App() {
                       route={{
                         name: 'game',
                         playerId: route.params.playerId,
+                        playerToken: route.params.playerToken,
                         quiz: route.params.quiz,
                         room: route.params.room,
                       }}

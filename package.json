@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "build": "pnpm --filter @quizparty/shared build && pnpm --filter '!@quizparty/shared' -r build",
+    "build": "pnpm --filter @quizparty/shared build && pnpm --filter @quizparty/backend build && pnpm --filter @quizparty/web build",
     "dev:web": "pnpm --filter @quizparty/web dev",
     "dev:backend": "pnpm --filter @quizparty/backend start:dev",
     "docker:up": "docker compose up -d",

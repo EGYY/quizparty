@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, {
   Circle,
   Defs,
@@ -10,6 +10,11 @@ import Svg, {
 } from 'react-native-svg';
 import { colors, spacing } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
+
+// Pre-computed at module load — these memo'd components never re-render,
+// but computing s() inline in JSX is unnecessary allocation per-call.
+const ICON_DPAD = s(48);
+const ICON_BTN = s(58);
 
 type RemoteHintsProps = {
   style?: ViewStyle;
@@ -40,7 +45,7 @@ export const RemoteHints = memo(function RemoteHints({
 
 const DPadIcon = memo(function DPadIcon() {
   return (
-    <Svg width={s(48)} height={s(48)} viewBox="0 0 48 48" fill="none">
+    <Svg width={ICON_DPAD} height={ICON_DPAD} viewBox="0 0 48 48" fill="none">
       <Path
         d="M20 4H28C29.6 4 31 5.4 31 7V17H41C42.6 17 44 18.4 44 20V28C44 29.6 42.6 31 41 31H31V41C31 42.6 29.6 44 28 44H20C18.4 44 17 42.6 17 41V31H7C5.4 31 4 29.6 4 28V20C4 18.4 5.4 17 7 17H17V7C17 5.4 18.4 4 20 4Z"
         fill="rgba(255,255,255,0.08)"
@@ -61,7 +66,7 @@ const DPadIcon = memo(function DPadIcon() {
 
 const RemoteOkIcon = memo(function RemoteOkIcon() {
   return (
-    <Svg width={s(58)} height={s(58)} viewBox="0 0 58 58" fill="none">
+    <Svg width={ICON_BTN} height={ICON_BTN} viewBox="0 0 58 58" fill="none">
       <Defs>
         <LinearGradient id="okGradient" x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0%" stopColor="#B5FF8A" />
@@ -94,7 +99,7 @@ const RemoteOkIcon = memo(function RemoteOkIcon() {
 
 export const RemoteBackIcon = memo(function RemoteBackIcon() {
   return (
-    <Svg width={s(58)} height={s(58)} viewBox="0 0 58 58" fill="none">
+    <Svg width={ICON_BTN} height={ICON_BTN} viewBox="0 0 58 58" fill="none">
       <Circle cx={29} cy={29} r={25} fill="rgba(255, 60, 60, 0.12)" />
 
       <Circle
@@ -159,7 +164,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: s(58),
     right: s(58),
-    bottom: sv(34),
+    bottom: sv(10),
     maxWidth: s(700),
 
     minHeight: sv(74),
@@ -175,12 +180,15 @@ const styles = StyleSheet.create({
     borderWidth: s(1.5),
     borderColor: 'rgba(120, 150, 255, 0.42)',
 
-    shadowColor: '#536DFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: s(18),
-
-    elevation: s(14),
+    ...Platform.select({
+      android: { elevation: 14 },
+      default: {
+        shadowColor: '#536DFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.55,
+        shadowRadius: s(18),
+      },
+    }),
   },
 
   hint: {

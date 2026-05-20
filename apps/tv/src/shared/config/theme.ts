@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { s } from './scale';
 
 export const colors = {
@@ -31,19 +31,27 @@ export const radii = {
   xl: s(38),
 };
 
+// On Android, shadow* props are silently ignored — elevation is the correct API.
+// On iOS/tvOS, elevation does nothing — shadow* props are used.
 export const shadows = StyleSheet.create({
-  focus: {
-    shadowColor: colors.purple,
-    shadowOpacity: 0.72,
-    shadowRadius: s(22),
-    shadowOffset: { width: 0, height: 0 },
-  },
-  warm: {
-    shadowColor: colors.gold,
-    shadowOpacity: 0.36,
-    shadowRadius: s(24),
-    shadowOffset: { width: 0, height: 0 },
-  },
+  focus: Platform.select({
+    android: { elevation: 10 },
+    default: {
+      shadowColor: colors.purple,
+      shadowOpacity: 0.72,
+      shadowRadius: s(22),
+      shadowOffset: { width: 0, height: 0 },
+    },
+  }),
+  warm: Platform.select({
+    android: { elevation: 6 },
+    default: {
+      shadowColor: colors.gold,
+      shadowOpacity: 0.36,
+      shadowRadius: s(24),
+      shadowOffset: { width: 0, height: 0 },
+    },
+  }),
 });
 
 export const spacing = {
