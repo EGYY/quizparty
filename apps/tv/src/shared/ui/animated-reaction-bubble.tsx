@@ -11,6 +11,18 @@ import { colors } from '@shared/config/theme';
 import { s, sf } from '@shared/config/scale';
 import { hashString } from '@shared/lib/hash-string';
 
+const MAX_PLAYED_REACTIONS = 120;
+const playedReactionKeys = new Set<string>();
+
+function rememberPlayedReaction(key: string): void {
+  if (playedReactionKeys.has(key)) return;
+  playedReactionKeys.add(key);
+  if (playedReactionKeys.size <= MAX_PLAYED_REACTIONS) return;
+
+  const oldestKey = playedReactionKeys.values().next().value;
+  if (typeof oldestKey === 'string') playedReactionKeys.delete(oldestKey);
+}
+
 export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
   reaction,
   range = 'default',
@@ -18,7 +30,10 @@ export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
   reaction: ReactionEvent;
   range?: 'default' | 'finalHost';
 }) {
-  const [visible, setVisible] = useState(true);
+  const reactionKey = `${range}:${reaction.id}`;
+  const [visible, setVisible] = useState(
+    () => !playedReactionKeys.has(reactionKey),
+  );
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.78)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -35,12 +50,18 @@ export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
   }, [range, reaction.id]);
 
   useEffect(() => {
+    if (playedReactionKeys.has(reactionKey)) {
+      setVisible(false);
+      return undefined;
+    }
+
+    rememberPlayedReaction(reactionKey);
     setVisible(true);
     opacity.setValue(0);
     scale.setValue(0.78);
     translateY.setValue(20);
 
-    Animated.sequence([
+    const animation = Animated.sequence([
       Animated.parallel([
         Animated.timing(opacity, {
           duration: 160,
@@ -83,10 +104,14 @@ export const AnimatedReactionBubble = memo(function AnimatedReactionBubble({
           useNativeDriver: true,
         }),
       ]),
-    ]).start(({ finished }) => {
+    ]);
+
+    animation.start(({ finished }) => {
       if (finished) setVisible(false);
     });
-  }, [opacity, reaction.id, scale, translateY]);
+
+    return () => animation.stop();
+  }, [opacity, reaction.id, reactionKey, scale, translateY]);
 
   if (!visible) return null;
 

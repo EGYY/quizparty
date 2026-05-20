@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useLayoutEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import type { ReactionEvent } from '@quizparty/shared';
 import type { TvGameState } from '@entities/game';
@@ -22,15 +22,17 @@ export const GameSurface = memo(function GameSurface({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(22)).current;
   const prevPhase = useRef<string | null>(null);
+  const phaseAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (gameState.phase === prevPhase.current) return;
     prevPhase.current = gameState.phase;
 
+    phaseAnimationRef.current?.stop();
     fadeAnim.setValue(0);
     slideAnim.setValue(22);
 
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 360,
@@ -44,7 +46,21 @@ export const GameSurface = memo(function GameSurface({
         useNativeDriver: true,
         isInteraction: false,
       }),
-    ]).start();
+    ]);
+
+    phaseAnimationRef.current = animation;
+    animation.start(({ finished }) => {
+      if (finished && phaseAnimationRef.current === animation) {
+        phaseAnimationRef.current = null;
+      }
+    });
+
+    return () => {
+      animation.stop();
+      if (phaseAnimationRef.current === animation) {
+        phaseAnimationRef.current = null;
+      }
+    };
   }, [gameState.phase]);
 
   function renderContent() {
