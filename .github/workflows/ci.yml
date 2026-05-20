@@ -53,6 +53,9 @@ jobs:
       - name: Build shared (required for type checking)
         run: pnpm --filter @quizparty/shared build
 
+      - name: Generate Prisma client (required for type checking)
+        run: pnpm db:generate
+
       - name: Type check all packages
         run: pnpm typecheck
 
@@ -75,6 +78,9 @@ jobs:
 
       - name: Build shared
         run: pnpm --filter @quizparty/shared build
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
 
       - name: Build backend
         run: pnpm --filter @quizparty/backend build
