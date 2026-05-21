@@ -26,10 +26,14 @@ type TrackState = {
 } | null;
 
 type MusicContextValue = {
+  setPaused: (paused: boolean) => void;
   setTrack: (source: SoundSource | null | undefined, loop?: boolean) => void;
 };
 
-const MusicContext = createContext<MusicContextValue>({ setTrack: () => {} });
+const MusicContext = createContext<MusicContextValue>({
+  setPaused: () => {},
+  setTrack: () => {},
+});
 
 function toVideoSource(source: ImageRequireSource): ReactVideoSource {
   return source as unknown as ReactVideoSource;
@@ -43,6 +47,7 @@ function toVideoSource(source: ImageRequireSource): ReactVideoSource {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function MusicProvider({ children }: { children: ReactNode }) {
+  const [paused, setPaused] = useState(false);
   const [track, setTrackState] = useState<TrackState>({
     source: soundMainTheme,
     loop: true,
@@ -63,7 +68,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
-  const value = useMemo(() => ({ setTrack }), [setTrack]);
+  const value = useMemo(() => ({ setPaused, setTrack }), [setPaused, setTrack]);
 
   return (
     <MusicContext.Provider value={value}>
@@ -73,7 +78,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           key={track.key}
           ignoreSilentSwitch="ignore"
           mixWithOthers="mix"
-          paused={false}
+          paused={paused}
           repeat={track.loop}
           source={toVideoSource(track.source)}
           style={styles.hidden}
@@ -97,7 +102,16 @@ export function useMusicTrack(
   const { setTrack } = useContext(MusicContext);
   useEffect(() => {
     setTrack(source, loop);
+    return () => setTrack(null);
   }, [source, loop, setTrack]);
+}
+
+export function useMusicPaused(paused: boolean) {
+  const { setPaused } = useContext(MusicContext);
+  useEffect(() => {
+    setPaused(paused);
+    return () => setPaused(false);
+  }, [paused, setPaused]);
 }
 
 const styles = StyleSheet.create({

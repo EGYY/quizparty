@@ -17,7 +17,7 @@ export const StageBackground = memo(function StageBackground({
       <Image
         resizeMode="cover"
         source={homeBackground}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.vignette} />
       <View style={styles.leftShade} />
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgNight,
   },
   vignette: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(5, 7, 20, 0.22)',
   },
   leftShade: {

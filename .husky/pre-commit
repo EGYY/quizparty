@@ -9,3 +9,4 @@ pnpm db:generate
 
 echo "TypeScript typecheck..."
 pnpm typecheck
+

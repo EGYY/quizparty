@@ -52,11 +52,19 @@ function navigateWithNativeStack(
     return;
   }
 
-  navigation.navigate('Game', {
-    playerId: route.playerId,
-    playerToken: route.playerToken,
-    quiz: route.quiz,
-    room: route.room,
+  navigation.reset({
+    index: 0,
+    routes: [
+      {
+        name: 'Game',
+        params: {
+          playerId: route.playerId,
+          playerToken: route.playerToken,
+          quiz: route.quiz,
+          room: route.room,
+        },
+      },
+    ],
   });
 }
 

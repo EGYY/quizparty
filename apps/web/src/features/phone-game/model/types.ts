@@ -1,6 +1,7 @@
 import type {
   AnswerAcceptedEvent,
   GameEndEvent,
+  GamePausedEvent,
   GameStartingEvent,
   NextRoundCountdownEvent,
   ReactionWindowEvent,
@@ -22,6 +23,8 @@ export type PhoneGameState =
   | { event: GameStartingEvent; phase: 'starting' }
   | {
       accepted?: AnswerAcceptedEvent;
+      isPaused?: boolean;
+      pause?: GamePausedEvent | undefined;
       phase: 'question';
       round: RoundStartEvent;
       selectedAnswerIndex?: number;
@@ -29,6 +32,8 @@ export type PhoneGameState =
     }
   | {
       nextRound?: NextRoundCountdownEvent;
+      isPaused?: boolean;
+      pause?: GamePausedEvent | undefined;
       phase: 'reveal';
       reactionWindow?: ReactionWindowEvent;
       round?: RoundStartEvent;

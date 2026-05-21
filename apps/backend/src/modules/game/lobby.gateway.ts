@@ -25,6 +25,12 @@ import { type QuizPartySocket, requireSession } from '../../common/gateways/sock
 import { GameRealtimeService } from './game-realtime.service';
 import { LobbyService } from './lobby.service';
 
+const DISCONNECT_GRACE_MS = 750;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 @UseFilters(WsExceptionFilter, WsFallbackExceptionFilter)
 @WebSocketGateway({ namespace: 'lobby' })
 export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
@@ -43,6 +49,9 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayDisconnect {
   async handleDisconnect(socket: QuizPartySocket): Promise<void> {
     const { roomCode, playerId } = socket.data;
     if (!roomCode || !playerId) return;
+
+    await delay(DISCONNECT_GRACE_MS);
+    if (await this.realtime.hasConnectedPlayer(roomCode, playerId)) return;
 
     const result = await this.lobby.disconnectPlayer(roomCode, playerId);
     if (!result) return;

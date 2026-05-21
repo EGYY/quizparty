@@ -26,4 +26,19 @@ export class GameRealtimeService {
     this.emitLobby(roomCode, event, payload);
     this.emitGame(roomCode, event, payload);
   }
+
+  async hasConnectedPlayer(roomCode: string, playerId: string): Promise<boolean> {
+    const servers = [this.lobbyServer, this.gameServer].filter((server): server is Server =>
+      Boolean(server),
+    );
+
+    for (const server of servers) {
+      const sockets = await server.in(roomCode).fetchSockets();
+      if (sockets.some((socket) => socket.data.playerId === playerId)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

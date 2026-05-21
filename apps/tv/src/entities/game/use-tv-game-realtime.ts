@@ -109,13 +109,56 @@ export function useTvGameRealtime({
     socket.emit(ClientEvent.START_GAME);
   }, []);
 
+  const pauseGame = useCallback(() => {
+    const socket = gameSocketRef.current;
+    if (!socket?.connected) {
+      dispatch({
+        type: 'connection/error',
+        message: 'Нет соединения с game socket для паузы',
+      });
+      socket?.connect();
+      return;
+    }
+    socket.emit(ClientEvent.PAUSE_GAME);
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    const socket = gameSocketRef.current;
+    if (!socket?.connected) {
+      dispatch({
+        type: 'connection/error',
+        message: 'Нет соединения с game socket для продолжения',
+      });
+      socket?.connect();
+      return;
+    }
+    socket.emit(ClientEvent.RESUME_GAME);
+  }, []);
+
+  const endGame = useCallback(() => {
+    const socket = gameSocketRef.current;
+    if (!socket?.connected) {
+      dispatch({
+        type: 'connection/error',
+        message: 'Нет соединения с game socket для завершения игры',
+      });
+      socket?.connect();
+      return;
+    }
+    socket.emit(ClientEvent.END_GAME);
+  }, []);
+
   return {
     connectionStatus: state.connectionStatus,
+    endGame,
     error: state.error,
     gameState: state.gameState,
     lobbyState: state.lobbyState,
+    pauseGame,
     playAgain,
     recentReactions: state.recentReactions,
     reconnect,
+    resumeGame,
+    roomClosed: state.roomClosed,
   };
 }

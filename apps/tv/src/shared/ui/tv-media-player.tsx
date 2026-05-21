@@ -8,12 +8,14 @@ import { getMediaUrl } from '@shared/lib/media';
 
 export function TvMediaPlayer({
   fallbackIcon = '?',
+  forcePaused = false,
   media,
   variant = 'question',
   overrideWidth,
   overrideHeight,
 }: {
   fallbackIcon?: string;
+  forcePaused?: boolean;
   media: Media | undefined;
   variant?: 'question' | 'reveal' | 'question-av';
   overrideWidth?: number;
@@ -35,7 +37,9 @@ export function TvMediaPlayer({
     didSeekRef.current = false;
   }
 
-  const paused = pausedState.mediaKey === mediaKey ? pausedState.paused : false;
+  const paused =
+    forcePaused ||
+    (pausedState.mediaKey === mediaKey ? pausedState.paused : false);
 
   useEffect(() => {
     setPausedState(current => {

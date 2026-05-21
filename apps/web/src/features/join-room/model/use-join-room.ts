@@ -11,19 +11,31 @@ import {
   readStoredPhoneProfile,
   saveLastRoom,
   saveStoredPhoneProfile,
+  type StoredPhoneProfile,
 } from '@entities/player';
 import { getRoomSummary } from '@entities/room';
 import { useToastStore } from '@shared/ui/toast';
 
 const fallbackAvatarId = phoneAvatars[0]?.id ?? 'avatar-1';
-const storedProfile = readStoredPhoneProfile() ?? {
-  avatarId: fallbackAvatarId,
-  nickname: '',
+
+type InitialPhoneProfile = StoredPhoneProfile & {
+  canAutoJoinRouteRoom: boolean;
 };
 
-const safeDefaultAvatarId = phoneAvatars.some((a) => a.id === storedProfile.avatarId)
-  ? storedProfile.avatarId
-  : fallbackAvatarId;
+function readInitialPhoneProfile(): InitialPhoneProfile {
+  const storedProfile = readStoredPhoneProfile();
+  const avatarId =
+    storedProfile && phoneAvatars.some((avatar) => avatar.id === storedProfile.avatarId)
+      ? storedProfile.avatarId
+      : fallbackAvatarId;
+  const nickname = storedProfile?.nickname ?? '';
+
+  return {
+    avatarId,
+    nickname,
+    canAutoJoinRouteRoom: nickname.trim().length >= 2,
+  };
+}
 
 function normalizeRoomCode(value?: string | null): string {
   return value?.trim().toUpperCase() ?? '';
@@ -39,6 +51,8 @@ export function useJoinRoom() {
   const params = useParams<{ roomCode?: string }>();
   const [searchParams] = useSearchParams();
   const routeRoomCode = normalizeRoomCode(params.roomCode ?? searchParams.get('room'));
+  const [initialProfile] = useState(readInitialPhoneProfile);
+  const canAutoJoinRouteRoomRef = useRef(initialProfile.canAutoJoinRouteRoom);
   const leavingRef = useRef(false);
   const [room, setRoom] = useState<RoomSummary | undefined>(() => {
     if (!routeRoomCode) return undefined;
@@ -49,8 +63,8 @@ export function useJoinRoom() {
     return undefined;
   });
   const [roomCode, setRoomCodeState] = useState(routeRoomCode);
-  const [nickname, setNickname] = useState(storedProfile.nickname);
-  const [avatarId, setAvatarId] = useState(safeDefaultAvatarId);
+  const [nickname, setNickname] = useState(initialProfile.nickname);
+  const [avatarId, setAvatarId] = useState(initialProfile.avatarId);
   const playerId = useMemo(() => getOrCreatePlayerId(), []);
 
   const { isPending, mutate: joinRoom } = useMutation({
@@ -81,9 +95,9 @@ export function useJoinRoom() {
     if (!routeRoomCode || leavingRef.current) return;
     setRoomCodeState(routeRoomCode);
     if (room?.roomCode === routeRoomCode || isPending) return;
-    if (nickname.trim().length < 2) return;
+    if (!canAutoJoinRouteRoomRef.current) return;
     joinRoom(routeRoomCode);
-  }, [isPending, joinRoom, nickname, room?.roomCode, routeRoomCode]);
+  }, [isPending, joinRoom, room?.roomCode, routeRoomCode]);
 
   const onJoin = useCallback(() => {
     if (!canJoin) return;

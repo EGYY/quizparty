@@ -1,11 +1,14 @@
 import type {
   AnswerProgressEvent,
   GameEndEvent,
+  GamePausedEvent,
+  GameResumedEvent,
   GameStartingEvent,
   LobbyState,
   NextRoundCountdownEvent,
   ReactionEvent,
   ReactionWindowEvent,
+  RoomClosedEvent,
   RoundEndEvent,
   RoundStartEvent,
   TimerTickEvent,
@@ -20,6 +23,7 @@ export type TvGameRealtimeState = {
   gameState: TvGameState;
   lobbyState: LobbyState | undefined;
   recentReactions: ReactionEvent[];
+  roomClosed: RoomClosedEvent | undefined;
 };
 
 export type TvGameRealtimeAction =
@@ -39,7 +43,10 @@ export type TvGameRealtimeAction =
     }
   | { type: 'game/reactionWindowOpened'; reactionWindow: ReactionWindowEvent }
   | { type: 'game/nextRoundCountdown'; nextRound: NextRoundCountdownEvent }
-  | { type: 'game/ended'; event: GameEndEvent };
+  | { type: 'game/ended'; event: GameEndEvent }
+  | { type: 'game/paused'; event: GamePausedEvent }
+  | { type: 'game/resumed'; event: GameResumedEvent }
+  | { type: 'game/roomClosed'; event: RoomClosedEvent };
 
 export const initialTvGameRealtimeState: TvGameRealtimeState = {
   connectionStatus: 'connecting',
@@ -47,6 +54,7 @@ export const initialTvGameRealtimeState: TvGameRealtimeState = {
   gameState: { phase: 'waiting' },
   lobbyState: undefined,
   recentReactions: [],
+  roomClosed: undefined,
 };
 
 export function tvGameRealtimeReducer(
@@ -90,6 +98,7 @@ export function tvGameRealtimeReducer(
       };
     case 'game/timerTicked':
       if (state.gameState.phase !== 'question') return state;
+      if (state.gameState.isPaused) return state;
       return {
         ...state,
         gameState: { ...state.gameState, timer: action.timer },
@@ -120,6 +129,7 @@ export function tvGameRealtimeReducer(
       };
     case 'game/nextRoundCountdown':
       if (state.gameState.phase !== 'reveal') return state;
+      if (state.gameState.isPaused) return state;
       return {
         ...state,
         gameState: {
@@ -131,6 +141,74 @@ export function tvGameRealtimeReducer(
       return {
         ...state,
         gameState: { phase: 'final', event: action.event },
+      };
+    case 'game/paused':
+      if (
+        state.gameState.phase !== 'question' &&
+        state.gameState.phase !== 'reveal'
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        gameState: {
+          ...state.gameState,
+          isPaused: true,
+          pause: action.event,
+        },
+      };
+    case 'game/resumed':
+      if (state.gameState.phase === 'question') {
+        return {
+          ...state,
+          gameState: {
+            ...state.gameState,
+            isPaused: false,
+            pause: undefined,
+            timer: {
+              ...state.gameState.timer,
+              remainingSeconds: Math.ceil(action.event.remainingMs / 1000),
+              serverTime: action.event.serverTime,
+            },
+          },
+        };
+      }
+      if (state.gameState.phase === 'reveal') {
+        return {
+          ...state,
+          gameState: {
+            ...state.gameState,
+            isPaused: false,
+            pause: undefined,
+            ...(state.gameState.nextRound
+              ? {
+                  nextRound: {
+                    ...state.gameState.nextRound,
+                    nextRoundStartsAt: action.event.targetTime,
+                    remainingSeconds: Math.ceil(
+                      action.event.remainingMs / 1000,
+                    ),
+                    serverTime: action.event.serverTime,
+                  },
+                }
+              : {}),
+            ...(state.gameState.reactionWindow
+              ? {
+                  reactionWindow: {
+                    ...state.gameState.reactionWindow,
+                    closesAt: action.event.targetTime,
+                    serverTime: action.event.serverTime,
+                  },
+                }
+              : {}),
+          },
+        };
+      }
+      return state;
+    case 'game/roomClosed':
+      return {
+        ...state,
+        roomClosed: action.event,
       };
   }
 }

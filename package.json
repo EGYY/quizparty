@@ -16,6 +16,7 @@
     "db:seed": "pnpm --filter @quizparty/backend prisma:seed",
     "db:studio": "pnpm --filter @quizparty/backend prisma:studio",
     "server:setup": "pnpm db:generate && pnpm db:migrate && pnpm db:seed",
+    "prepare": "git config core.hooksPath .husky",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
