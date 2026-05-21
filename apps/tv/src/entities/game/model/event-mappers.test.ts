@@ -32,6 +32,7 @@ describe('buildInitialTimer', () => {
       remainingSeconds: 15,
       totalSeconds: 30,
       serverTime: 25_200,
+      stage: 'answering',
     });
   });
 
@@ -47,6 +48,23 @@ describe('buildInitialTimer', () => {
       remainingSeconds: 0,
       totalSeconds: 1,
       serverTime: 25_200,
+      stage: 'answering',
+    });
+  });
+
+  it('builds a reading timer before the answer window opens', () => {
+    expect(
+      buildInitialTimer(
+        roundStart({
+          answerStartTime: 30_000,
+          roundEndTime: 37_000,
+        }),
+      ),
+    ).toEqual({
+      remainingSeconds: 5,
+      totalSeconds: 20,
+      serverTime: 25_200,
+      stage: 'reading',
     });
   });
 });

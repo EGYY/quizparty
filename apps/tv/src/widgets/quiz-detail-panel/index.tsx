@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
 
   // ── Scroll ──
   scrollContent: {
-    paddingHorizontal: s(28),
-    paddingTop: sv(22),
-    paddingBottom: sv(28),
-    gap: s(16),
+    paddingHorizontal: s(26),
+    paddingTop: sv(18),
+    paddingBottom: sv(20),
+    gap: sv(10),
   },
 });

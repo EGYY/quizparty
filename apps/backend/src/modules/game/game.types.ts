@@ -35,6 +35,8 @@ export type InternalGameState = {
   pauseRemainingMs?: number;
   roundStartedAt?: number;
   roundEndsAt?: number;
+  answerWindowOpensAt?: number;
+  answerWindowOpenedAt?: number;
   revealEndsAt?: number;
   currentQuestion?: InternalGameQuestion;
   lastActivityAt: number;

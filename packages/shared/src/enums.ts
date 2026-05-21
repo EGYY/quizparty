@@ -22,6 +22,7 @@ export enum ServerEvent {
   HOST_TRANSFERRED = 'host_transferred',
   GAME_STARTING = 'game_starting',
   ROUND_START = 'round_start',
+  ANSWER_WINDOW_OPEN = 'answer_window_open',
   TIMER_TICK = 'timer_tick',
   ANSWER_ACCEPTED = 'answer_accepted',
   ANSWER_PROGRESS = 'answer_progress',
@@ -57,6 +58,7 @@ export enum Difficulty {
 export enum GameMode {
   FAST = 'FAST',
   CLASSIC = 'CLASSIC',
+  REACTION = 'REACTION',
 }
 
 export enum QuizStatus {

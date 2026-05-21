@@ -45,7 +45,7 @@ export const QuizDetailInfoRow = memo(function QuizDetailInfoRow({
         <View
           style={[styles.statCard, { borderColor: `${difficultyColor}55` }]}
         >
-          <SignalBarsIcon size={s(30)} color={difficultyColor} />
+          <SignalBarsIcon size={s(26)} color={difficultyColor} />
           <View>
             <Text style={[styles.statValue, { color: difficultyColor }]}>
               {difficultyLabels[quizDifficulty]}
@@ -62,72 +62,72 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: s(12),
+    gap: s(10),
   },
   author: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: s(12),
+    gap: s(10),
     borderRadius: radii.md,
     borderWidth: s(1),
     borderColor: 'rgba(255, 255, 255, 0.10)',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: s(16),
-    paddingVertical: sv(12),
+    paddingHorizontal: s(14),
+    paddingVertical: sv(9),
   },
   authorMark: {
-    width: s(44),
-    height: s(44),
+    width: s(40),
+    height: s(40),
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: colors.purple,
-    borderRadius: s(22),
+    borderRadius: s(20),
     borderWidth: s(2),
     backgroundColor: 'rgba(155, 124, 255, 0.16)',
   },
   authorMarkText: {
     color: colors.gold,
-    fontSize: sf(18),
+    fontSize: sf(17),
     fontWeight: '900',
   },
   authorLabel: {
     color: colors.textMuted,
-    fontSize: sf(16),
+    fontSize: sf(14),
     fontWeight: '800',
   },
   authorName: {
     color: colors.text,
-    fontSize: sf(18),
+    fontSize: sf(17),
     fontWeight: '900',
   },
   statGroup: {
     flexDirection: 'row',
-    gap: s(10),
+    gap: s(8),
   },
   statCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: s(10),
+    gap: s(8),
     borderRadius: radii.md,
     borderWidth: s(1.5),
     borderColor: 'rgba(255, 255, 255, 0.12)',
     backgroundColor: 'rgba(255, 255, 255, 0.065)',
-    paddingHorizontal: s(14),
-    paddingVertical: sv(12),
-    minWidth: s(112),
+    paddingHorizontal: s(12),
+    paddingVertical: sv(9),
+    minWidth: s(104),
   },
   statEmoji: {
-    fontSize: sf(22),
+    fontSize: sf(20),
   },
   statValue: {
     color: colors.text,
-    fontSize: sf(20),
+    fontSize: sf(18),
     fontWeight: '900',
   },
   statLabel: {
     color: colors.textSecondary,
-    fontSize: sf(13),
+    fontSize: sf(12),
     fontWeight: '700',
   },
 });

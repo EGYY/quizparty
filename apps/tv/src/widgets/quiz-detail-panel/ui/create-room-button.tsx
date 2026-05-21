@@ -19,7 +19,7 @@ export const CreateRoomButton = memo(function CreateRoomButton({
       onPress={onPress}
       style={styles.primary}
     >
-      <PartyPopperIcon accentColor={colors.purple} size={s(74)} />
+      <PartyPopperIcon accentColor={colors.purple} size={s(56)} />
       <Text style={styles.primaryText}>
         {isCreating ? 'Создаём комнату...' : 'Создать комнату'}
       </Text>
@@ -29,10 +29,10 @@ export const CreateRoomButton = memo(function CreateRoomButton({
 
 const styles = StyleSheet.create({
   primary: {
-    minHeight: sv(78),
+    minHeight: sv(90),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: s(22),
+    borderRadius: s(20),
     borderWidth: s(2),
     borderColor: 'rgba(255, 248, 238, 0.78)',
     backgroundColor: colors.purple,
@@ -40,13 +40,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.76,
     shadowRadius: s(24),
     shadowOffset: { width: 0, height: 0 },
-    marginTop: sv(12),
+    marginTop: sv(4),
     flexDirection: 'row',
     gap: s(14),
   },
   primaryText: {
     color: colors.text,
-    fontSize: sf(29),
+    fontSize: sf(28),
     fontWeight: '900',
   },
 });

@@ -13,14 +13,23 @@ export const BASE_SCORE = 1000;
 export const GAME_MODE_SETTINGS = {
   [GameMode.FAST]: {
     questionDurationMs: 5_000,
+    answerRevealDelayMs: 0,
     revealDurationMs: 8_000,
     roundIntroDurationMs: 1_500,
     showExplanation: false,
   },
   [GameMode.CLASSIC]: {
     questionDurationMs: 10_000,
+    answerRevealDelayMs: 0,
     revealDurationMs: 12_000,
     roundIntroDurationMs: 2_500,
+    showExplanation: true,
+  },
+  [GameMode.REACTION]: {
+    questionDurationMs: 7_000,
+    answerRevealDelayMs: 7_000,
+    revealDurationMs: 10_000,
+    roundIntroDurationMs: 2_000,
     showExplanation: true,
   },
 } as const;

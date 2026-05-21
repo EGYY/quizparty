@@ -1,5 +1,6 @@
 import { GamePhase } from '@quizparty/shared';
 import type {
+  AnswerWindowOpenEvent,
   GamePausedEvent,
   GameResumedEvent,
   RoomClosedEvent,
@@ -19,6 +20,16 @@ const round = {
     questionText: 'Question?',
     options: ['A', 'B', 'C', 'D'],
     order: 0,
+  },
+} satisfies RoundStartEvent;
+
+const readingRound = {
+  ...round,
+  answerStartTime: 17_000,
+  roundEndTime: 24_000,
+  question: {
+    ...round.question,
+    options: undefined,
   },
 } satisfies RoundStartEvent;
 
@@ -88,6 +99,45 @@ describe('tvGameRealtimeReducer pause flow', () => {
       timer: {
         remainingSeconds: 12,
         serverTime: 30_000,
+      },
+    });
+  });
+
+  it('merges answer options when the reaction answer window opens', () => {
+    const event = {
+      questionId: round.question.id,
+      options: ['A', 'B', 'C', 'D'],
+      serverTime: 17_000,
+      answerStartTime: 17_000,
+      roundEndTime: 24_000,
+    } satisfies AnswerWindowOpenEvent;
+
+    const result = tvGameRealtimeReducer(
+      {
+        ...initialTvGameRealtimeState,
+        gameState: {
+          phase: 'question',
+          round: readingRound,
+          timer: {
+            remainingSeconds: 7,
+            totalSeconds: 7,
+            serverTime: 10_000,
+            stage: 'reading',
+          },
+        },
+      },
+      { type: 'game/answerWindowOpened', event },
+    );
+
+    expect(result.gameState).toMatchObject({
+      phase: 'question',
+      round: {
+        question: {
+          options: event.options,
+        },
+      },
+      timer: {
+        stage: 'answering',
       },
     });
   });

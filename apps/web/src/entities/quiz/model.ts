@@ -55,9 +55,12 @@ export function localValidation(draft: QuizDraft): QuizDraft['validation'] {
     },
     {
       code: 'FOUR_ANSWERS',
-      label: 'У каждого вопроса 4 ответа',
+      label: 'У каждого вопроса минимум 2 ответа',
       passed: draft.questions.every(
-        (question) => question.options.length === 4 && question.options.every(Boolean),
+        (question) =>
+          question.options.length <= 4 &&
+          question.options.length >= 2 &&
+          question.options.every(Boolean),
       ),
       severity: 'ERROR',
     },

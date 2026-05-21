@@ -29,6 +29,20 @@ export function attachTvGameEvents(
     currentRoundRef.current = data;
     dispatch({ type: 'game/roundStarted', round: data });
   });
+  socket.on(ServerEvent.ANSWER_WINDOW_OPEN, data => {
+    if (currentRoundRef.current?.question.id === data.questionId) {
+      currentRoundRef.current = {
+        ...currentRoundRef.current,
+        answerStartTime: data.answerStartTime,
+        roundEndTime: data.roundEndTime,
+        question: {
+          ...currentRoundRef.current.question,
+          options: data.options,
+        },
+      };
+    }
+    dispatch({ type: 'game/answerWindowOpened', event: data });
+  });
   socket.on(ServerEvent.TIMER_TICK, data => {
     if (!currentRoundRef.current) return;
     dispatch({ type: 'game/timerTicked', timer: data });

@@ -2,6 +2,7 @@ import { ClientEvent, ServerEvent } from './enums';
 import {
   answerAcceptedEventSchema,
   answerProgressEventSchema,
+  answerWindowOpenEventSchema,
   gameEndEventSchema,
   gamePausedEventSchema,
   gameResumedEventSchema,
@@ -48,6 +49,7 @@ export const serverEventSchemas = {
   [ServerEvent.HOST_TRANSFERRED]: hostTransferredEventSchema,
   [ServerEvent.GAME_STARTING]: gameStartingEventSchema,
   [ServerEvent.ROUND_START]: roundStartEventSchema,
+  [ServerEvent.ANSWER_WINDOW_OPEN]: answerWindowOpenEventSchema,
   [ServerEvent.TIMER_TICK]: timerTickEventSchema,
   [ServerEvent.ANSWER_ACCEPTED]: answerAcceptedEventSchema,
   [ServerEvent.ANSWER_PROGRESS]: answerProgressEventSchema,

@@ -4,6 +4,7 @@ import { BullMqConnectionService } from '../../infrastructure/bullmq-connection'
 
 type TimerJobName =
   | 'start_round'
+  | 'open_answer_window'
   | 'timer_tick'
   | 'end_round'
   | 'next_round_countdown'
@@ -12,6 +13,7 @@ type TimerJobName =
 
 type TimerHandlers = {
   startRound(roomCode: string, roundIndex: number): Promise<void>;
+  openAnswerWindow(roomCode: string, roundIndex: number, questionId: string): Promise<void>;
   timerTick(roomCode: string, roundIndex: number, questionId: string): Promise<void>;
   endRound(roomCode: string, roundIndex: number, questionId: string): Promise<void>;
   nextRoundCountdown(roomCode: string, nextRoundStartsAt: number): Promise<void>;
@@ -71,6 +73,20 @@ export class GameTimersService implements OnModuleDestroy {
       { roomCode, roundIndex, questionId },
       delayMs,
       timerJobId(roomCode, 'tick', roundIndex, Date.now()),
+    );
+  }
+
+  async scheduleAnswerWindowOpen(
+    roomCode: string,
+    roundIndex: number,
+    questionId: string,
+    delayMs: number,
+  ): Promise<void> {
+    await this.addJob(
+      'open_answer_window',
+      { roomCode, roundIndex, questionId },
+      delayMs,
+      timerJobId(roomCode, 'answer-window', roundIndex),
     );
   }
 
@@ -143,6 +159,11 @@ export class GameTimersService implements OnModuleDestroy {
       case 'timer_tick':
         if (typeof roundIndex === 'number' && questionId) {
           await this.handlers.timerTick(roomCode, roundIndex, questionId);
+        }
+        return;
+      case 'open_answer_window':
+        if (typeof roundIndex === 'number' && questionId) {
+          await this.handlers.openAnswerWindow(roomCode, roundIndex, questionId);
         }
         return;
       case 'end_round':

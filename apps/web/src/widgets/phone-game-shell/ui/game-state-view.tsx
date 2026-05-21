@@ -2,7 +2,7 @@ import { getPhoneAvatar, phoneAvatars } from '@entities/player';
 import type { PhoneGameState } from '@features/phone-game';
 import type { Player, RoomSummary } from '@quizparty/shared';
 import { MediaType } from '@quizparty/shared';
-import { CheckCircle2, Lock, Trophy, Tv, Users } from 'lucide-react';
+import { CheckCircle2, Clock3, Lock, Trophy, Tv, Users } from 'lucide-react';
 import { memo, useEffect, useState, type CSSProperties } from 'react';
 import { FinalPhone } from './final-phone';
 import { GameScreenHeader } from './game-screen-header';
@@ -118,6 +118,8 @@ export const GameStateView = memo(function GameStateView({
     const isAv = media?.type === MediaType.AUDIO || media?.type === MediaType.VIDEO;
     const questionText = gameState.round.question.questionText;
     const questionTextClass = getQuestionTextClass(questionText);
+    const options = gameState.round.question.options;
+    const hasOptions = Array.isArray(options);
 
     return (
       <section
@@ -172,21 +174,30 @@ export const GameStateView = memo(function GameStateView({
           {questionText}
         </h1>
 
-        <div className={styles['phone-answer-grid']}>
-          {gameState.round.question.options.map((option, index) => (
-            <button
-              className={`${styles['phone-answer']} ${getAnswerTextClass(option)} ${selected === index ? styles.selected : ''} ${locked && selected !== index ? styles.dimmed : ''}`}
-              disabled={locked}
-              key={`${option}-${index}`}
-              type="button"
-              onClick={() => onSubmitAnswer(gameState.round.question.id, index)}
-            >
-              <span>{ANSWER_LETTERS[index]}</span>
-              <strong>{option}</strong>
-              {locked && selected === index ? <Lock size={27} /> : null}
-            </button>
-          ))}
-        </div>
+        {hasOptions ? (
+          <div className={styles['phone-answer-grid']}>
+            {options.map((option, index) => (
+              <button
+                className={`${styles['phone-answer']} ${getAnswerTextClass(option)} ${selected === index ? styles.selected : ''} ${locked && selected !== index ? styles.dimmed : ''}`}
+                disabled={locked}
+                key={`${option}-${index}`}
+                type="button"
+                onClick={() => onSubmitAnswer(gameState.round.question.id, index)}
+              >
+                <span>{ANSWER_LETTERS[index]}</span>
+                <strong>{option}</strong>
+                {locked && selected === index ? <Lock size={27} /> : null}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className={styles['answer-window-wait-card']}>
+            <Clock3 size={34} />
+            <strong>Готовься отвечать</strong>
+            <span>Варианты появятся через {gameState.timer.remainingSeconds} с</span>
+            <small>Сначала читаем вопрос, потом выбираем на скорость</small>
+          </div>
+        )}
 
         {locked ? (
           <div className={styles['answer-accepted-note']}>
@@ -209,7 +220,7 @@ export const GameStateView = memo(function GameStateView({
 
   if (gameState.phase === 'reveal') {
     const ownScore = gameState.roundEnd.scores.find((score) => score.playerId === playerId);
-    const correctOption = gameState.round?.question.options[gameState.roundEnd.correctIndex];
+    const correctOption = gameState.round?.question.options?.[gameState.roundEnd.correctIndex];
 
     return (
       <section className={`${styles['phone-round-screen']} ${styles['reveal-phone']}`}>

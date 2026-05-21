@@ -1,5 +1,6 @@
 import {
   Difficulty,
+  ErrorCode,
   GameMode,
   GamePhase,
   LobbyPlayerStatus,
@@ -15,6 +16,7 @@ import type { GameStateService } from './game-state.service';
 import type { GameTimersService } from './game-timers.service';
 import { GamePlayService } from './gameplay.service';
 import type { InternalGameState } from './game.types';
+import type { InternalGameQuestion } from './game.types';
 
 const roomCode = 'QUIZ-123456';
 const hostPlayerId = '00000000-0000-4000-8000-000000000001';
@@ -32,6 +34,7 @@ function createRoom(): LobbyState {
       difficulty: Difficulty.MEDIUM,
       mode: GameMode.CLASSIC,
       questionDurationMs: 30_000,
+      answerRevealDelayMs: 0,
       revealDurationMs: 8_000,
     },
     players: [
@@ -49,6 +52,18 @@ function createRoom(): LobbyState {
       },
     ],
     maxPlayers: MAX_PLAYERS,
+  };
+}
+
+function createQuestion(overrides: Partial<InternalGameQuestion> = {}): InternalGameQuestion {
+  return {
+    id: '00000000-0000-4000-8000-000000000201',
+    quizId: '00000000-0000-4000-8000-000000000101',
+    questionText: 'Question?',
+    options: ['A', 'B', 'C', 'D'],
+    order: 0,
+    correctIndex: 1,
+    ...overrides,
   };
 }
 
@@ -81,21 +96,33 @@ function createService(game: InternalGameState, room = createRoom()) {
     gameState = patcher(gameState);
     return Promise.resolve(gameState);
   }) satisfies GameStateService['patchGameState']);
+  const setGameState = vi.fn(((_roomCode, next) => {
+    gameState = next;
+    return Promise.resolve();
+  }) satisfies GameStateService['setGameState']);
+  const patchRoomState = vi.fn(((_roomCode, patcher) => {
+    if (!roomState) return Promise.resolve(null);
+    roomState = patcher(roomState);
+    return Promise.resolve(roomState);
+  }) satisfies RoomStateService['patchRoomState']);
   const deleteGameState = vi.fn((() =>
     Promise.resolve()) satisfies GameStateService['deleteGameState']);
   const emitGame = vi.fn();
   const emitRoom = vi.fn();
+  const scheduleAnswerWindowOpen = vi.fn();
   const scheduleRoundEnd = vi.fn();
   const scheduleTimerTick = vi.fn();
   const roomStateService = {
     getRoomState: vi.fn((() =>
       Promise.resolve(roomState)) satisfies RoomStateService['getRoomState']),
+    patchRoomState,
     deleteRoomState,
   } as unknown as RoomStateService;
   const gameStateService = {
     getGameState: vi.fn((() =>
       Promise.resolve(gameState)) satisfies GameStateService['getGameState']),
     patchGameState,
+    setGameState,
     deleteGameState,
   } as unknown as GameStateService;
   const realtime = {
@@ -104,6 +131,7 @@ function createService(game: InternalGameState, room = createRoom()) {
   } as unknown as GameRealtimeService;
   const timers = {
     registerHandlers: vi.fn(),
+    scheduleAnswerWindowOpen,
     scheduleRoundEnd,
     scheduleTimerTick,
     scheduleNextRoundCountdown: vi.fn(),
@@ -117,8 +145,10 @@ function createService(game: InternalGameState, room = createRoom()) {
     deleteRoomState,
     emitGame,
     emitRoom,
+    patchRoomState,
     realtime,
     roomStateService,
+    scheduleAnswerWindowOpen,
     scheduleRoundEnd,
     scheduleTimerTick,
     service: new GamePlayService(roomStateService, gameStateService, realtime, timers),
@@ -181,6 +211,145 @@ describe('GamePlayService pause/resume/end from host', () => {
       0,
       '00000000-0000-4000-8000-000000000201',
       expect.any(Number),
+    );
+  });
+
+  it('starts a reaction round without sending options until the answer window opens', async () => {
+    const question = createQuestion();
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    const ctx = createService(
+      createGame({
+        questions: [question],
+        totalRounds: 1,
+      }),
+      room,
+    );
+
+    await ctx.service.startRound(roomCode, 0);
+
+    expect(ctx.emitGame).toHaveBeenCalledWith(
+      roomCode,
+      ServerEvent.ROUND_START,
+      expect.objectContaining({
+        question: expect.not.objectContaining({
+          options: expect.any(Array),
+        }),
+        answerStartTime: 32_000,
+        roundEndTime: 39_000,
+      }),
+    );
+    expect(ctx.scheduleAnswerWindowOpen).toHaveBeenCalledWith(roomCode, 0, question.id, 7_000);
+    expect(ctx.scheduleRoundEnd).toHaveBeenCalledWith(roomCode, 0, question.id, 14_000);
+  });
+
+  it('clears stale answer window state when starting the next reaction round', async () => {
+    const firstQuestion = createQuestion();
+    const secondQuestion = createQuestion({
+      id: '00000000-0000-4000-8000-000000000202',
+      questionText: 'Second question?',
+    });
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    const ctx = createService(
+      createGame({
+        currentRoundIndex: 0,
+        currentQuestion: firstQuestion,
+        questions: [firstQuestion, secondQuestion],
+        totalRounds: 2,
+        answerWindowOpensAt: 17_000,
+        answerWindowOpenedAt: 17_000,
+        roundEndsAt: 24_000,
+      }),
+      room,
+    );
+
+    await ctx.service.startRound(roomCode, 1);
+
+    expect(ctx.gameState).toMatchObject({
+      currentRoundIndex: 1,
+      currentQuestion: secondQuestion,
+      answerWindowOpensAt: 32_000,
+      roundEndsAt: 39_000,
+    });
+    expect(ctx.gameState.answerWindowOpenedAt).toBeUndefined();
+    expect(ctx.scheduleAnswerWindowOpen).toHaveBeenCalledWith(
+      roomCode,
+      1,
+      secondQuestion.id,
+      7_000,
+    );
+  });
+
+  it('rejects reaction answers before the answer window opens', async () => {
+    const question = createQuestion();
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answers: { [question.id]: {} },
+        answerWindowOpensAt: 32_000,
+        roundEndsAt: 39_000,
+      }),
+      room,
+    );
+
+    let error: unknown;
+    try {
+      await ctx.service.submitAnswer(roomCode, hostPlayerId, {
+        questionId: question.id,
+        answerIndex: 1,
+        submittedAt: 25_000,
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect((error as { getError(): unknown }).getError()).toMatchObject({
+      code: ErrorCode.ANSWER_TOO_EARLY,
+    });
+  });
+
+  it('opens the reaction answer window and emits options', async () => {
+    const question = createQuestion();
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answerWindowOpensAt: 25_000,
+        roundEndsAt: 32_000,
+      }),
+    );
+
+    await ctx.service.openAnswerWindow(roomCode, 0, question.id);
+
+    expect(ctx.gameState.answerWindowOpenedAt).toBe(25_000);
+    expect(ctx.emitGame).toHaveBeenCalledWith(
+      roomCode,
+      ServerEvent.ANSWER_WINDOW_OPEN,
+      expect.objectContaining({
+        questionId: question.id,
+        options: question.options,
+        answerStartTime: 25_000,
+        roundEndTime: 32_000,
+      }),
     );
   });
 

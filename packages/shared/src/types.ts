@@ -7,6 +7,7 @@ import {
   answerAcceptedEventSchema,
   answerProgressEventSchema,
   answerStatsSchema,
+  answerWindowOpenEventSchema,
   createRoomRequestSchema,
   createRoomResponseSchema,
   gameEndEventSchema,
@@ -23,6 +24,7 @@ import {
   playerSchema,
   qualityWarningSchema,
   questionSchema,
+  roundQuestionSchema,
   quizBrowserQuerySchema,
   quizCardSchema,
   quizDetailSchema,
@@ -78,10 +80,12 @@ export type ReactionPayload = z.infer<typeof reactionPayloadSchema>;
 export type ReactionEvent = z.infer<typeof reactionEventSchema>;
 export type ReactionWindowEvent = z.infer<typeof reactionWindowEventSchema>;
 export type Question = z.infer<typeof questionSchema>;
+export type RoundQuestion = z.infer<typeof roundQuestionSchema>;
 export type RoundStartEvent = z.infer<typeof roundStartEventSchema>;
 export type TimerTickEvent = z.infer<typeof timerTickEventSchema>;
 export type SubmitAnswerPayload = z.infer<typeof submitAnswerPayloadSchema>;
 export type AnswerAcceptedEvent = z.infer<typeof answerAcceptedEventSchema>;
+export type AnswerWindowOpenEvent = z.infer<typeof answerWindowOpenEventSchema>;
 export type AnswerProgressEvent = z.infer<typeof answerProgressEventSchema>;
 export type AnswerStats = z.infer<typeof answerStatsSchema>;
 export type ScoreEntry = z.infer<typeof scoreEntrySchema>;
