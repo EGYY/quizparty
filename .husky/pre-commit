@@ -10,5 +10,3 @@ pnpm db:generate
 echo "TypeScript typecheck..."
 pnpm typecheck
 
-echo "Code formatting..."
-pnpm format

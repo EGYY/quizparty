@@ -6,10 +6,7 @@ import type {
   RoundStartEvent,
   TimerTickEvent,
 } from '@quizparty/shared';
-import {
-  initialTvGameRealtimeState,
-  tvGameRealtimeReducer,
-} from './reducer';
+import { initialTvGameRealtimeState, tvGameRealtimeReducer } from './reducer';
 
 const round = {
   roundNumber: 1,

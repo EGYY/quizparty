@@ -28,8 +28,8 @@ export class GameRealtimeService {
   }
 
   async hasConnectedPlayer(roomCode: string, playerId: string): Promise<boolean> {
-    const servers = [this.lobbyServer, this.gameServer].filter(
-      (server): server is Server => Boolean(server),
+    const servers = [this.lobbyServer, this.gameServer].filter((server): server is Server =>
+      Boolean(server),
     );
 
     for (const server of servers) {

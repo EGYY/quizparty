@@ -81,17 +81,20 @@ function createService(game: InternalGameState, room = createRoom()) {
     gameState = patcher(gameState);
     return Promise.resolve(gameState);
   }) satisfies GameStateService['patchGameState']);
-  const deleteGameState = vi.fn((() => Promise.resolve()) satisfies GameStateService['deleteGameState']);
+  const deleteGameState = vi.fn((() =>
+    Promise.resolve()) satisfies GameStateService['deleteGameState']);
   const emitGame = vi.fn();
   const emitRoom = vi.fn();
   const scheduleRoundEnd = vi.fn();
   const scheduleTimerTick = vi.fn();
   const roomStateService = {
-    getRoomState: vi.fn((() => Promise.resolve(roomState)) satisfies RoomStateService['getRoomState']),
+    getRoomState: vi.fn((() =>
+      Promise.resolve(roomState)) satisfies RoomStateService['getRoomState']),
     deleteRoomState,
   } as unknown as RoomStateService;
   const gameStateService = {
-    getGameState: vi.fn((() => Promise.resolve(gameState)) satisfies GameStateService['getGameState']),
+    getGameState: vi.fn((() =>
+      Promise.resolve(gameState)) satisfies GameStateService['getGameState']),
     patchGameState,
     deleteGameState,
   } as unknown as GameStateService;
@@ -149,11 +152,7 @@ describe('GamePlayService pause/resume/end from host', () => {
       pauseRemainingMs: 15_000,
       pausedAt: 25_000,
     });
-    expect(ctx.emitRoom).toHaveBeenCalledWith(
-      roomCode,
-      ServerEvent.GAME_PAUSED,
-      event,
-    );
+    expect(ctx.emitRoom).toHaveBeenCalledWith(roomCode, ServerEvent.GAME_PAUSED, event);
   });
 
   it('resumes a paused question and schedules the round end again', async () => {
@@ -194,11 +193,7 @@ describe('GamePlayService pause/resume/end from host', () => {
       reason: 'HOST_ENDED_GAME',
       roomCode,
     });
-    expect(ctx.emitRoom).toHaveBeenCalledWith(
-      roomCode,
-      ServerEvent.ROOM_CLOSED,
-      event,
-    );
+    expect(ctx.emitRoom).toHaveBeenCalledWith(roomCode, ServerEvent.ROOM_CLOSED, event);
     expect(ctx.deleteGameState).toHaveBeenCalledWith(roomCode);
     expect(ctx.deleteRoomState).toHaveBeenCalledWith(roomCode);
   });
