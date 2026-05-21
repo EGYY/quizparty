@@ -11,13 +11,19 @@ import { TvMediaPlayer } from '@shared/ui/tv-media-player';
 import { s, sf } from '@shared/config/scale';
 
 type Props = {
+  forcePaused?: boolean;
   media: Media | undefined;
   questionId: string;
   questionText: string;
 };
 
 export const QuestionTextPanel = memo(
-  function QuestionTextPanel({ media, questionId, questionText }: Props) {
+  function QuestionTextPanel({
+    forcePaused,
+    media,
+    questionId,
+    questionText,
+  }: Props) {
     const slideAnim = useRef(new Animated.Value(40)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +61,13 @@ export const QuestionTextPanel = memo(
             },
           ]}
         >
-          {media ? <TvMediaPlayer media={media} variant="question" /> : null}
+          {media ? (
+            <TvMediaPlayer
+              forcePaused={forcePaused}
+              media={media}
+              variant="question"
+            />
+          ) : null}
           <Text numberOfLines={3} style={[styles.questionText]}>
             {questionText}
           </Text>
@@ -63,7 +75,9 @@ export const QuestionTextPanel = memo(
       </View>
     );
   },
-  (prev, next) => prev.questionId === next.questionId,
+  (prev, next) =>
+    prev.questionId === next.questionId &&
+    prev.forcePaused === next.forcePaused,
 );
 
 const styles = StyleSheet.create({

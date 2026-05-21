@@ -10,6 +10,8 @@ import {
   createRoomRequestSchema,
   createRoomResponseSchema,
   gameEndEventSchema,
+  gamePausedEventSchema,
+  gameResumedEventSchema,
   gameStartingEventSchema,
   hostTransferredEventSchema,
   joinLobbyPayloadSchema,
@@ -34,6 +36,7 @@ import {
   reactionPayloadSchema,
   reviewDecisionPayloadSchema,
   reviewDecisionBodySchema,
+  roomClosedEventSchema,
   reviewQueueFiltersSchema,
   reviewQueueItemSchema,
   reviewQueueSchema,
@@ -65,6 +68,9 @@ export type Player = z.infer<typeof playerSchema>;
 export type LobbyState = z.infer<typeof lobbyStateSchema>;
 export type HostTransferredEvent = z.infer<typeof hostTransferredEventSchema>;
 export type GameStartingEvent = z.infer<typeof gameStartingEventSchema>;
+export type GamePausedEvent = z.infer<typeof gamePausedEventSchema>;
+export type GameResumedEvent = z.infer<typeof gameResumedEventSchema>;
+export type RoomClosedEvent = z.infer<typeof roomClosedEventSchema>;
 export type JoinLobbyPayload = z.infer<typeof joinLobbyPayloadSchema>;
 export type SetPlayerInfoPayload = z.infer<typeof setPlayerInfoPayloadSchema>;
 export type SetReadyPayload = z.infer<typeof setReadyPayloadSchema>;

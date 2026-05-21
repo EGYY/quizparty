@@ -160,6 +160,30 @@ export const gameStartingEventSchema = z.object({
   startsAt: z.number().int().positive(),
 });
 
+const pausableGamePhaseSchema = z.union([
+  z.literal(GamePhase.QUESTION),
+  z.literal(GamePhase.ANSWER_REVEAL),
+]);
+
+export const gamePausedEventSchema = z.object({
+  phase: pausableGamePhaseSchema,
+  remainingMs: z.number().int().nonnegative(),
+  serverTime: z.number().int().positive(),
+});
+
+export const gameResumedEventSchema = z.object({
+  phase: pausableGamePhaseSchema,
+  remainingMs: z.number().int().nonnegative(),
+  serverTime: z.number().int().positive(),
+  targetTime: z.number().int().positive(),
+});
+
+export const roomClosedEventSchema = z.object({
+  roomCode: z.string(),
+  reason: z.literal('HOST_ENDED_GAME'),
+  serverTime: z.number().int().positive(),
+});
+
 export const joinLobbyPayloadSchema = z.object({
   roomCode: z.string().min(4).max(12),
   playerId: uuidSchema.optional(),

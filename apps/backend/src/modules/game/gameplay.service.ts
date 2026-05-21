@@ -5,7 +5,9 @@ import {
   ErrorCode,
   GAME_MODE_SETTINGS,
   GameEndEvent,
+  GamePausedEvent,
   GamePhase,
+  GameResumedEvent,
   LeaderboardEntry,
   LobbyState,
   NextRoundCountdownEvent,
@@ -13,6 +15,7 @@ import {
   REACTION_WINDOW_SECONDS,
   RoundEndEvent,
   RoundStartEvent,
+  RoomClosedEvent,
   ServerEvent,
   SubmitAnswerPayload,
   TimerTickEvent,
@@ -23,8 +26,17 @@ import { RoomStateService } from '../../infrastructure/room-state.service';
 import { GameRealtimeService } from './game-realtime.service';
 import { GameStateService } from './game-state.service';
 import { GameTimersService } from './game-timers.service';
-import { applyRanks, ensurePlayer, nextPlayerStats, wsError } from './game.helpers';
+import {
+  applyRanks,
+  ensureHost,
+  ensurePlayer,
+  nextPlayerStats,
+  normalizeLobbyState,
+  wsError,
+} from './game.helpers';
 import type { InternalGameState, StoredAnswer } from './game.types';
+
+type PausablePhase = GamePhase.QUESTION | GamePhase.ANSWER_REVEAL;
 
 @Injectable()
 export class GamePlayService implements OnModuleInit {
@@ -63,6 +75,9 @@ export class GamePlayService implements OnModuleInit {
     if (game.phase !== GamePhase.QUESTION || !question || question.id !== payload.questionId) {
       throw wsError(ErrorCode.GAME_NOT_STARTED, 'No active question');
     }
+    if (game.isPaused) {
+      throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game is paused');
+    }
     if (now > (game.roundEndsAt ?? 0)) {
       throw wsError(ErrorCode.ANSWER_TOO_LATE, 'Answer deadline has passed');
     }
@@ -89,6 +104,9 @@ export class GamePlayService implements OnModuleInit {
     let accepted = false;
     const patched = await this.gameState.patchGameState(roomCode, (current) => {
       if (current.phase !== GamePhase.QUESTION || current.currentQuestion?.id !== question.id) {
+        return current;
+      }
+      if (current.isPaused) {
         return current;
       }
       if (current.answers[question.id]?.[playerId]) {
@@ -146,11 +164,162 @@ export class GamePlayService implements OnModuleInit {
     };
   }
 
+  async pauseGame(roomCode: string, playerId: string): Promise<GamePausedEvent> {
+    const room = normalizeLobbyState(await this.getRoomOrThrow(roomCode));
+    ensureHost(room, playerId);
+
+    const now = Date.now();
+    const patched = await this.gameState.patchGameState(roomCode, (game) => {
+      if (!isPausablePhase(game.phase)) {
+        throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game cannot be paused now');
+      }
+      const remainingMs = game.isPaused
+        ? (game.pauseRemainingMs ?? 0)
+        : getPauseRemainingMs(game, now);
+      return {
+        ...game,
+        isPaused: true,
+        pausedAt: game.pausedAt ?? now,
+        pauseRemainingMs: remainingMs,
+        lastActivityAt: now,
+      };
+    });
+
+    if (!patched || !isPausablePhase(patched.phase)) {
+      throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game cannot be paused now');
+    }
+
+    const event: GamePausedEvent = {
+      phase: patched.phase,
+      remainingMs: patched.pauseRemainingMs ?? 0,
+      serverTime: now,
+    };
+    this.realtime.emitRoom(roomCode, ServerEvent.GAME_PAUSED, event);
+    return event;
+  }
+
+  async resumeGame(roomCode: string, playerId: string): Promise<GameResumedEvent> {
+    const room = normalizeLobbyState(await this.getRoomOrThrow(roomCode));
+    ensureHost(room, playerId);
+
+    const now = Date.now();
+    let shouldScheduleQuestion = false;
+    let shouldScheduleReveal = false;
+    const patched = await this.gameState.patchGameState(roomCode, (game) => {
+      if (!isPausablePhase(game.phase)) {
+        throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game cannot be resumed now');
+      }
+
+      const remainingMs = game.isPaused
+        ? (game.pauseRemainingMs ?? 0)
+        : getPauseRemainingMs(game, now);
+      const targetTime = now + remainingMs;
+
+      if (!game.isPaused) {
+        return game;
+      }
+
+      const nextGame = withoutPauseFields({
+        ...game,
+        lastActivityAt: now,
+      });
+
+      if (game.phase === GamePhase.QUESTION) {
+        shouldScheduleQuestion = true;
+        return {
+          ...nextGame,
+          roundEndsAt: targetTime,
+        };
+      }
+
+      shouldScheduleReveal = true;
+      return {
+        ...nextGame,
+        revealEndsAt: targetTime,
+      };
+    });
+
+    if (!patched || !isPausablePhase(patched.phase)) {
+      throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game cannot be resumed now');
+    }
+
+    const targetTime =
+      patched.phase === GamePhase.QUESTION
+        ? (patched.roundEndsAt ?? now)
+        : (patched.revealEndsAt ?? now);
+    const event: GameResumedEvent = {
+      phase: patched.phase,
+      remainingMs: Math.max(0, targetTime - now),
+      serverTime: now,
+      targetTime,
+    };
+    this.realtime.emitRoom(roomCode, ServerEvent.GAME_RESUMED, event);
+
+    if (
+      shouldScheduleQuestion &&
+      typeof patched.currentRoundIndex === 'number' &&
+      patched.currentQuestion
+    ) {
+      await this.emitTimerTick(roomCode, patched.currentRoundIndex, patched.currentQuestion.id);
+      await this.timers.scheduleRoundEnd(
+        roomCode,
+        patched.currentRoundIndex,
+        patched.currentQuestion.id,
+        Math.max(0, targetTime - Date.now()),
+      );
+    }
+
+    if (shouldScheduleReveal) {
+      const hasNextRound = patched.currentRoundIndex + 1 < patched.totalRounds;
+      if (hasNextRound) {
+        await this.timers.scheduleNextRoundCountdown(roomCode, targetTime, 0);
+        await this.timers.scheduleStartRound(
+          roomCode,
+          patched.currentRoundIndex + 1,
+          Math.max(0, targetTime - Date.now()),
+        );
+      } else {
+        await this.timers.scheduleFinishGame(roomCode, Math.max(0, targetTime - Date.now()));
+      }
+    }
+
+    return event;
+  }
+
+  async endGameFromHost(roomCode: string, playerId: string): Promise<RoomClosedEvent> {
+    const room = normalizeLobbyState(await this.getRoomOrThrow(roomCode));
+    ensureHost(room, playerId);
+
+    const game = await this.gameState.getGameState(roomCode);
+    if (
+      game &&
+      ![
+        GamePhase.STARTING,
+        GamePhase.QUESTION,
+        GamePhase.ANSWER_REVEAL,
+        GamePhase.FINAL_RESULTS,
+      ].includes(game.phase)
+    ) {
+      throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game cannot be ended now');
+    }
+
+    const event: RoomClosedEvent = {
+      roomCode,
+      reason: 'HOST_ENDED_GAME',
+      serverTime: Date.now(),
+    };
+    this.realtime.emitRoom(roomCode, ServerEvent.ROOM_CLOSED, event);
+    await this.gameState.deleteGameState(roomCode);
+    await this.roomState.deleteRoomState(roomCode);
+    return event;
+  }
+
   async startRound(roomCode: string, roundIndex: number): Promise<void> {
     const room = await this.roomState.getRoomState(roomCode);
     if (!room) return; // stale job — room was already cleaned up
     const game = await this.gameState.getGameState(roomCode);
     if (!game) return; // stale job — game state was already cleaned up
+    if (game.isPaused) return; // stale job — host paused the game
     const question = game.questions[roundIndex];
     if (!question) return;
 
@@ -200,6 +369,7 @@ export class GamePlayService implements OnModuleInit {
     if (!room) return;
     const game = await this.gameState.getGameState(roomCode);
     if (!game) return;
+    if (game.isPaused) return;
 
     if (
       game.phase !== GamePhase.QUESTION ||
@@ -234,6 +404,7 @@ export class GamePlayService implements OnModuleInit {
     if (!room) return;
     const game = await this.gameState.getGameState(roomCode);
     if (!game) return;
+    if (game.isPaused) return;
     const question = game.currentQuestion;
     if (
       game.phase !== GamePhase.QUESTION ||
@@ -324,6 +495,7 @@ export class GamePlayService implements OnModuleInit {
   async emitNextRoundCountdown(roomCode: string, nextRoundStartsAt: number): Promise<void> {
     const game = await this.gameState.getGameState(roomCode);
     if (!game || game.phase !== GamePhase.ANSWER_REVEAL) return;
+    if (game.isPaused) return;
 
     const now = Date.now();
     const remainingMs = Math.max(0, nextRoundStartsAt - now);
@@ -348,6 +520,7 @@ export class GamePlayService implements OnModuleInit {
     if (!room) return;
     const game = await this.gameState.getGameState(roomCode);
     if (!game) return;
+    if (game.isPaused) return;
     const rankedPlayers = applyRanks(room.players);
     const leaderboard: LeaderboardEntry[] = rankedPlayers.map((player) => {
       const stats = game.playerStats[player.playerId] ?? {
@@ -410,4 +583,28 @@ export class GamePlayService implements OnModuleInit {
     if (!state) throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game not started');
     return state;
   }
+}
+
+function isPausablePhase(phase: GamePhase): phase is PausablePhase {
+  return phase === GamePhase.QUESTION || phase === GamePhase.ANSWER_REVEAL;
+}
+
+function getPauseRemainingMs(game: InternalGameState, now: number): number {
+  if (game.phase === GamePhase.QUESTION) {
+    return Math.max(0, (game.roundEndsAt ?? now) - now);
+  }
+  if (game.phase === GamePhase.ANSWER_REVEAL) {
+    return Math.max(0, (game.revealEndsAt ?? now) - now);
+  }
+  return 0;
+}
+
+function withoutPauseFields(game: InternalGameState): InternalGameState {
+  const {
+    isPaused: _isPaused,
+    pausedAt: _pausedAt,
+    pauseRemainingMs: _pauseRemainingMs,
+    ...next
+  } = game;
+  return next;
 }

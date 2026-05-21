@@ -28,6 +28,7 @@ export default function App() {
                 screenOptions={{
                   animation: 'fade',
                   contentStyle: { backgroundColor: '#101426' },
+                  headerBackButtonMenuEnabled: false,
                   headerShown: false,
                   orientation: 'landscape',
                 }}

@@ -30,6 +30,9 @@ export type InternalGameState = {
   questions: InternalGameQuestion[];
   answers: Record<string, Record<string, StoredAnswer>>;
   playerStats: Record<string, PlayerGameStats>;
+  isPaused?: boolean;
+  pausedAt?: number;
+  pauseRemainingMs?: number;
   roundStartedAt?: number;
   roundEndsAt?: number;
   revealEndsAt?: number;

@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   type MutableRefObject,
@@ -20,6 +21,7 @@ type SoundEffectsContextValue = {
   playFocus: () => void;
   playSubmit: () => void;
   playError: () => void;
+  setMuted: (muted: boolean) => void;
 };
 
 type SoundRef = MutableRefObject<VideoRef | null>;
@@ -28,16 +30,22 @@ const SoundEffectsContext = createContext<SoundEffectsContextValue>({
   playFocus: () => {},
   playSubmit: () => {},
   playError: () => {},
+  setMuted: () => {},
 });
 
 function toVideoSource(source: ImageRequireSource): ReactVideoSource {
   return source as unknown as ReactVideoSource;
 }
 
-function createPlaySound(ref: SoundRef, minIntervalMs = 0) {
+function createPlaySound(
+  ref: SoundRef,
+  mutedRef: MutableRefObject<boolean>,
+  minIntervalMs = 0,
+) {
   let lastPlayedAt = 0;
 
   return () => {
+    if (mutedRef.current) return;
     const now = Date.now();
     if (now - lastPlayedAt < minIntervalMs) return;
     lastPlayedAt = now;
@@ -51,16 +59,29 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
   const focusRef = useRef<VideoRef | null>(null);
   const submitRef = useRef<VideoRef | null>(null);
   const errorRef = useRef<VideoRef | null>(null);
+  const mutedRef = useRef(false);
 
-  const playFocus = useMemo(() => createPlaySound(focusRef, 45), []);
-  const playSubmit = useMemo(() => createPlaySound(submitRef), []);
-  const playError = useMemo(() => createPlaySound(errorRef), []);
   const pauseFocus = useCallback(() => focusRef.current?.pause(), []);
   const pauseSubmit = useCallback(() => submitRef.current?.pause(), []);
   const pauseError = useCallback(() => errorRef.current?.pause(), []);
+  const pauseAll = useCallback(() => {
+    pauseFocus();
+    pauseSubmit();
+    pauseError();
+  }, [pauseError, pauseFocus, pauseSubmit]);
+  const setMuted = useCallback(
+    (muted: boolean) => {
+      mutedRef.current = muted;
+      if (muted) pauseAll();
+    },
+    [pauseAll],
+  );
+  const playFocus = useMemo(() => createPlaySound(focusRef, mutedRef, 45), []);
+  const playSubmit = useMemo(() => createPlaySound(submitRef, mutedRef), []);
+  const playError = useMemo(() => createPlaySound(errorRef, mutedRef), []);
   const value = useMemo(
-    () => ({ playFocus, playSubmit, playError }),
-    [playError, playFocus, playSubmit],
+    () => ({ playFocus, playSubmit, playError, setMuted }),
+    [playError, playFocus, playSubmit, setMuted],
   );
 
   return (
@@ -99,6 +120,14 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
 
 export function useSoundEffects() {
   return useContext(SoundEffectsContext);
+}
+
+export function useSoundEffectsMuted(muted: boolean) {
+  const { setMuted } = useContext(SoundEffectsContext);
+  useEffect(() => {
+    setMuted(muted);
+    return () => setMuted(false);
+  }, [muted, setMuted]);
 }
 
 const styles = StyleSheet.create({

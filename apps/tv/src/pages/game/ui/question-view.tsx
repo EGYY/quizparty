@@ -38,6 +38,7 @@ export function QuestionView({
   const { question } = round;
   const answeredCount = state.progress?.answeredCount ?? 0;
   const playerCount = state.progress?.playerCount ?? 0;
+  const isPaused = Boolean(state.isPaused);
   const { media } = question;
   const hasMedia = media != null;
   const mediaH = Math.round(height * 0.64);
@@ -66,6 +67,7 @@ export function QuestionView({
       <View style={[styles.layout]}>
         {chrome}
         <QuestionVideoHero
+          forcePaused={isPaused}
           media={media}
           mediaH={mediaH}
           questionId={question.id}
@@ -87,6 +89,7 @@ export function QuestionView({
     <View style={[styles.layout]}>
       {chrome}
       <QuestionTextPanel
+        forcePaused={isPaused}
         media={media}
         questionId={question.id}
         questionText={question.questionText}

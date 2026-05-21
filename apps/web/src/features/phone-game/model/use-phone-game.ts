@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ClientEvent, ServerEvent } from '@quizparty/shared';
 import type { LobbyState, ReactionEvent, RoundStartEvent, WsErrorEvent } from '@quizparty/shared';
-import { readStoredPlayerToken, saveStoredPlayerToken } from '@entities/player';
+import {
+  clearStoredPlayerToken,
+  readStoredPlayerToken,
+  saveStoredPlayerToken,
+} from '@entities/player';
 import { createGameSocket, type GameSocket } from '@shared/lib/socket';
 import { buildInitialTimer } from '../lib/build-initial-timer';
 import { socketBaseUrl, socketOptions } from '../lib/socket-config';
@@ -14,6 +18,7 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
   const [fatalError, setFatalError] = useState<string | null>(null);
   const [lobbyState, setLobbyState] = useState<LobbyState>();
   const [gameState, setGameState] = useState<PhoneGameState>({ phase: 'lobby' });
+  const [roomClosed, setRoomClosed] = useState(false);
   const [recentReactions, setRecentReactions] = useState<ReactionEvent[]>([]);
   const lobbySocketRef = useRef<GameSocket | null>(null);
   const gameSocketRef = useRef<GameSocket | null>(null);
@@ -21,8 +26,13 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
   const lobbyJoinedRef = useRef(false);
   const gameJoinedRef = useRef(false);
   const pendingProfileRef = useRef<{ avatarId: string; nickname: string } | undefined>(undefined);
+  const gameStateRef = useRef(gameState);
 
   const joinPayloadRef = useRef({ roomCode: room.roomCode, playerId, nickname, avatarId });
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
   useEffect(() => {
     joinPayloadRef.current = { roomCode: room.roomCode, playerId, nickname, avatarId };
   }, [avatarId, nickname, playerId, room.roomCode]);
@@ -136,6 +146,7 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
     game.on(ServerEvent.TIMER_TICK, (data) => {
       setGameState((current) => {
         if (current.phase !== 'question' || !currentRoundRef.current) return current;
+        if (current.isPaused) return current;
         if (
           current.timer.remainingSeconds === data.remainingSeconds &&
           current.timer.totalSeconds === data.totalSeconds
@@ -167,11 +178,65 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
     game.on(ServerEvent.NEXT_ROUND_COUNTDOWN, (data) => {
       setGameState((current) => {
         if (current.phase !== 'reveal') return current;
+        if (current.isPaused) return current;
         return { ...current, nextRound: data };
       });
     });
     game.on(ServerEvent.GAME_END, (data) => {
       setGameState({ phase: 'final', event: data });
+    });
+    game.on(ServerEvent.GAME_PAUSED, (data) => {
+      setGameState((current) => {
+        if (current.phase !== 'question' && current.phase !== 'reveal') return current;
+        return { ...current, isPaused: true, pause: data };
+      });
+    });
+    game.on(ServerEvent.GAME_RESUMED, (data) => {
+      setGameState((current) => {
+        if (current.phase === 'question') {
+          return {
+            ...current,
+            isPaused: false,
+            pause: undefined,
+            timer: {
+              ...current.timer,
+              remainingSeconds: Math.ceil(data.remainingMs / 1000),
+              serverTime: data.serverTime,
+            },
+          };
+        }
+        if (current.phase === 'reveal') {
+          return {
+            ...current,
+            isPaused: false,
+            pause: undefined,
+            ...(current.nextRound
+              ? {
+                  nextRound: {
+                    ...current.nextRound,
+                    nextRoundStartsAt: data.targetTime,
+                    remainingSeconds: Math.ceil(data.remainingMs / 1000),
+                    serverTime: data.serverTime,
+                  },
+                }
+              : {}),
+            ...(current.reactionWindow
+              ? {
+                  reactionWindow: {
+                    ...current.reactionWindow,
+                    closesAt: data.targetTime,
+                    serverTime: data.serverTime,
+                  },
+                }
+              : {}),
+          };
+        }
+        return current;
+      });
+    });
+    game.on(ServerEvent.ROOM_CLOSED, () => {
+      clearStoredPlayerToken(room.roomCode);
+      setRoomClosed(true);
     });
 
     return () => {
@@ -209,8 +274,17 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
   }, []);
 
   const submitAnswer = useCallback((questionId: string, answerIndex: number) => {
+    const currentGameState = gameStateRef.current;
+    if (
+      currentGameState.phase !== 'question' ||
+      currentGameState.accepted ||
+      currentGameState.isPaused
+    ) {
+      return;
+    }
+
     setGameState((current) => {
-      if (current.phase !== 'question' || current.accepted) return current;
+      if (current.phase !== 'question' || current.accepted || current.isPaused) return current;
       return { ...current, selectedAnswerIndex: answerIndex };
     });
     if (!gameJoinedRef.current) return;
@@ -235,6 +309,7 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
     ownPlayer,
     recentReactions,
     reconnect,
+    roomClosed,
     sendReaction,
     setReady,
     submitAnswer,

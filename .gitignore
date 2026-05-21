@@ -112,3 +112,6 @@ apps/tv/.bundle/
 # AI local settings
 .claude
 .codex
+
+# local docs
+docs/

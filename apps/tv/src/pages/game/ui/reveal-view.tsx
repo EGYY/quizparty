@@ -96,6 +96,7 @@ export const RevealView = memo(function RevealView({
         <RevealCorrectCard
           correctAnswer={correctAnswer}
           explanation={state.roundEnd.explanation}
+          forcePaused={state.isPaused}
           mediaCardH={mediaCardH}
           mediaCardW={mediaCardW}
           revealMedia={state.roundEnd.revealMedia}

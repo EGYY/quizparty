@@ -13,6 +13,7 @@ import { TvMediaPlayer } from '@shared/ui/tv-media-player';
 const GAME_PADDING_H = 58;
 
 type Props = {
+  forcePaused?: boolean;
   media: Media;
   mediaH: number;
   questionId: string;
@@ -22,6 +23,7 @@ type Props = {
 
 export const QuestionVideoHero = memo(
   function QuestionVideoHero({
+    forcePaused,
     media,
     mediaH,
     questionText,
@@ -30,6 +32,7 @@ export const QuestionVideoHero = memo(
     return (
       <View style={[styles.wrapper, { height: mediaH }]}>
         <TvMediaPlayer
+          forcePaused={forcePaused}
           media={media}
           overrideWidth={screenWidth}
           overrideHeight={mediaH}
@@ -44,7 +47,9 @@ export const QuestionVideoHero = memo(
       </View>
     );
   },
-  (prev, next) => prev.questionId === next.questionId,
+  (prev, next) =>
+    prev.questionId === next.questionId &&
+    prev.forcePaused === next.forcePaused,
 );
 
 const styles = StyleSheet.create({

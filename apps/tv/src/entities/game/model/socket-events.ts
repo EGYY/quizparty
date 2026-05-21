@@ -52,4 +52,13 @@ export function attachTvGameEvents(
   socket.on(ServerEvent.GAME_END, data => {
     dispatch({ type: 'game/ended', event: data });
   });
+  socket.on(ServerEvent.GAME_PAUSED, data => {
+    dispatch({ type: 'game/paused', event: data });
+  });
+  socket.on(ServerEvent.GAME_RESUMED, data => {
+    dispatch({ type: 'game/resumed', event: data });
+  });
+  socket.on(ServerEvent.ROOM_CLOSED, data => {
+    dispatch({ type: 'game/roomClosed', event: data });
+  });
 }

@@ -76,4 +76,22 @@ export class GameGateway implements OnGatewayInit {
     const parsed = reactionPayloadSchema.parse(payload);
     await this.lobby.sendReaction(roomCode, playerId, parsed.emoji);
   }
+
+  @SubscribeMessage(ClientEvent.PAUSE_GAME)
+  async pauseGame(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
+    const { roomCode, playerId } = requireSession(socket);
+    await this.gameplay.pauseGame(roomCode, playerId);
+  }
+
+  @SubscribeMessage(ClientEvent.RESUME_GAME)
+  async resumeGame(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
+    const { roomCode, playerId } = requireSession(socket);
+    await this.gameplay.resumeGame(roomCode, playerId);
+  }
+
+  @SubscribeMessage(ClientEvent.END_GAME)
+  async endGame(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
+    const { roomCode, playerId } = requireSession(socket);
+    await this.gameplay.endGameFromHost(roomCode, playerId);
+  }
 }

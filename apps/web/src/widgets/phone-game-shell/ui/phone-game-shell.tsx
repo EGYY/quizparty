@@ -35,6 +35,7 @@ export function PhoneGameShell({
     lobbyState,
     ownPlayer,
     reconnect,
+    roomClosed,
     sendReaction,
     setReady,
     submitAnswer,
@@ -48,7 +49,17 @@ export function PhoneGameShell({
   }, [avatarId, nickname, updateProfile]);
 
   const ownReady = ownPlayer?.lobbyStatus === LobbyPlayerStatus.READY;
-  const showGameReactions = gameState.phase === 'reveal' || gameState.phase === 'final';
+  const isPaused =
+    gameState.phase === 'question' || gameState.phase === 'reveal'
+      ? Boolean(gameState.isPaused)
+      : false;
+  const showGameReactions =
+    !isPaused && (gameState.phase === 'reveal' || gameState.phase === 'final');
+
+  useEffect(() => {
+    if (!roomClosed) return;
+    onLeave();
+  }, [onLeave, roomClosed]);
 
   const toggleProfileEditor = useCallback(() => {
     setIsEditingProfile((value) => !value);
@@ -143,6 +154,16 @@ export function PhoneGameShell({
         />
 
         {showGameReactions ? <ReactionBar onSend={sendReaction} /> : null}
+
+        {isPaused ? (
+          <div className={styles['pause-overlay']} role="status" aria-live="polite">
+            <div className={styles['pause-overlay-card']}>
+              <span>Ведущий поставил игру на паузу</span>
+              <strong>Пауза</strong>
+              <small>Оставайтесь на месте, игра скоро продолжится.</small>
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );

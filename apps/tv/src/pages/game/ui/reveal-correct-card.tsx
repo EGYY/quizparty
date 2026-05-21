@@ -23,12 +23,14 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
   correctAnswer,
   mediaCardH,
   mediaCardW,
+  forcePaused,
   revealMedia,
   roundNumber,
   explanation,
 }: {
   correctAnswer: string;
   explanation: string | undefined;
+  forcePaused?: boolean;
   mediaCardH: number;
   mediaCardW: number;
   revealMedia: RevealState['roundEnd']['revealMedia'];
@@ -63,6 +65,7 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
       {revealMedia ? (
         <>
           <TvMediaPlayer
+            forcePaused={forcePaused}
             media={revealMedia}
             overrideWidth={mediaCardW}
             overrideHeight={Math.round(mediaCardH * 0.68)}

@@ -1,7 +1,9 @@
 import type {
   AnswerProgressEvent,
   GameEndEvent,
+  GamePausedEvent,
   GameStartingEvent,
+  RoomClosedEvent,
   NextRoundCountdownEvent,
   ReactionWindowEvent,
   RoundEndEvent,
@@ -21,6 +23,8 @@ export type TvGameState =
   | { phase: 'starting'; event: GameStartingEvent }
   | {
       phase: 'question';
+      pause?: GamePausedEvent;
+      isPaused?: boolean;
       progress?: AnswerProgressEvent;
       round: RoundStartEvent;
       timer: TimerTickEvent;
@@ -28,8 +32,15 @@ export type TvGameState =
   | {
       nextRound?: NextRoundCountdownEvent;
       phase: 'reveal';
+      pause?: GamePausedEvent;
+      isPaused?: boolean;
       reactionWindow?: ReactionWindowEvent;
       round?: RoundStartEvent;
       roundEnd: RoundEndEvent;
     }
   | { event: GameEndEvent; phase: 'final' };
+
+export type TvRoomClosedState = {
+  event: RoomClosedEvent;
+  closed: true;
+};
