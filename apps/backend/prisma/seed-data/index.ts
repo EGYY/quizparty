@@ -10,16 +10,16 @@ import { artQuizzes } from './art.quizzes';
 import type { SeedQuiz } from './types';
 
 export const allQuizzes: SeedQuiz[] = [
-  ...cinemaQuizzes, // 8 quizzes
-  ...musicQuizzes, // 4 quizzes
+  ...cinemaQuizzes, // 9 quizzes
+  ...musicQuizzes, // 5 quizzes
   ...gamesQuizzes, // 3 quizzes
-  ...partyQuizzes, // 5 quizzes
-  ...kidsQuizzes, // 2 quizzes
+  ...partyQuizzes, // 6 quizzes
+  ...kidsQuizzes, // 3 quizzes
   ...scienceQuizzes, // 2 quizzes
   ...historyQuizzes, // 2 quizzes
   ...sportsQuizzes, // 1 quiz
   ...artQuizzes, // 1 quiz
-  // Total: 28 quizzes × 12 questions = 336 questions
+  // Total: 32 quizzes × 12 questions = 384 questions
 ];
 
 export type { SeedQuiz } from './types';

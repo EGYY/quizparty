@@ -88,10 +88,16 @@ export const gamesQuizzes: SeedQuiz[] = [
       },
       {
         order: 8,
-        questionText: 'В каком году вышел оригинальный Minecraft?',
-        options: ['2007', '2009', '2011', '2013'],
-        correctIndex: 2,
-        explanation: 'Minecraft вышел в официальный релиз 18 ноября 2011. Альфа — с 2009.',
+        questionText: 'В чём основная механика Minecraft?',
+        options: [
+          'Шутер от первого лица',
+          'Строительство и выживание в мире из кубических блоков',
+          'Гонки на транспорте',
+          'Ролевая игра с линейным сюжетом',
+        ],
+        correctIndex: 1,
+        explanation:
+          'Minecraft — добываешь ресурсы, строишь, выживаешь. Самая продаваемая игра в истории. Нотч сделал её почти в одиночку.',
       },
       {
         order: 9,
@@ -162,11 +168,16 @@ export const gamesQuizzes: SeedQuiz[] = [
       },
       {
         order: 2,
-        questionText: 'В каком году вышел первый Counter-Strike (как мод для Half-Life)?',
-        options: ['1998', '1999', '2000', '2001'],
+        questionText: 'В Counter-Strike — что нужно сделать террористам для победы в раунде?',
+        options: [
+          'Захватить флаг',
+          'Взорвать бомбу или уничтожить всех КТ',
+          'Спасти заложников',
+          'Добраться до базы',
+        ],
         correctIndex: 1,
         explanation:
-          'CS 1.0 как мод вышел в 1999, силами Минь Ли и Джесса Клиффа. Valve купила права в 2000.',
+          'Террористы побеждают, если взрывают бомбу на точке или уничтожают всех контр-террористов. Классика тактических шутеров.',
       },
       {
         order: 3,
@@ -211,11 +222,12 @@ export const gamesQuizzes: SeedQuiz[] = [
       },
       {
         order: 7,
-        questionText: 'В каком году вышел первый The Elder Scrolls?',
-        options: ['1991', '1994', '1997', '2000'],
+        questionText:
+          'Как называется главный герой Elder Scrolls V: Skyrim, рождённый убивать драконов?',
+        options: ['Нерейвар', 'Довакин (Dragonborn)', 'Ярл Балгруф', 'Арован'],
         correctIndex: 1,
         explanation:
-          'The Elder Scrolls: Arena — 1994. Bethesda тогда называлась просто Bethesda Softworks.',
+          'Довакин (Dragonborn) — "Рождённый Драконом". Может поглощать драконьи души и использовать Туум — крики силы. Fus Ro Dah!',
       },
       {
         order: 8,
