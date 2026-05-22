@@ -21,6 +21,7 @@ import {
   TimerTickEvent,
   calculateScore,
   questionSchema,
+  roundQuestionSchema,
 } from '@quizparty/shared';
 import { RoomStateService } from '../../infrastructure/room-state.service';
 import { GameRealtimeService } from './game-realtime.service';
@@ -50,6 +51,8 @@ export class GamePlayService implements OnModuleInit {
   onModuleInit(): void {
     this.timers.registerHandlers({
       startRound: (roomCode, roundIndex) => this.startRound(roomCode, roundIndex),
+      openAnswerWindow: (roomCode, roundIndex, questionId) =>
+        this.openAnswerWindow(roomCode, roundIndex, questionId),
       timerTick: (roomCode, roundIndex, questionId) =>
         this.emitTimerTick(roomCode, roundIndex, questionId),
       endRound: (roomCode, roundIndex, questionId) =>
@@ -81,12 +84,17 @@ export class GamePlayService implements OnModuleInit {
     if (now > (game.roundEndsAt ?? 0)) {
       throw wsError(ErrorCode.ANSWER_TOO_LATE, 'Answer deadline has passed');
     }
+    if (game.answerWindowOpensAt && now < game.answerWindowOpensAt) {
+      throw wsError(ErrorCode.ANSWER_TOO_EARLY, 'Answer window is not open yet');
+    }
 
     if ((game.answers[question.id] ?? {})[playerId]) {
       throw wsError(ErrorCode.ANSWER_ALREADY_SUBMITTED, 'Answer already submitted');
     }
 
-    const responseMs = Math.max(0, now - (game.roundStartedAt ?? now));
+    const answerStartedAt =
+      game.answerWindowOpenedAt ?? game.answerWindowOpensAt ?? game.roundStartedAt ?? now;
+    const responseMs = Math.max(0, now - answerStartedAt);
     const isCorrect = payload.answerIndex === question.correctIndex;
     const totalSeconds = Math.max(1, Math.ceil(room.settings.questionDurationMs / 1000));
     const remainingSeconds = Math.max(0, Math.ceil(((game.roundEndsAt ?? now) - now) / 1000));
@@ -102,11 +110,16 @@ export class GamePlayService implements OnModuleInit {
     // Атомарный check-and-set под game-локом: повторный ответ того же игрока
     // и гонка между игроками невозможны (нет потерянных ответов/очков).
     let accepted = false;
+    let answerTooEarly = false;
     const patched = await this.gameState.patchGameState(roomCode, (current) => {
       if (current.phase !== GamePhase.QUESTION || current.currentQuestion?.id !== question.id) {
         return current;
       }
       if (current.isPaused) {
+        return current;
+      }
+      if (current.answerWindowOpensAt && now < current.answerWindowOpensAt) {
+        answerTooEarly = true;
         return current;
       }
       if (current.answers[question.id]?.[playerId]) {
@@ -131,6 +144,9 @@ export class GamePlayService implements OnModuleInit {
 
     if (!patched) {
       throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game not started');
+    }
+    if (answerTooEarly) {
+      throw wsError(ErrorCode.ANSWER_TOO_EARLY, 'Answer window is not open yet');
     }
     if (!accepted) {
       throw wsError(ErrorCode.ANSWER_ALREADY_SUBMITTED, 'Answer already submitted');
@@ -204,6 +220,7 @@ export class GamePlayService implements OnModuleInit {
 
     const now = Date.now();
     let shouldScheduleQuestion = false;
+    let shouldScheduleAnswerWindow = false;
     let shouldScheduleReveal = false;
     const patched = await this.gameState.patchGameState(roomCode, (game) => {
       if (!isPausablePhase(game.phase)) {
@@ -225,6 +242,14 @@ export class GamePlayService implements OnModuleInit {
       });
 
       if (game.phase === GamePhase.QUESTION) {
+        if (isAnswerWindowPending(game)) {
+          shouldScheduleAnswerWindow = true;
+          return {
+            ...nextGame,
+            answerWindowOpensAt: targetTime,
+            roundEndsAt: targetTime + room.settings.questionDurationMs,
+          };
+        }
         shouldScheduleQuestion = true;
         return {
           ...nextGame,
@@ -245,7 +270,7 @@ export class GamePlayService implements OnModuleInit {
 
     const targetTime =
       patched.phase === GamePhase.QUESTION
-        ? (patched.roundEndsAt ?? now)
+        ? getQuestionTargetTime(patched, now)
         : (patched.revealEndsAt ?? now);
     const event: GameResumedEvent = {
       phase: patched.phase,
@@ -256,16 +281,24 @@ export class GamePlayService implements OnModuleInit {
     this.realtime.emitRoom(roomCode, ServerEvent.GAME_RESUMED, event);
 
     if (
-      shouldScheduleQuestion &&
+      (shouldScheduleQuestion || shouldScheduleAnswerWindow) &&
       typeof patched.currentRoundIndex === 'number' &&
       patched.currentQuestion
     ) {
       await this.emitTimerTick(roomCode, patched.currentRoundIndex, patched.currentQuestion.id);
+      if (shouldScheduleAnswerWindow && patched.answerWindowOpensAt) {
+        await this.timers.scheduleAnswerWindowOpen(
+          roomCode,
+          patched.currentRoundIndex,
+          patched.currentQuestion.id,
+          Math.max(0, patched.answerWindowOpensAt - Date.now()),
+        );
+      }
       await this.timers.scheduleRoundEnd(
         roomCode,
         patched.currentRoundIndex,
         patched.currentQuestion.id,
-        Math.max(0, targetTime - Date.now()),
+        Math.max(0, (patched.roundEndsAt ?? targetTime) - Date.now()),
       );
     }
 
@@ -324,15 +357,32 @@ export class GamePlayService implements OnModuleInit {
     if (!question) return;
 
     const now = Date.now();
-    const roundEndsAt = now + room.settings.questionDurationMs;
-    const publicQuestion = questionSchema.parse(question);
+    const answerRevealDelayMs = room.settings.answerRevealDelayMs ?? 0;
+    const answerWindowOpensAt = now + answerRevealDelayMs;
+    const answerWindowOpenedAt = answerRevealDelayMs > 0 ? undefined : now;
+    const roundEndsAt = answerWindowOpensAt + room.settings.questionDurationMs;
+    const fullQuestion = questionSchema.parse(question);
+    const publicQuestion =
+      answerRevealDelayMs > 0
+        ? roundQuestionSchema.parse({
+            ...fullQuestion,
+            options: undefined,
+          })
+        : fullQuestion;
+    const {
+      answerWindowOpenedAt: _previousAnswerWindowOpenedAt,
+      answerWindowOpensAt: _previousAnswerWindowOpensAt,
+      ...gameWithoutAnswerWindow
+    } = game;
     const nextGame: InternalGameState = {
-      ...game,
+      ...gameWithoutAnswerWindow,
       phase: GamePhase.QUESTION,
       currentRoundIndex: roundIndex,
       currentQuestion: question,
       roundStartedAt: now,
       roundEndsAt,
+      answerWindowOpensAt,
+      ...(typeof answerWindowOpenedAt === 'number' ? { answerWindowOpenedAt } : {}),
       lastActivityAt: now,
       answers: {
         ...game.answers,
@@ -352,16 +402,73 @@ export class GamePlayService implements OnModuleInit {
       question: publicQuestion,
       serverTime: now,
       roundEndTime: roundEndsAt,
+      answerStartTime: answerWindowOpensAt,
     };
 
     this.realtime.emitGame(roomCode, ServerEvent.ROUND_START, event);
     await this.emitTimerTick(roomCode, roundIndex, question.id);
+    if (answerRevealDelayMs > 0) {
+      await this.timers.scheduleAnswerWindowOpen(
+        roomCode,
+        roundIndex,
+        question.id,
+        answerRevealDelayMs,
+      );
+    }
     await this.timers.scheduleRoundEnd(
       roomCode,
       roundIndex,
       question.id,
-      room.settings.questionDurationMs,
+      answerRevealDelayMs + room.settings.questionDurationMs,
     );
+  }
+
+  async openAnswerWindow(roomCode: string, roundIndex: number, questionId: string): Promise<void> {
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return;
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game) return;
+    if (game.isPaused) return;
+    const question = game.currentQuestion;
+    if (
+      game.phase !== GamePhase.QUESTION ||
+      game.currentRoundIndex !== roundIndex ||
+      !question ||
+      question.id !== questionId ||
+      game.answerWindowOpenedAt
+    ) {
+      return;
+    }
+
+    const now = Date.now();
+    const patched = await this.gameState.patchGameState(roomCode, (current) => {
+      if (
+        current.phase !== GamePhase.QUESTION ||
+        current.currentRoundIndex !== roundIndex ||
+        current.currentQuestion?.id !== questionId ||
+        current.isPaused ||
+        current.answerWindowOpenedAt
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        answerWindowOpenedAt: now,
+        lastActivityAt: now,
+      };
+    });
+
+    if (!patched || patched.phase !== GamePhase.QUESTION || !patched.currentQuestion) return;
+
+    this.realtime.emitGame(roomCode, ServerEvent.ANSWER_WINDOW_OPEN, {
+      questionId,
+      options: patched.currentQuestion.options,
+      serverTime: now,
+      answerStartTime: patched.answerWindowOpenedAt ?? now,
+      roundEndTime: patched.roundEndsAt ?? now,
+    });
+    await this.emitTimerTick(roomCode, roundIndex, questionId);
   }
 
   async emitTimerTick(roomCode: string, roundIndex: number, questionId: string): Promise<void> {
@@ -381,11 +488,21 @@ export class GamePlayService implements OnModuleInit {
     }
 
     const now = Date.now();
-    const remainingMs = Math.max(0, game.roundEndsAt - now);
+    const isReading =
+      typeof game.answerWindowOpensAt === 'number' &&
+      !game.answerWindowOpenedAt &&
+      now < game.answerWindowOpensAt;
+    const answerWindowOpensAt = game.answerWindowOpensAt;
+    const targetTime = isReading && answerWindowOpensAt ? answerWindowOpensAt : game.roundEndsAt;
+    const remainingMs = Math.max(0, targetTime - now);
+    const totalMs = isReading
+      ? Math.max(1, (answerWindowOpensAt ?? now) - (game.roundStartedAt ?? now))
+      : room.settings.questionDurationMs;
     const event: TimerTickEvent = {
       remainingSeconds: Math.ceil(remainingMs / 1000),
-      totalSeconds: Math.max(1, Math.ceil(room.settings.questionDurationMs / 1000)),
+      totalSeconds: Math.max(1, Math.ceil(totalMs / 1000)),
       serverTime: now,
+      stage: isReading ? 'reading' : 'answering',
     };
     this.realtime.emitGame(roomCode, ServerEvent.TIMER_TICK, event);
 
@@ -591,12 +708,27 @@ function isPausablePhase(phase: GamePhase): phase is PausablePhase {
 
 function getPauseRemainingMs(game: InternalGameState, now: number): number {
   if (game.phase === GamePhase.QUESTION) {
-    return Math.max(0, (game.roundEndsAt ?? now) - now);
+    return Math.max(0, getQuestionTargetTime(game, now) - now);
   }
   if (game.phase === GamePhase.ANSWER_REVEAL) {
     return Math.max(0, (game.revealEndsAt ?? now) - now);
   }
   return 0;
+}
+
+function getQuestionTargetTime(game: InternalGameState, now: number): number {
+  if (isAnswerWindowPending(game)) {
+    return game.answerWindowOpensAt ?? now;
+  }
+  return game.roundEndsAt ?? now;
+}
+
+function isAnswerWindowPending(game: InternalGameState): boolean {
+  return (
+    game.phase === GamePhase.QUESTION &&
+    typeof game.answerWindowOpensAt === 'number' &&
+    !game.answerWindowOpenedAt
+  );
 }
 
 function withoutPauseFields(game: InternalGameState): InternalGameState {

@@ -1,4 +1,5 @@
 import type {
+  AnswerWindowOpenEvent,
   AnswerProgressEvent,
   GameEndEvent,
   GamePausedEvent,
@@ -34,6 +35,7 @@ export type TvGameRealtimeAction =
   | { type: 'reaction/received'; reaction: ReactionEvent }
   | { type: 'game/starting'; event: GameStartingEvent }
   | { type: 'game/roundStarted'; round: RoundStartEvent }
+  | { type: 'game/answerWindowOpened'; event: AnswerWindowOpenEvent }
   | { type: 'game/timerTicked'; timer: TimerTickEvent }
   | { type: 'game/answerProgressed'; progress: AnswerProgressEvent }
   | {
@@ -102,6 +104,41 @@ export function tvGameRealtimeReducer(
       return {
         ...state,
         gameState: { ...state.gameState, timer: action.timer },
+      };
+    case 'game/answerWindowOpened':
+      if (state.gameState.phase !== 'question') return state;
+      if (state.gameState.round.question.id !== action.event.questionId)
+        return state;
+      return {
+        ...state,
+        gameState: {
+          ...state.gameState,
+          answerWindow: action.event,
+          round: {
+            ...state.gameState.round,
+            question: {
+              ...state.gameState.round.question,
+              options: action.event.options,
+            },
+            answerStartTime: action.event.answerStartTime,
+            roundEndTime: action.event.roundEndTime,
+          },
+          timer: {
+            remainingSeconds: Math.max(
+              0,
+              Math.ceil((action.event.roundEndTime - Date.now()) / 1000),
+            ),
+            totalSeconds: Math.max(
+              1,
+              Math.ceil(
+                (action.event.roundEndTime - action.event.answerStartTime) /
+                  1000,
+              ),
+            ),
+            serverTime: action.event.serverTime,
+            stage: 'answering',
+          },
+        },
       };
     case 'game/answerProgressed':
       if (state.gameState.phase !== 'question') return state;

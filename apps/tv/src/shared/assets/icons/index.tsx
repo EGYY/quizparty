@@ -57,6 +57,49 @@ export const TrophyIcon = ({
   );
 };
 
+export const TimerBoltIcon = ({
+  size = 32,
+  color = '#7DD8FF',
+  width,
+  height,
+  ...props
+}: IconProps) => {
+  return (
+    <Svg
+      width={width ?? size}
+      height={height ?? size}
+      viewBox="0 0 32 32"
+      fill="none"
+      {...props}
+    >
+      <Circle
+        cx={16}
+        cy={17}
+        r={10}
+        stroke={color}
+        strokeWidth={3}
+        opacity={0.42}
+      />
+      <Path
+        d="M12 4.5H20"
+        stroke={color}
+        strokeWidth={3}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M16 17L20.2 12.8"
+        stroke={color}
+        strokeWidth={3}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M17.45 7.2L10.3 17.1C9.92 17.63 10.3 18.36 10.95 18.36H14.78L13.58 25C13.42 25.86 14.51 26.34 15.02 25.64L22.08 15.98C22.47 15.45 22.09 14.7 21.43 14.7H17.68L18.9 7.85C19.06 6.99 17.96 6.5 17.45 7.2Z"
+        fill={color}
+      />
+    </Svg>
+  );
+};
+
 export const PartyPopperIcon = ({
   size = 32,
   color = '#FFFFFF',

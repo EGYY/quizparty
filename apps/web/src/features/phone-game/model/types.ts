@@ -1,5 +1,6 @@
 import type {
   AnswerAcceptedEvent,
+  AnswerWindowOpenEvent,
   GameEndEvent,
   GamePausedEvent,
   GameStartingEvent,
@@ -23,6 +24,7 @@ export type PhoneGameState =
   | { event: GameStartingEvent; phase: 'starting' }
   | {
       accepted?: AnswerAcceptedEvent;
+      answerWindow?: AnswerWindowOpenEvent;
       isPaused?: boolean;
       pause?: GamePausedEvent | undefined;
       phase: 'question';

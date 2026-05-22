@@ -93,6 +93,7 @@ export const roomSettingsSchema = z.object({
   difficulty: difficultySchema,
   mode: gameModeSchema,
   questionDurationMs: z.number().int().positive(),
+  answerRevealDelayMs: z.number().int().nonnegative().default(0),
   revealDurationMs: z.number().int().positive(),
 });
 
@@ -229,18 +230,24 @@ export const questionSchema = z.object({
   order: z.number().int().nonnegative(),
 });
 
+export const roundQuestionSchema = questionSchema.extend({
+  options: questionSchema.shape.options.optional(),
+});
+
 export const roundStartEventSchema = z.object({
   roundNumber: z.number().int().positive(),
   totalRounds: z.number().int().positive(),
-  question: questionSchema,
+  question: roundQuestionSchema,
   serverTime: z.number().int().positive(),
   roundEndTime: z.number().int().positive(),
+  answerStartTime: z.number().int().positive().optional(),
 });
 
 export const timerTickEventSchema = z.object({
   remainingSeconds: z.number().int().nonnegative(),
   totalSeconds: z.number().int().positive(),
   serverTime: z.number().int().positive(),
+  stage: z.enum(['reading', 'answering']).optional(),
 });
 
 export const submitAnswerPayloadSchema = z.object({
@@ -253,6 +260,14 @@ export const answerAcceptedEventSchema = z.object({
   questionId: uuidSchema,
   answerIndex: z.number().int().min(0).max(3),
   answeredAt: z.number().int().positive(),
+});
+
+export const answerWindowOpenEventSchema = z.object({
+  questionId: uuidSchema,
+  options: z.array(z.string().min(1).max(140)).length(4),
+  serverTime: z.number().int().positive(),
+  answerStartTime: z.number().int().positive(),
+  roundEndTime: z.number().int().positive(),
 });
 
 export const answerProgressEventSchema = z.object({
@@ -487,6 +502,7 @@ export function deriveRoomSettings(quizId: string, difficulty: Difficulty, mode:
     difficulty,
     mode,
     questionDurationMs: modeSettings.questionDurationMs,
+    answerRevealDelayMs: modeSettings.answerRevealDelayMs,
     revealDurationMs: modeSettings.revealDurationMs,
   });
 }

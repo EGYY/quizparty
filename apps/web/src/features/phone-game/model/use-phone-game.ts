@@ -143,6 +143,42 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
       currentRoundRef.current = data;
       setGameState({ phase: 'question', round: data, timer: buildInitialTimer(data) });
     });
+    game.on(ServerEvent.ANSWER_WINDOW_OPEN, (data) => {
+      if (currentRoundRef.current?.question.id === data.questionId) {
+        currentRoundRef.current = {
+          ...currentRoundRef.current,
+          answerStartTime: data.answerStartTime,
+          roundEndTime: data.roundEndTime,
+          question: {
+            ...currentRoundRef.current.question,
+            options: data.options,
+          },
+        };
+      }
+      setGameState((current) => {
+        if (current.phase !== 'question') return current;
+        if (current.round.question.id !== data.questionId) return current;
+        return {
+          ...current,
+          answerWindow: data,
+          round: {
+            ...current.round,
+            answerStartTime: data.answerStartTime,
+            roundEndTime: data.roundEndTime,
+            question: {
+              ...current.round.question,
+              options: data.options,
+            },
+          },
+          timer: {
+            remainingSeconds: Math.max(0, Math.ceil((data.roundEndTime - Date.now()) / 1000)),
+            totalSeconds: Math.max(1, Math.ceil((data.roundEndTime - data.answerStartTime) / 1000)),
+            serverTime: data.serverTime,
+            stage: 'answering',
+          },
+        };
+      });
+    });
     game.on(ServerEvent.TIMER_TICK, (data) => {
       setGameState((current) => {
         if (current.phase !== 'question' || !currentRoundRef.current) return current;
@@ -278,13 +314,21 @@ export function usePhoneGame({ avatarId, nickname, playerId, room }: UsePhoneGam
     if (
       currentGameState.phase !== 'question' ||
       currentGameState.accepted ||
-      currentGameState.isPaused
+      currentGameState.isPaused ||
+      !currentGameState.round.question.options
     ) {
       return;
     }
 
     setGameState((current) => {
-      if (current.phase !== 'question' || current.accepted || current.isPaused) return current;
+      if (
+        current.phase !== 'question' ||
+        current.accepted ||
+        current.isPaused ||
+        !current.round.question.options
+      ) {
+        return current;
+      }
       return { ...current, selectedAnswerIndex: answerIndex };
     });
     if (!gameJoinedRef.current) return;

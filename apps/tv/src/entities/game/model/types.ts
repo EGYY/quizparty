@@ -1,4 +1,5 @@
 import type {
+  AnswerWindowOpenEvent,
   AnswerProgressEvent,
   GameEndEvent,
   GamePausedEvent,
@@ -26,6 +27,7 @@ export type TvGameState =
       pause?: GamePausedEvent;
       isPaused?: boolean;
       progress?: AnswerProgressEvent;
+      answerWindow?: AnswerWindowOpenEvent;
       round: RoundStartEvent;
       timer: TimerTickEvent;
     }
