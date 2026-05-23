@@ -1,0 +1,142 @@
+.final-phone {
+  min-height: 0;
+  display: grid;
+  align-content: stretch;
+  justify-items: center;
+  gap: 12px;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  text-align: center;
+}
+
+.final-hero-card,
+.final-message,
+.final-leave-button {
+  border: 2px solid rgba(221, 160, 84, 0.48);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 209, 102, 0.15), transparent 42%),
+    rgba(6, 11, 24, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+}
+
+.final-hero-card {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  border-radius: 26px;
+  padding: 18px 14px;
+  text-align: center;
+}
+
+.final-trophy-badge {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.3), transparent 24%),
+    linear-gradient(180deg, #ffd84f, #ef7b2f);
+  box-shadow: 0 0 28px rgba(255, 197, 80, 0.48);
+}
+
+.final-hero-card span,
+.final-hero-card small {
+  color: #f5d1a1;
+  font-weight: 900;
+}
+
+.final-hero-card h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(35px, 11vw, 54px);
+  line-height: 1;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.58);
+}
+
+.final-leave-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 16px;
+  color: #fff6dd;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.final-message {
+  border-radius: 18px;
+  color: #9fdf8a;
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+@media (max-width: 460px) {
+  .final-phone {
+    gap: 8px;
+  }
+
+  .final-hero-card {
+    gap: 4px;
+    border-radius: 21px;
+    padding: 13px 10px;
+  }
+
+  .final-trophy-badge {
+    width: 58px;
+    height: 58px;
+  }
+
+  .final-hero-card h1 {
+    font-size: clamp(29px, 9vw, 40px);
+  }
+
+  .final-hero-card span,
+  .final-hero-card small {
+    font-size: 14px;
+  }
+
+  .final-message {
+    border-radius: 15px;
+    padding: 9px;
+    font-size: 15px;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .final-phone {
+    gap: 6px;
+  }
+
+  .final-hero-card {
+    padding: 9px 8px;
+  }
+
+  .final-trophy-badge {
+    width: 46px;
+    height: 46px;
+  }
+
+  .final-trophy-badge svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .final-hero-card h1 {
+    font-size: clamp(24px, 8vw, 32px);
+  }
+
+  .final-hero-card span,
+  .final-hero-card small {
+    font-size: 12px;
+  }
+
+  .final-message {
+    padding: 7px;
+    font-size: 13px;
+  }
+}

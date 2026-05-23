@@ -1,0 +1,32 @@
+.mobileDanger {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .mobileDanger {
+    position: relative;
+    display: block;
+    margin-left: auto;
+  }
+
+  .mobileDangerPanel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 12;
+    width: min(260px, calc(100vw - 24px));
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid rgba(255, 82, 103, 0.24);
+    border-radius: 8px;
+    color: #fff2f3;
+    background: rgba(18, 10, 24, 0.98);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+
+    span {
+      color: #ffb2bd;
+      font-size: 12px;
+    }
+  }
+}

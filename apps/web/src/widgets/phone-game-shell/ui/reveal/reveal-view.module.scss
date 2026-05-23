@@ -1,0 +1,68 @@
+.reveal-phone {
+  display: grid;
+  gap: 14px;
+}
+
+.reveal-phone p {
+  margin: 0;
+  color: #d5d9e6;
+  font-size: 18px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.round-result-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  border: 2px solid rgba(221, 160, 84, 0.55);
+  border-radius: 28px;
+  background: rgba(6, 11, 24, 0.82);
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.round-result-card span,
+.round-result-card small {
+  color: #f5d1a1;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.round-result-card h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.75rem, 4.5dvh, 2.625rem);
+  line-height: 1.08;
+}
+
+@media (max-width: 460px) {
+  .round-result-card {
+    gap: 8px;
+    border-radius: 22px;
+    padding: 18px 12px;
+  }
+
+  .round-result-card span,
+  .round-result-card small {
+    font-size: 16px;
+  }
+
+  .round-result-card h1 {
+    font-size: clamp(1.5rem, 4dvh, 2rem);
+  }
+
+  .reveal-phone p {
+    font-size: 15px;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .round-result-card {
+    padding: 14px 10px;
+  }
+
+  .reveal-phone p {
+    font-size: 13px;
+  }
+}

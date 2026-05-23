@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Role } from '@quizparty/shared';
 import { useQuizDraftEditor } from '@features/manage-quiz-draft';
-import { PageStatus } from '@shared/ui/page-status';
+import { useAppStore } from '@shared/model/app-store';
+import { PageStatus } from '@shared/ui';
 import { QuizEditor } from '@widgets/quiz-editor';
 
 export default function EditorPage() {
@@ -19,6 +21,7 @@ export default function EditorPage() {
     void navigate('/admin/quizzes', { replace: true });
   }, [navigate]);
 
+  const currentUser = useAppStore((state) => state.currentUser);
   const editor = useQuizDraftEditor({ quizId, onCreated, onDeleted });
 
   if (editor.loadState.status === 'loading') return <PageStatus text="Загрузка редактора" />;
@@ -36,6 +39,7 @@ export default function EditorPage() {
     <QuizEditor
       draft={editor.draft}
       canDelete={editor.canDelete}
+      canEditStatus={currentUser?.role === Role.ADMIN}
       isDeleting={editor.isDeleting}
       isSaving={editor.isSaving}
       isSubmitting={editor.isSubmitting}

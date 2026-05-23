@@ -1,0 +1,94 @@
+.filterShell {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.filterPrimaryRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filterToggle {
+  display: none;
+}
+
+.filterToggle span {
+  min-width: 20px;
+  min-height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #1a102e;
+  background: #ffd35c;
+  font-size: 11px;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.filterChip {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 211, 92, 0.2);
+  border-radius: 999px;
+  color: #fff0c7;
+  background: rgba(255, 211, 92, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.filterChipReset {
+  color: #aeb5d4;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .filterToggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .filterRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filterPrimaryRow {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filterPanel {
+    display: none;
+    margin-bottom: 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .filterPanelOpen {
+    display: flex;
+  }
+
+  .filterChip {
+    min-height: 34px;
+  }
+}

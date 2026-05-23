@@ -1,0 +1,54 @@
+.mobileTabs {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .mobileTabs {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(9, 10, 24, 0.94);
+    backdrop-filter: blur(16px);
+
+    button {
+      min-width: 0;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: #aeb5d4;
+      background: rgba(255, 255, 255, 0.045);
+      font-size: 12px;
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      span {
+        min-width: 20px;
+        min-height: 20px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 999px;
+        color: #1a102e;
+        background: #ffd35c;
+        font-size: 11px;
+      }
+    }
+  }
+
+  .mobileTabActive {
+    color: #fff6dd !important;
+    border-color: rgba(255, 211, 92, 0.32) !important;
+    background: rgba(255, 211, 92, 0.1) !important;
+  }
+}

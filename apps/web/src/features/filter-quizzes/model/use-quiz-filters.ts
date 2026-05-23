@@ -7,6 +7,12 @@ export function useQuizFilters() {
   const [category, setCategory] = useState<QuizCategory>(QuizCategory.ALL);
   const [status, setStatus] = useState<string>('');
   const [sort, setSort] = useState<AdminSort>(AdminSort.NEWEST);
+  const activeFilterCount = [
+    search.trim(),
+    category !== QuizCategory.ALL,
+    Boolean(status),
+    sort !== AdminSort.NEWEST,
+  ].filter(Boolean).length;
 
   const filters = useMemo<AdminQuizListFilters>(
     () => ({
@@ -21,7 +27,14 @@ export function useQuizFilters() {
 
   return {
     category,
+    activeFilterCount,
     filters,
+    resetFilters: () => {
+      setSearch('');
+      setCategory(QuizCategory.ALL);
+      setStatus('');
+      setSort(AdminSort.NEWEST);
+    },
     search,
     setCategory,
     setSearch,

@@ -1,0 +1,15 @@
+.coverThumb {
+  width: 58px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.coverThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

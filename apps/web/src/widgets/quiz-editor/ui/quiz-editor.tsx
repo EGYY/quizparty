@@ -1,16 +1,17 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Save, Send, Trash2 } from 'lucide-react';
+import { memo, useCallback, useMemo } from 'react';
+import { Plus } from 'lucide-react';
 import type { QuizDraft, QuizDraftQuestion } from '@quizparty/shared';
 import { emptyQuestion, localValidation } from '@entities/quiz';
+import { Button } from '@shared/ui';
 import { computeErrors, EMPTY_ERRORS } from '../lib/compute-errors';
-import type { QuestionErrors, QuizEditorProps } from '../model/types';
-import { FieldError } from './field-error';
-import { MetaPanel } from './meta-panel';
-import { QuestionEditorPanel } from './question-editor-panel';
-import { QuestionNav } from './question-nav';
-import { SaveStateBadge } from './save-state-badge';
-import { TVPreviewPanel } from './tv-preview-panel';
-import { ValidationPanel } from './validation-panel';
+import { useQuizEditorView } from '../model/use-quiz-editor-view';
+import type { MobileEditorView, QuestionErrors, QuizEditorProps } from '../model/types';
+import { EditorHeaderBar } from './layout/editor-header-bar';
+import { EditorMobileTabs } from './layout/editor-mobile-tabs';
+import { EditorSidebar } from './layout/editor-sidebar';
+import { QuestionEditorPanel } from './question/question-editor-panel';
+import { TVPreviewPanel } from './preview/tv-preview-panel';
+import { ValidationPanel } from './validation/validation-panel';
 import styles from './quiz-editor.module.scss';
 
 const emptyQuestionErrors: QuestionErrors = { questionText: undefined, options: [] };
@@ -18,6 +19,7 @@ const emptyQuestionErrors: QuestionErrors = { questionText: undefined, options: 
 export const QuizEditor = memo(function QuizEditor({
   draft,
   canDelete,
+  canEditStatus,
   saveState,
   isDeleting,
   isSaving,
@@ -34,23 +36,30 @@ export const QuizEditor = memo(function QuizEditor({
   onSave,
   onSubmit,
 }: QuizEditorProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showErrors, setShowErrors] = useState(false);
-
   const allErrors = useMemo(() => computeErrors(draft), [draft]);
   const validation = useMemo(
     () => (draft.validation.length ? draft.validation : localValidation(draft)),
     [draft],
   );
   const canSubmit = useMemo(() => validation.every((item) => item.passed), [validation]);
+  const failedValidationCount = validation.filter((item) => !item.passed).length;
+  const {
+    isDeleteOpen,
+    mobileTabs,
+    mobileView,
+    safeIndex,
+    setIsDeleteOpen,
+    setMobileView,
+    setSelectedIndex,
+    setShowErrors,
+    showErrors,
+  } = useQuizEditorView({
+    draftId: draft.id,
+    failedValidationCount,
+    questionCount: draft.questions.length,
+  });
 
-  const safeIndex = Math.max(0, Math.min(selectedIndex, draft.questions.length - 1));
   const selectedQuestion = draft.questions[safeIndex];
-
-  useEffect(() => {
-    setSelectedIndex(0);
-    setShowErrors(false);
-  }, [draft.id]);
 
   const setField = useCallback(
     <K extends keyof QuizDraft>(field: K, value: QuizDraft[K]) =>
@@ -97,6 +106,7 @@ export const QuizEditor = memo(function QuizEditor({
 
   const handleSubmit = useCallback(() => {
     setShowErrors(true);
+    setMobileView('check');
     onSubmit();
   }, [onSubmit]);
 
@@ -104,96 +114,90 @@ export const QuizEditor = memo(function QuizEditor({
   const selectedQuestionErrors: QuestionErrors = showErrors
     ? (allErrors.questions[safeIndex] ?? emptyQuestionErrors)
     : emptyQuestionErrors;
+  const mobileSectionClass = (view: MobileEditorView, extraClass?: string) =>
+    [styles.mobileSection, mobileView === view ? styles.mobileSectionActive : '', extraClass ?? '']
+      .filter(Boolean)
+      .join(' ');
 
   return (
     <div className={styles.root}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <input
-            className={`${styles.titleInput}${showErrors && allErrors.title ? ` ${styles.titleInputError}` : ''}`}
-            placeholder="Название квиза"
-            value={draft.title}
-            onChange={(e) => setField('title', e.target.value)}
-          />
-          {showErrors && allErrors.title ? <FieldError message={allErrors.title} /> : null}
-          <SaveStateBadge state={saveState} />
-        </div>
-        <div className={styles.headerActions}>
-          {canDelete ? (
-            <button
-              className="danger-button"
-              disabled={isDeleting}
-              type="button"
-              onClick={onDelete}
-            >
-              <Trash2 size={15} />
-              <span className={styles.btnLabel}>Удалить</span>
-            </button>
-          ) : null}
-          <button
-            className="secondary-button"
-            disabled={isSaving}
-            type="button"
-            onClick={handleSave}
-          >
-            <Save size={15} />
-            <span className={styles.btnLabel}>{isSaving ? 'Сохранение…' : 'Сохранить'}</span>
-          </button>
-          <button
-            className="primary-button"
-            disabled={!canSubmit || isSubmitting}
-            type="button"
-            onClick={handleSubmit}
-          >
-            <Send size={15} />
-            <span className={styles.btnLabel}>{isSubmitting ? 'Отправка…' : 'На ревью'}</span>
-          </button>
-        </div>
-      </header>
+      <EditorHeaderBar
+        canDelete={canDelete}
+        canSubmit={canSubmit}
+        isDeleteOpen={isDeleteOpen}
+        isDeleting={isDeleting}
+        isSaving={isSaving}
+        isSubmitting={isSubmitting}
+        saveState={saveState}
+        showErrors={showErrors}
+        title={draft.title}
+        titleError={allErrors.title}
+        onDelete={onDelete}
+        onSave={handleSave}
+        onSubmit={handleSubmit}
+        onTitleChange={(value) => setField('title', value)}
+        onToggleDelete={() => setIsDeleteOpen((value) => !value)}
+      />
+
+      <EditorMobileTabs activeView={mobileView} tabs={mobileTabs} onSelect={setMobileView} />
 
       <div className={styles.body}>
-        <aside className={styles.sidebar}>
-          <MetaPanel
-            draft={draft}
-            errors={visibleErrors}
-            pendingCoverFile={pendingCoverFile}
-            setField={setField}
-            onCoverFileChange={onCoverFileChange}
-          />
-          <QuestionNav
-            draft={draft}
-            errors={allErrors}
-            selectedIndex={safeIndex}
-            showErrors={showErrors}
-            onAdd={addQuestion}
-            onSelect={setSelectedIndex}
-          />
-        </aside>
+        <EditorSidebar
+          allErrors={allErrors}
+          canEditStatus={canEditStatus}
+          draft={draft}
+          errors={visibleErrors}
+          mobileSectionClass={mobileSectionClass}
+          pendingCoverFile={pendingCoverFile}
+          safeIndex={safeIndex}
+          showErrors={showErrors}
+          setField={setField}
+          onAdd={addQuestion}
+          onCoverFileChange={onCoverFileChange}
+          onSelect={(index) => {
+            setSelectedIndex(index);
+            setMobileView('question');
+          }}
+        />
 
         <main className={styles.main}>
-          {selectedQuestion ? (
-            <QuestionEditorPanel
-              count={draft.questions.length}
-              errors={selectedQuestionErrors}
-              index={safeIndex}
-              pendingMediaFile={pendingQuestionMediaFiles[safeIndex]}
-              pendingRevealMediaFile={pendingQuestionRevealMediaFiles[safeIndex]}
+          <div className={mobileSectionClass('check', styles.mobileValidation)}>
+            <ValidationPanel validation={validation} />
+          </div>
+
+          <div className={mobileSectionClass('preview', styles.mobilePreview)}>
+            <TVPreviewPanel
+              draft={draft}
+              pendingCoverFile={pendingCoverFile}
               question={selectedQuestion}
-              onChange={(patch) => setQuestion(safeIndex, patch)}
-              onMediaFileChange={(file) => onQuestionMediaFileChange(safeIndex, file)}
-              onNavigate={setSelectedIndex}
-              onRemove={() => removeQuestion(safeIndex)}
-              onRevealMediaFileChange={(file) => onQuestionRevealMediaFileChange(safeIndex, file)}
             />
-          ) : (
-            <div className={styles.empty}>
-              <p>Нет вопросов. Добавьте первый!</p>
-              <button className="primary-button" type="button" onClick={addQuestion}>
-                <Plus size={16} />
-                Добавить вопрос
-              </button>
-            </div>
-          )}
+          </div>
+
+          <div className={mobileSectionClass('question', styles.questionEditorSlot)}>
+            {selectedQuestion ? (
+              <QuestionEditorPanel
+                count={draft.questions.length}
+                errors={selectedQuestionErrors}
+                index={safeIndex}
+                pendingMediaFile={pendingQuestionMediaFiles[safeIndex]}
+                pendingRevealMediaFile={pendingQuestionRevealMediaFiles[safeIndex]}
+                question={selectedQuestion}
+                onChange={(patch) => setQuestion(safeIndex, patch)}
+                onMediaFileChange={(file) => onQuestionMediaFileChange(safeIndex, file)}
+                onNavigate={setSelectedIndex}
+                onRemove={() => removeQuestion(safeIndex)}
+                onRevealMediaFileChange={(file) => onQuestionRevealMediaFileChange(safeIndex, file)}
+              />
+            ) : (
+              <div className={styles.empty}>
+                <p>Нет вопросов. Добавьте первый!</p>
+                <Button variant="primary" onClick={addQuestion}>
+                  <Plus size={16} />
+                  Добавить вопрос
+                </Button>
+              </div>
+            )}
+          </div>
         </main>
 
         <aside className={styles.side}>

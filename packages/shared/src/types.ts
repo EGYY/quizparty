@@ -36,6 +36,7 @@ import {
   reorderQuestionsRequestSchema,
   reactionEventSchema,
   reactionPayloadSchema,
+  registerRequestSchema,
   reviewDecisionPayloadSchema,
   reviewDecisionBodySchema,
   roomClosedEventSchema,
@@ -104,6 +105,7 @@ export type ReorderQuestionsRequest = z.infer<typeof reorderQuestionsRequestSche
 export type MediaUploadResponse = z.infer<typeof mediaUploadResponseSchema>;
 export type UserSummary = z.infer<typeof userSummarySchema>;
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type AuthSession = z.infer<typeof authSessionSchema>;
 export type QualityWarning = z.infer<typeof qualityWarningSchema>;
 export type AdminDashboard = z.infer<typeof adminDashboardSchema>;

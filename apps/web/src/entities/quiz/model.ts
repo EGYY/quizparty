@@ -1,6 +1,6 @@
 import { Difficulty, QuizCategory, QuizStatus } from '@quizparty/shared';
 import type { QuizDraft, QuizDraftQuestion } from '@quizparty/shared';
-import { defaultCoverUrl } from '@shared/lib/assets';
+import { defaultCoverUrl } from '@shared/lib';
 
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 

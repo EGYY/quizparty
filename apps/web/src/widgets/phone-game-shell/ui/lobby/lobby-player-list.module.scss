@@ -1,0 +1,80 @@
+.lobby-player-list {
+  display: grid;
+  gap: clamp(7px, 1.5dvh, 11px);
+}
+
+.lobby-player-row {
+  min-height: clamp(60px, 10dvh, 88px);
+  display: grid;
+  grid-template-columns: clamp(46px, 14vw, 72px) minmax(0, 1fr) auto;
+  gap: clamp(8px, 2.5vw, 12px);
+  align-items: center;
+  border: 2px solid rgba(220, 139, 62, 0.58);
+  border-radius: clamp(16px, 4vw, 22px);
+  background: rgba(255, 255, 255, 0.035);
+  padding: clamp(7px, 1.5dvh, 10px);
+}
+
+.lobby-player-row.ready {
+  border-color: rgba(177, 255, 91, 0.76);
+  background: rgba(96, 170, 57, 0.16);
+  box-shadow: 0 0 20px rgba(163, 255, 83, 0.19);
+}
+
+.lobby-player-row.offline {
+  opacity: 0.58;
+}
+
+.lobby-player-row.empty {
+  border-style: dashed;
+  opacity: 0.62;
+}
+
+.lobby-player-row img,
+.lobby-empty-avatar {
+  width: clamp(46px, 14vw, 66px);
+  height: clamp(46px, 14vw, 66px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #282b36;
+  object-fit: cover;
+}
+
+.lobby-empty-avatar {
+  color: #8f93a0;
+  font-size: clamp(24px, 7vw, 38px);
+  font-weight: 900;
+}
+
+.lobby-player-row strong,
+.lobby-player-row small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.lobby-player-row strong {
+  color: #fff;
+  font-size: clamp(17px, 5vw, 25px);
+  line-height: 1.08;
+  font-weight: 900;
+}
+
+.lobby-player-row small {
+  margin-top: 2px;
+  color: #ffc850;
+  font-size: clamp(13px, 3.5vw, 17px);
+  font-weight: 900;
+}
+
+.lobby-player-status {
+  min-width: clamp(30px, 8vw, 42px);
+  display: grid;
+  place-items: center;
+  color: #b9ff72;
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 900;
+}

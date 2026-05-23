@@ -1,0 +1,45 @@
+.question-progress-segments {
+  grid-area: progress;
+  display: grid;
+  grid-template-columns: repeat(var(--segments, 10), 1fr);
+  grid-auto-flow: column;
+  gap: 3px;
+}
+
+.question-progress-segments span {
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.question-progress-segments span.active {
+  background: linear-gradient(90deg, #ff5267, #ffd84f);
+}
+
+@media (max-width: 460px) {
+  .question-progress-segments {
+    gap: 2px;
+  }
+
+  .question-progress-segments span {
+    height: 8px;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 560px) {
+  .question-progress-segments span {
+    height: 6px;
+  }
+}
+
+@media (max-height: 520px) and (min-width: 560px) {
+  .question-progress-segments span {
+    height: 5px;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .question-progress-segments span {
+    height: 6px;
+  }
+}

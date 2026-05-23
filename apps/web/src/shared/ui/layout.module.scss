@@ -1,0 +1,58 @@
+.panel h3 {
+  margin: 0;
+  color: #fff6dd;
+}
+
+.panel {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(25, 27, 54, 0.94), rgba(14, 16, 34, 0.94));
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.26);
+}
+
+.fullPanel {
+  min-height: calc(100vh - 108px);
+  min-height: calc(100svh - 108px);
+}
+
+.viewStack {
+  display: grid;
+  gap: 18px;
+}
+
+.panelHeader,
+.filtersHeader,
+.detailHead,
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panelHeader,
+.detailHead {
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .panel {
+    padding: 14px;
+  }
+
+  .viewStack {
+    gap: 12px;
+  }
+
+  .panelHeader,
+  .filtersHeader {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .fullPanel {
+    min-height: auto;
+  }
+}

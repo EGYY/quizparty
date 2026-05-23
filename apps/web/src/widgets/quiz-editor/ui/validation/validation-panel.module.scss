@@ -1,0 +1,40 @@
+.checklistPanel {
+  padding: 14px;
+}
+
+.validationDetails {
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    span {
+      color: #9fa8c2;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    b {
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: #fff0c7;
+      background: rgba(255, 211, 92, 0.1);
+      font-size: 12px;
+    }
+  }
+}
+
+.checklist {
+  margin-top: 10px;
+}

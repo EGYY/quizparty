@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ReviewRejectionReason } from '@quizparty/shared';
-import { queryKeys } from '@shared/api/query-keys';
-import { useToastStore } from '@shared/ui/toast';
+import { queryKeys } from '@shared/api';
+import { useToastStore } from '@shared/ui';
 import { reviewQuiz } from '../api/review-decision';
 
 export function useReviewDecision() {

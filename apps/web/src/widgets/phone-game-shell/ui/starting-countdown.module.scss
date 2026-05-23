@@ -1,0 +1,201 @@
+.round-countdown-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  border: 2px solid rgba(221, 160, 84, 0.55);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 216, 79, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(18, 25, 50, 0.92), rgba(6, 11, 24, 0.88));
+  padding: 28px 18px;
+  text-align: center;
+}
+
+.round-countdown-card::before {
+  content: '';
+  position: absolute;
+  inset: -35%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 28%,
+    rgba(255, 216, 79, 0.2) 34%,
+    transparent 42% 100%
+  );
+  animation: countdown-sweep 5s linear infinite;
+}
+
+.round-countdown-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.round-countdown-card span {
+  color: #f5d1a1;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.round-countdown-card small {
+  color: #d8dcf0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.round-countdown-ring {
+  width: 160px;
+  height: 160px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(16, 21, 39, 0.98) 0 54%, transparent 56%),
+    conic-gradient(#ffd84f var(--countdown-progress, 100%), rgba(255, 109, 77, 0.34) 0);
+  box-shadow:
+    0 0 34px rgba(255, 141, 65, 0.36),
+    inset 0 0 26px rgba(255, 255, 255, 0.05);
+  animation: countdown-breathe 1.2s ease-in-out infinite;
+}
+
+.round-countdown-ring::after {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.09);
+  border-radius: inherit;
+}
+
+.round-countdown-ring i {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #fff6dd;
+  box-shadow: 0 0 16px rgba(255, 216, 79, 0.8);
+  animation: countdown-orbit 1.6s linear infinite;
+}
+
+.round-countdown-ring i:nth-child(2) {
+  animation-delay: -0.53s;
+}
+
+.round-countdown-ring i:nth-child(3) {
+  animation-delay: -1.06s;
+}
+
+.round-countdown-ring strong {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 88px;
+  line-height: 1;
+  text-shadow:
+    0 0 18px rgba(255, 216, 79, 0.62),
+    0 5px 18px rgba(0, 0, 0, 0.58);
+  animation: countdown-pop 0.42s cubic-bezier(0.2, 0.9, 0.2, 1.2);
+}
+
+@keyframes countdown-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes countdown-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes countdown-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.72);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.08);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes countdown-orbit {
+  from {
+    transform: rotate(0deg) translateY(-80px);
+  }
+
+  to {
+    transform: rotate(360deg) translateY(-80px);
+  }
+}
+
+@media (max-width: 460px) {
+  .round-countdown-card {
+    gap: 8px;
+    border-radius: 22px;
+    padding: 18px 12px;
+  }
+
+  .round-countdown-card strong {
+    font-size: 64px;
+  }
+
+  .round-countdown-ring {
+    width: 118px;
+    height: 118px;
+  }
+
+  .round-countdown-ring i {
+    transform: translateY(-59px);
+  }
+
+  .round-countdown-card span {
+    font-size: 16px;
+  }
+
+  @keyframes countdown-orbit {
+    from {
+      transform: rotate(0deg) translateY(-59px);
+    }
+
+    to {
+      transform: rotate(360deg) translateY(-59px);
+    }
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .round-countdown-card {
+    padding: 14px 10px;
+  }
+
+  .round-countdown-card strong {
+    font-size: 52px;
+  }
+
+  .round-countdown-ring {
+    width: 94px;
+    height: 94px;
+  }
+
+  @keyframes countdown-orbit {
+    from {
+      transform: rotate(0deg) translateY(-47px);
+    }
+
+    to {
+      transform: rotate(360deg) translateY(-47px);
+    }
+  }
+}

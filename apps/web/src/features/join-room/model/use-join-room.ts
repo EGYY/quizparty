@@ -14,7 +14,7 @@ import {
   type StoredPhoneProfile,
 } from '@entities/player';
 import { getRoomSummary } from '@entities/room';
-import { useToastStore } from '@shared/ui/toast';
+import { useToastStore } from '@shared/ui';
 
 const fallbackAvatarId = phoneAvatars[0]?.id ?? 'avatar-1';
 

@@ -16,6 +16,7 @@ export type DraftErrors = {
 export type QuizEditorProps = {
   draft: QuizDraft;
   canDelete: boolean;
+  canEditStatus: boolean;
   saveState: SaveState;
   isDeleting: boolean;
   isSaving: boolean;
@@ -34,3 +35,5 @@ export type QuizEditorProps = {
 };
 
 export type QuestionMedia = QuizDraftQuestion['media'];
+
+export type MobileEditorView = 'quiz' | 'question' | 'check' | 'preview';

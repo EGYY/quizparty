@@ -1,0 +1,23 @@
+.appShell {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.workspace {
+  min-width: 0;
+  padding: 22px;
+}
+
+@media (max-width: 760px) {
+  .appShell {
+    grid-template-columns: 1fr;
+    min-height: 100svh;
+  }
+
+  .workspace {
+    padding: 12px;
+    padding-bottom: calc(var(--admin-bottom-nav-height) + 22px + env(safe-area-inset-bottom));
+  }
+}

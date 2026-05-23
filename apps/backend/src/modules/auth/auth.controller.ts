@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { authSessionSchema, loginRequestSchema } from '@quizparty/shared';
-import type { AuthSession, LoginRequest } from '@quizparty/shared';
+import { authSessionSchema, loginRequestSchema, registerRequestSchema } from '@quizparty/shared';
+import type { AuthSession, LoginRequest, RegisterRequest } from '@quizparty/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -38,6 +38,21 @@ export class AuthController {
     @Res({ passthrough: true }) response: ResponseLike,
   ): Promise<AuthSession> {
     const session = await this.auth.login(body);
+    this.setRefreshCookie(response, session.refreshToken, request);
+    return authSessionSchema.parse({
+      accessToken: session.accessToken,
+      user: session.user,
+    });
+  }
+
+  @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  async register(
+    @Body(new ZodValidationPipe(registerRequestSchema)) body: RegisterRequest,
+    @Req() request: RequestLike,
+    @Res({ passthrough: true }) response: ResponseLike,
+  ): Promise<AuthSession> {
+    const session = await this.auth.register(body);
     this.setRefreshCookie(response, session.refreshToken, request);
     return authSessionSchema.parse({
       accessToken: session.accessToken,

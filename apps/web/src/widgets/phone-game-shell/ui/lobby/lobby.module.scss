@@ -1,0 +1,129 @@
+.phone-lobby-screen {
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff6dd;
+}
+
+.phone-lobby-hero {
+  flex-shrink: 0;
+  height: clamp(85px, 28dvh, 190px);
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: clamp(8px, 1.5dvh, 12px) 10px 0;
+  text-align: center;
+}
+
+.phone-lobby-actions {
+  width: 100%;
+  position: absolute;
+  top: clamp(4px, 1dvh, 8px);
+  left: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.lobby-icon-button {
+  width: clamp(44px, 12vw, 56px);
+  height: clamp(44px, 12vw, 56px);
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 214, 143, 0.28);
+  border-radius: 999px;
+  color: #ffe1a6;
+  background: rgba(11, 15, 30, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.phone-lobby-logo {
+  width: clamp(190px, 54vw, 270px);
+  height: auto;
+  margin-top: -20px;
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.48));
+}
+
+.phone-lobby-code {
+  display: grid;
+  gap: 2px;
+}
+
+.phone-lobby-code span,
+.phone-lobby-code small {
+  color: #ffe2bd;
+  font-size: clamp(10px, 2dvh, 16px);
+  font-weight: 800;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
+}
+
+.phone-lobby-code strong {
+  color: #ffc850;
+  font-size: clamp(16px, 4.5dvh, 30px);
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow: 0 5px 18px rgba(0, 0, 0, 0.62);
+}
+
+.phone-lobby-mascot {
+  position: absolute;
+  right: -8px;
+  bottom: clamp(4px, 1dvh, 8px);
+  width: clamp(100px, 26vw, 160px);
+  height: auto;
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.46));
+}
+
+.phone-lobby-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: start;
+  gap: clamp(10px, 2dvh, 16px);
+  margin-top: clamp(-44px, -5.5dvh, -46px);
+  padding: clamp(12px, 2.5dvh, 18px) clamp(10px, 3.5vw, 14px) clamp(10px, 2dvh, 14px);
+  border: 2px solid rgba(221, 160, 84, 0.66);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(11, 17, 32, 0.97), rgba(7, 11, 22, 0.98)),
+    radial-gradient(circle at 50% 0%, rgba(255, 197, 96, 0.12), transparent 46%);
+  box-shadow:
+    0 22px 70px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.lobby-error {
+  border-radius: 16px;
+}
+
+.lobby-players-card {
+  display: grid;
+  gap: clamp(8px, 1.5dvh, 12px);
+  border: 1px solid rgba(221, 160, 84, 0.38);
+  border-radius: clamp(16px, 4vw, 20px);
+  background: rgba(2, 7, 17, 0.56);
+  padding: clamp(10px, 2dvh, 14px);
+}
+
+.lobby-players-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #f0c997;
+  font-size: clamp(17px, 4.5vw, 23px);
+}
+
+.lobby-players-card h2 span {
+  color: #ffc850;
+}

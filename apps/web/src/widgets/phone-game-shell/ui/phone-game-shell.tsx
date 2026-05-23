@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { LobbyPlayerStatus } from '@quizparty/shared';
 import type { Player, RoomSummary } from '@quizparty/shared';
 import { usePhoneGame } from '@features/phone-game';
+import { Eyebrow } from '@shared/ui';
 import { GameStateView } from './game-state-view';
-import { LobbyPhoneScreen } from './lobby-phone-screen';
+import { LobbyPhoneScreen } from './lobby/lobby-phone-screen';
 import styles from './phone-game-shell.module.scss';
-import { ReactionBar } from './reaction-bar';
+import { PauseOverlay } from './shared/pause-overlay';
+import { ReactionBar } from './shared/reaction-bar';
 
 const EMPTY_PLAYERS: Player[] = [];
 
@@ -77,7 +79,7 @@ export function PhoneGameShell({
           aria-live="assertive"
           role="alert"
         >
-          <p className="eyebrow">Не удалось подключиться</p>
+          <Eyebrow>Не удалось подключиться</Eyebrow>
           <h2>{fatalError}</h2>
           <button className={styles['phone-primary']} type="button" onClick={onLeave}>
             Вернуться к вводу кода
@@ -119,7 +121,7 @@ export function PhoneGameShell({
       <section className={`${styles['phone-controller']} ${styles['game-controller-shell']}`}>
         <header className={styles['phone-top']}>
           <div>
-            <p className="eyebrow">Комната {room.roomCode}</p>
+            <Eyebrow>Комната {room.roomCode}</Eyebrow>
             <h1>{room.selectedQuiz.title}</h1>
           </div>
           <span
@@ -155,15 +157,7 @@ export function PhoneGameShell({
 
         {showGameReactions ? <ReactionBar onSend={sendReaction} /> : null}
 
-        {isPaused ? (
-          <div className={styles['pause-overlay']} role="status" aria-live="polite">
-            <div className={styles['pause-overlay-card']}>
-              <span>Ведущий поставил игру на паузу</span>
-              <strong>Пауза</strong>
-              <small>Оставайтесь на месте, игра скоро продолжится.</small>
-            </div>
-          </div>
-        ) : null}
+        {isPaused ? <PauseOverlay /> : null}
       </section>
     </main>
   );

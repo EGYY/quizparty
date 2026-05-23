@@ -1,0 +1,122 @@
+.questionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 700px;
+}
+
+.questionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.questionNav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.questionCounter {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f7f0dc;
+  min-width: 110px;
+  text-align: center;
+}
+
+.textareaTall {
+  min-height: 84px !important;
+  resize: vertical;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 120ms;
+}
+
+.correctOption {
+  border-color: rgba(127, 242, 173, 0.55);
+}
+
+.errorOption {
+  border-color: rgba(255, 94, 109, 0.55);
+}
+
+.optionBtn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  min-height: unset;
+  border: 0;
+  border-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 800;
+  color: #6e7795;
+  background: rgba(255, 255, 255, 0.055);
+  transition:
+    background 120ms,
+    color 120ms;
+
+  &:hover:not(.correctOptionBtn) {
+    background: rgba(127, 242, 173, 0.14);
+    color: #7ff2ad;
+  }
+}
+
+.correctOptionBtn {
+  color: #1a102e;
+  background: #7ff2ad;
+}
+
+.optionInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: transparent;
+
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+@media (max-width: 860px) {
+  .questionPanel {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .questionHeader {
+    align-items: stretch;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .questionNav {
+    justify-content: space-between;
+  }
+}

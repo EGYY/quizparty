@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import type { UserSummary } from '@quizparty/shared';
 
+// NOTE: FSD import rules — useAppStore must only be called as a React hook
+// (inside components/custom hooks) at the widget or page layer.
+// Outside of React (API callbacks, HTTP interceptors), use the static accessor:
+//   useAppStore.getState().accessToken     — read state
+//   useAppStore.getState().setAuth(...)    — call actions
+// This is Zustand's recommended pattern for non-React access.
+// See: shared/api/http.ts, shared/api/auth.ts, features/auth/api/admin-auth.ts
+
 type AppStore = {
   accessToken: string | undefined;
   currentUser: UserSummary | undefined;

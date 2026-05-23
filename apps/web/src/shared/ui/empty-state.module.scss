@@ -1,0 +1,23 @@
+.root {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  padding: 22px;
+  border: 1px dashed rgba(255, 211, 92, 0.22);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.root strong {
+  color: #fff6dd;
+}
+
+.compact {
+  min-height: 112px;
+  padding: 16px;
+  margin-top: 16px;
+}

@@ -1,0 +1,154 @@
+.final-leaderboard {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(221, 160, 84, 0.48);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 209, 102, 0.15), transparent 42%),
+    rgba(6, 11, 24, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+  padding: 12px;
+}
+
+.final-leaderboard h2 {
+  margin: 0;
+  color: #ffd166;
+  font-size: 21px;
+  text-align: center;
+}
+
+.final-leaderboard > div {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.final-leaderboard > div > div {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 46px 46px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.055);
+  padding: 7px;
+}
+
+.own {
+  border-color: rgba(185, 255, 114, 0.6);
+  background: rgba(94, 161, 54, 0.16);
+}
+
+.final-place {
+  color: #ffd166;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.final-leaderboard img {
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.final-leaderboard strong {
+  color: #fff;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.final-leaderboard em {
+  color: #ffc850;
+  font-style: normal;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+@media (max-width: 460px) {
+  .final-leaderboard {
+    gap: 8px;
+    border-radius: 18px;
+    padding: 9px;
+  }
+
+  .final-leaderboard h2 {
+    font-size: 18px;
+  }
+
+  .final-leaderboard > div {
+    gap: 6px;
+  }
+
+  .final-leaderboard > div > div {
+    min-height: 48px;
+    grid-template-columns: 37px 38px minmax(0, 1fr) auto;
+    gap: 7px;
+    border-radius: 13px;
+    padding: 5px;
+  }
+
+  .final-place {
+    font-size: 15px;
+  }
+
+  .final-leaderboard img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .final-leaderboard strong,
+  .final-leaderboard em {
+    font-size: 16px;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 460px) {
+  .final-leaderboard {
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .final-leaderboard h2 {
+    font-size: 16px;
+  }
+
+  .final-leaderboard > div {
+    gap: 5px;
+  }
+
+  .final-leaderboard > div > div {
+    min-height: 40px;
+    grid-template-columns: 31px 30px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .final-place {
+    font-size: 13px;
+  }
+
+  .final-leaderboard img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .final-leaderboard strong,
+  .final-leaderboard em {
+    font-size: 14px;
+  }
+}

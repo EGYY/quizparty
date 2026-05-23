@@ -1,5 +1,5 @@
 import type { SaveState } from '@entities/quiz';
-import styles from './quiz-editor.module.scss';
+import styles from './save-state-badge.module.scss';
 
 export function SaveStateBadge({ state }: { state: SaveState }) {
   const text = {
@@ -9,5 +9,9 @@ export function SaveStateBadge({ state }: { state: SaveState }) {
     saved: 'Сохранено',
     error: 'Ошибка',
   }[state];
-  return <span className={`${styles.saveState} ${styles[state]}`}>{text}</span>;
+  return (
+    <span className={`${styles.saveState} ${styles[state]}`} role="status" aria-live="polite">
+      {text}
+    </span>
+  );
 }

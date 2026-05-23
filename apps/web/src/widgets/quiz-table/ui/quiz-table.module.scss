@@ -1,0 +1,135 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 13px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+    text-align: left;
+  }
+
+  th {
+    color: #7f88ac;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+}
+
+.quizCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quizCell strong,
+.quizCell span {
+  display: block;
+}
+
+.quizCell span {
+  color: #aeb5d4;
+}
+
+.desktopTableWrap {
+  /* visible on desktop, hidden on mobile */
+}
+
+.mobileCardList {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktopTableWrap {
+    display: none;
+  }
+
+  .mobileCardList {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobileCard {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.052);
+  }
+
+  .quizMobileCard {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .quizMobileHead {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quizMobileTitle {
+    min-width: 0;
+  }
+
+  .quizMobileTitle strong,
+  .quizMobileTitle span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quizMobileTitle span {
+    margin-top: 2px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+  }
+
+  .quizMobileMeta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+  }
+
+  .quizMobileMeta div {
+    min-width: 0;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .quizMobileMeta dt {
+    margin: 0 0 3px;
+    color: #7f88ac;
+    font-size: 10px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .quizMobileMeta dd {
+    margin: 0;
+    overflow: hidden;
+    color: #fff6dd;
+    font-size: 12px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quizMobileAction {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .quizMobileHead {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pillWrap {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
