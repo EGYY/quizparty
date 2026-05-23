@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { LobbyState, ReactionEvent, RoundStartEvent } from '@quizparty/shared';
 import { readStoredPlayerToken } from '@entities/player';
+import type { LobbyState, ReactionEvent } from '@quizparty/shared';
 import type { GameSocket } from '@shared/lib/socket';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PhoneConnectionStatus, UsePhoneGameParams } from './types';
 import { useGameSocket } from './use-game-socket';
 import { useLobbySocket } from './use-lobby-socket';
