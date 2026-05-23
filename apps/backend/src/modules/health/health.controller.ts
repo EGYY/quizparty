@@ -1,8 +1,10 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../../database/prisma.service';
 import { RedisService } from '../../infrastructure/redis.service';
 
+@ApiTags('health')
 @SkipThrottle()
 @Controller('health')
 export class HealthController {
@@ -11,6 +13,9 @@ export class HealthController {
     private readonly redis: RedisService,
   ) {}
 
+  @ApiOperation({ summary: 'Check DB + Redis connectivity' })
+  @ApiResponse({ status: 200, schema: { example: { status: 'ok', db: true, redis: true } } })
+  @ApiResponse({ status: 503, schema: { example: { status: 'error', db: false, redis: true } } })
   @Get()
   async check(): Promise<{ status: string; db: boolean; redis: boolean }> {
     const [db, redis] = await Promise.all([

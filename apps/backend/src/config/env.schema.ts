@@ -35,6 +35,15 @@ export const envSchema = z.object({
     .union([z.boolean(), z.enum(['true', 'false'])])
     .transform((v) => (typeof v === 'boolean' ? v : v === 'true'))
     .default(false),
+
+  ENABLE_SWAGGER: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((v) => (typeof v === 'boolean' ? v : v === 'true'))
+    .default(false),
+
+  // Только для prisma:seed — не требуются при запуске приложения.
+  SEED_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().min(6).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
