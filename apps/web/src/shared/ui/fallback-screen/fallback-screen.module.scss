@@ -1,0 +1,41 @@
+.root {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+}
+
+.panel {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 30px;
+  border: 1px solid rgba(255, 211, 92, 0.25);
+  border-radius: 8px;
+  background: rgba(18, 16, 38, 0.92);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.44);
+}
+
+.panel h1,
+.panel p {
+  margin: 0;
+}
+
+.message {
+  color: #aeb5d4;
+}
+
+@media (max-width: 760px) {
+  .root {
+    align-items: start;
+    padding: 14px;
+    padding-top: max(18px, env(safe-area-inset-top));
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    padding: 18px;
+  }
+}

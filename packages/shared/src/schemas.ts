@@ -418,6 +418,16 @@ export const loginRequestSchema = z.object({
   password: z.string().min(6).max(160),
 });
 
+export const registerRequestSchema = z.object({
+  email: z.string().email(),
+  name: z.string().trim().min(2).max(80),
+  password: z
+    .string()
+    .min(8)
+    .max(160)
+    .regex(/^(?=.*\d)(?=.*[^\d\s]).+$/),
+});
+
 export const authSessionSchema = z.object({
   accessToken: z.string().min(32),
   user: userSummarySchema,

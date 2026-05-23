@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { QuizDraft } from '@quizparty/shared';
 import { deleteUploadedMedia } from '@entities/media';
 import { createNewDraft, type SaveState } from '@entities/quiz';
-import { queryKeys } from '@shared/api/query-keys';
-import { useToastStore } from '@shared/ui/toast';
+import { queryKeys } from '@shared/api';
+import { useToastStore } from '@shared/ui';
 import { deleteQuiz, getDraft, saveDraft, submitForReview } from '../api/quiz-draft';
 import { emptyPendingMedia, shiftPendingMediaAfterQuestionRemoved } from '../lib/pending-media';
 import { uploadPendingMedia } from '../lib/upload-pending-media';
@@ -136,7 +136,6 @@ export function useQuizDraftEditor({ quizId, onCreated, onDeleted }: UseQuizDraf
   const onSubmit = useCallback(() => submitDraftMutate(draft), [draft, submitDraftMutate]);
   const onDelete = useCallback(() => {
     if (!draft.id) return;
-    if (!window.confirm('Удалить квиз и неиспользуемые файлы с сервера?')) return;
     deleteQuizMutate(draft.id);
   }, [deleteQuizMutate, draft.id]);
 

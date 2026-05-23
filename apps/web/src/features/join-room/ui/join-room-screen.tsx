@@ -1,6 +1,7 @@
 import { Loader2, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PhoneAvatarPicker } from '@entities/player';
-import { phonePopcornMascotUrl, quizPartyLogoUrl } from '@shared/lib/assets';
+import { phonePopcornMascotUrl, quizPartyLogoUrl } from '@shared/lib';
 import styles from './join-room-screen.module.scss';
 
 export function JoinRoomScreen({
@@ -28,6 +29,9 @@ export function JoinRoomScreen({
     <main className={styles.shell}>
       <section className={styles.hero}>
         <img alt="QuizParty" className={styles.logo} src={quizPartyLogoUrl} />
+        <Link className={styles.authorLink} to="/admin/login">
+          Вход для авторов
+        </Link>
         <h1>Подключайся и играй вместе с друзьями!</h1>
         <div className={styles.tip}>Введи код с экрана телевизора и выбери свой аватар!</div>
         <img alt="" className={styles.mascot} src={phonePopcornMascotUrl} />

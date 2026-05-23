@@ -1,0 +1,19 @@
+.checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.checkRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.checkRowPassed {
+  color: #7ff2ad;
+}

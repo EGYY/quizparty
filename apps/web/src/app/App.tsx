@@ -1,23 +1,17 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { useAppStore } from '@shared/model/app-store';
-import { PageStatus } from '@shared/ui/page-status';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { PageStatus } from '@shared/ui';
 import { AdminAuthGate } from './ui/admin-auth-gate';
 import { AdminLayout } from './ui/admin-layout';
+import { AdminOnlyRoute } from './ui/admin-only-route';
+import { LoginRoute } from './ui/login-route';
 
 const DashboardPage = lazy(() => import('@pages/dashboard'));
 const QuizzesPage = lazy(() => import('@pages/quizzes'));
 const EditorPage = lazy(() => import('@pages/editor'));
 const ReviewPage = lazy(() => import('@pages/review'));
-const LoginPage = lazy(() => import('@pages/login'));
 const PhoneControllerPage = lazy(() => import('@pages/phone-controller'));
 const NotFoundPage = lazy(() => import('@pages/not-found'));
-
-function LoginRoute() {
-  const accessToken = useAppStore((state) => state.accessToken);
-  if (accessToken) return <Navigate replace to="/admin" />;
-  return <LoginPage />;
-}
 
 export function App() {
   return (
@@ -34,7 +28,14 @@ export function App() {
               <Route element={<QuizzesPage />} path="quizzes" />
               <Route element={<EditorPage />} path="editor" />
               <Route element={<EditorPage />} path="editor/:quizId" />
-              <Route element={<ReviewPage />} path="review" />
+              <Route
+                element={
+                  <AdminOnlyRoute>
+                    <ReviewPage />
+                  </AdminOnlyRoute>
+                }
+                path="review"
+              />
             </Route>
           </Route>
           <Route element={<NotFoundPage />} path="*" />

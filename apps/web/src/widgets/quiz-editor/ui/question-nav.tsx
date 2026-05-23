@@ -1,9 +1,10 @@
 import { memo } from 'react';
 import { Plus } from 'lucide-react';
 import type { QuizDraft } from '@quizparty/shared';
+import { IconButton } from '@shared/ui';
 import { questionErrorCount } from '../lib/compute-errors';
 import type { DraftErrors } from '../model/types';
-import styles from './quiz-editor.module.scss';
+import styles from './question-nav.module.scss';
 
 export const QuestionNav = memo(function QuestionNav({
   draft,
@@ -24,9 +25,9 @@ export const QuestionNav = memo(function QuestionNav({
     <div className={styles.nav}>
       <div className={styles.navHeader}>
         <span>Вопросы ({draft.questions.length})</span>
-        <button className="icon-button" title="Добавить вопрос" type="button" onClick={onAdd}>
+        <IconButton label="Добавить вопрос" title="Добавить вопрос" onClick={onAdd}>
           <Plus size={15} />
-        </button>
+        </IconButton>
       </div>
       <div className={styles.navList}>
         {draft.questions.map((question, index) => {

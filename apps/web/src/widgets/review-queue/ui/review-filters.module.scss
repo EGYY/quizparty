@@ -1,0 +1,52 @@
+.filterShell {
+  display: grid;
+  gap: 10px;
+}
+
+.filterPrimary,
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filterToggle {
+  display: none;
+
+  span {
+    min-width: 20px;
+    min-height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #1a102e;
+    background: #ffd35c;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 760px) {
+  .filters {
+    display: none;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .filtersOpen {
+    display: flex;
+  }
+
+  .filterPrimary {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filterToggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+}

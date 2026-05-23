@@ -21,6 +21,10 @@ export const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
+  AUTH_REGISTRATION_ENABLED: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((v) => (typeof v === 'boolean' ? v : v === 'true'))
+    .default(true),
 
   // Player-token: серверная подпись для анти-спуфинга playerId по сокету.
   PLAYER_TOKEN_SECRET: z.string().min(16),

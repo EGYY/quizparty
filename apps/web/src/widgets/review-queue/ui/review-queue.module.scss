@@ -1,3 +1,14 @@
+.queueCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(360px, 0.62fr) minmax(0, 1fr);
@@ -10,99 +21,6 @@
   min-height: calc(100vh - 108px);
 }
 
-.filters {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.item {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  color: inherit;
-  background: rgba(255, 255, 255, 0.045);
-  text-align: left;
-
-  &:hover {
-    border-color: rgba(255, 211, 92, 0.34);
-    background: rgba(255, 211, 92, 0.08);
-  }
-
-  small {
-    display: block;
-    margin-top: 4px;
-    color: #7f88ac;
-  }
-
-  span {
-    color: #aeb5d4;
-  }
-}
-
-.activeItem {
-  border-color: rgba(255, 211, 92, 0.34);
-  background: rgba(255, 211, 92, 0.08);
-}
-
-.thumb {
-  width: 96px;
-  height: 58px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.reasonGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.reasonChip {
-  width: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #aeb5d4;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.055);
-
-  input {
-    width: 14px;
-    min-height: 14px;
-  }
-}
-
-.activeReasonChip {
-  color: #fff4d4;
-  border-color: rgba(255, 211, 92, 0.36);
-  background: rgba(255, 211, 92, 0.11);
-}
-
-.commentBox {
-  margin-bottom: 14px;
-}
-
 @media (max-width: 1180px) {
   .layout {
     grid-template-columns: 1fr;
@@ -110,16 +28,24 @@
 }
 
 @media (max-width: 760px) {
-  .filters {
-    align-items: stretch;
-    flex-direction: column;
+  .layout {
+    gap: 12px;
   }
 
-  .item {
-    grid-template-columns: 72px minmax(0, 1fr) auto;
+  .list,
+  .detail {
+    min-height: auto;
   }
 
-  .thumb {
-    width: 72px;
+  .layout:not(.detailOpen) .detail {
+    display: none;
+  }
+
+  .detailOpen .list {
+    display: none;
+  }
+
+  .detail {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 }

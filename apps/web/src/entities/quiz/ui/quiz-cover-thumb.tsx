@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { ImagePlus } from 'lucide-react';
-import { resolveAssetUrl } from '@shared/lib/assets';
+import { resolveAssetUrl } from '@shared/lib';
+import styles from './quiz-cover-thumb.module.scss';
 
 export const QuizCoverThumb = memo(function QuizCoverThumb({
   coverUrl,
@@ -12,7 +13,7 @@ export const QuizCoverThumb = memo(function QuizCoverThumb({
   const cover = resolveAssetUrl(coverUrl);
 
   return (
-    <div className="cover-thumb" style={{ backgroundColor: themeColor ?? '#ffb45f' }}>
+    <div className={styles.coverThumb} style={{ backgroundColor: themeColor ?? '#ffb45f' }}>
       {cover ? <img alt="" loading="lazy" src={cover} /> : <ImagePlus size={18} />}
     </div>
   );

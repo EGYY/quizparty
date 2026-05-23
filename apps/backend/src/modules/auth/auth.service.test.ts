@@ -21,6 +21,7 @@ const configStub = {
 describe('AuthService', () => {
   let fake: RedisFake;
   let findUnique: ReturnType<typeof vi.fn>;
+  let create: ReturnType<typeof vi.fn>;
   let auth: AuthService;
   let user: Record<string, unknown>;
 
@@ -36,8 +37,16 @@ describe('AuthService', () => {
       passwordHash,
     };
     findUnique = vi.fn().mockResolvedValue(user);
+    create = vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) => ({
+      id: 'author-1',
+      email: data.email,
+      displayName: data.displayName,
+      role: data.role,
+      avatarUrl: null,
+      passwordHash: data.passwordHash,
+    }));
     const prismaStub = {
-      user: { findUnique, update: vi.fn() },
+      user: { findUnique, create, update: vi.fn() },
     } as unknown as PrismaService;
     const redisStub = { client: fake } as unknown as RedisService;
     auth = new AuthService(configStub, prismaStub, redisStub, new JwtService({}));
@@ -61,6 +70,35 @@ describe('AuthService', () => {
   it('rejects an unknown user', async () => {
     findUnique.mockResolvedValueOnce(null);
     await expect(auth.login({ email: 'x@y.z', password: 'pw' })).rejects.toThrow();
+  });
+
+  it('registers a new author and stores a refresh session', async () => {
+    findUnique.mockResolvedValueOnce(null);
+
+    const session = await auth.register({
+      email: ' New.Author@QuizParty.dev ',
+      name: 'New Author',
+      password: 'party2026',
+    });
+
+    expect(create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        email: 'new.author@quizparty.dev',
+        displayName: 'New Author',
+        role: 'AUTHOR',
+      }),
+    });
+    expect(session.user.role).toBe('AUTHOR');
+    expect(session.accessToken).toBeTruthy();
+    expect(session.refreshToken).toBeTruthy();
+    expect(refreshKeys()).toHaveLength(1);
+  });
+
+  it('rejects registration for an existing email', async () => {
+    await expect(
+      auth.register({ email: 'a@b.c', name: 'Existing', password: 'party2026' }),
+    ).rejects.toThrow();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('rotates the refresh session and rejects reuse of the old token', async () => {

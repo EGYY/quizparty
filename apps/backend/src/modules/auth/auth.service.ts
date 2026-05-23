@@ -1,8 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import type { AuthSession, LoginRequest, UserSummary } from '@quizparty/shared';
+import { Role } from '@quizparty/shared';
+import type { AuthSession, LoginRequest, RegisterRequest, UserSummary } from '@quizparty/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { RedisService } from '../../infrastructure/redis.service';
 import { hashPassword, hashToken, verifyPassword } from './auth.crypto';
@@ -50,8 +56,9 @@ export class AuthService {
   }
 
   async login(credentials: LoginRequest): Promise<AuthSession & { refreshToken: string }> {
+    const email = normalizeEmail(credentials.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: credentials.email.toLowerCase() },
+      where: { email },
     });
 
     if (!user || !(await verifyPassword(credentials.password, user.passwordHash))) {
@@ -66,6 +73,36 @@ export class AuthService {
     }
 
     return this.createSession(mapUser(user));
+  }
+
+  async register(credentials: RegisterRequest): Promise<AuthSession & { refreshToken: string }> {
+    if (!this.isRegistrationEnabled()) {
+      throw new ForbiddenException('Registration is disabled');
+    }
+
+    const email = normalizeEmail(credentials.email);
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          displayName: credentials.name.trim(),
+          passwordHash: await hashPassword(credentials.password),
+          role: Role.AUTHOR,
+        },
+      });
+
+      return this.createSession(mapUser(user));
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Email is already registered');
+      }
+      throw error;
+    }
   }
 
   async refresh(refreshToken: string | undefined): Promise<AuthSession & { refreshToken: string }> {
@@ -173,6 +210,11 @@ export class AuthService {
   private sessionKey(sessionId: string): string {
     return `${REFRESH_PREFIX}${sessionId}`;
   }
+
+  private isRegistrationEnabled(): boolean {
+    const value = this.config.get<boolean | string>('AUTH_REGISTRATION_ENABLED', true);
+    return value !== false && value !== 'false';
+  }
 }
 
 function mapUser(user: {
@@ -189,6 +231,19 @@ function mapUser(user: {
     role: user.role as UserSummary['role'],
     ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
   };
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'P2002'
+  );
 }
 
 function parseDurationMs(value: string): number {

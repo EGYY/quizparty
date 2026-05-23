@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { refreshAdminSession } from '@shared/api/auth';
 import { useAppStore } from '@shared/model/app-store';
-import { PageStatus } from '@shared/ui/page-status';
+import { PageStatus } from '@shared/ui';
 
 export function AdminAuthGate() {
   const location = useLocation();

@@ -14,6 +14,8 @@ export function describeRequestError(error: unknown, fallback: string): string |
     if (status === 401) return 'Сессия истекла. Войдите снова.';
     if (status === 403) return 'Недостаточно прав для этого действия.';
     if (status === 404) return 'Запрашиваемые данные не найдены.';
+    if (status === 409) return 'Такие данные уже используются.';
+    if (status === 429) return 'Слишком много попыток. Попробуйте немного позже.';
     if (status >= 500) return 'Ошибка сервера. Попробуйте позже.';
 
     const data: unknown = error.response.data;

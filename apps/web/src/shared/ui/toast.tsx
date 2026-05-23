@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 import { CheckCircle2, X, XCircle } from 'lucide-react';
 import { create } from 'zustand';
+import { IconButton } from './button/button';
 import styles from './toast.module.scss';
 
 type ToastTone = 'success' | 'error';
@@ -47,9 +48,9 @@ export const ToastViewport = memo(function ToastViewport() {
             <strong>{toast.title}</strong>
             {toast.message ? <span>{toast.message}</span> : null}
           </div>
-          <button className="icon-button tiny" type="button" onClick={() => onDismiss(toast.id)}>
+          <IconButton label="Закрыть уведомление" size="tiny" onClick={() => onDismiss(toast.id)}>
             <X size={14} />
-          </button>
+          </IconButton>
         </div>
       ))}
     </div>

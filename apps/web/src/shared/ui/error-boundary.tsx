@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { FallbackScreen } from './fallback-screen/fallback-screen';
 
 type ErrorBoundaryState = {
   hasError: boolean;
@@ -18,13 +19,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
   render() {
     if (this.state.hasError) {
       return (
-        <main className="login-screen">
-          <section className="login-panel">
-            <p className="eyebrow">QuizParty</p>
-            <h1>Интерфейс упал</h1>
-            <p className="muted-text">Обновите страницу. Ошибка уже выведена в консоль.</p>
-          </section>
-        </main>
+        <FallbackScreen
+          message="Обновите страницу. Ошибка уже выведена в консоль."
+          title="Интерфейс упал"
+        />
       );
     }
 
