@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import {
   adminDashboardSchema,
   adminQuizListSchema,
+  approvedQuizListSchema,
   mediaSchema,
   mediaUploadResponseSchema,
   quizBrowserQuerySchema,
@@ -14,6 +15,7 @@ import {
 } from '@quizparty/shared';
 
 export class QuizDetailDto extends createZodDto(quizDetailSchema) {}
+export class ApprovedQuizListDto extends createZodDto(approvedQuizListSchema) {}
 export class QuizBrowserQueryDto extends createZodDto(quizBrowserQuerySchema) {}
 export class QuizDraftDto extends createZodDto(quizDraftSchema) {}
 export class SaveQuizDraftRequestDto extends createZodDto(saveQuizDraftRequestSchema) {}

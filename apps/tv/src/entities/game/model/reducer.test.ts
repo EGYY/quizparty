@@ -1,4 +1,4 @@
-import { GamePhase } from '@quizparty/shared';
+import { GameMode, GamePhase } from '@quizparty/shared';
 import type {
   AnswerWindowOpenEvent,
   GamePausedEvent,
@@ -12,6 +12,7 @@ import { initialTvGameRealtimeState, tvGameRealtimeReducer } from './reducer';
 const round = {
   roundNumber: 1,
   totalRounds: 3,
+  mode: GameMode.CLASSIC,
   serverTime: 10_000,
   roundEndTime: 40_000,
   question: {
@@ -137,6 +138,8 @@ describe('tvGameRealtimeReducer pause flow', () => {
         },
       },
       timer: {
+        remainingSeconds: 7,
+        serverTime: 17_000,
         stage: 'answering',
       },
     });

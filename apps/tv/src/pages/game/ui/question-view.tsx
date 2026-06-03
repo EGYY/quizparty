@@ -1,16 +1,13 @@
 /**
- * QuestionView — тонкий ассемблер экрана вопроса.
+ * QuestionView — экран вопроса.
  *
- * Сам ре-рендерится каждую секунду (получает state.timer), но:
- *   - RoundTimer         — тоже ре-рендерится (отображает таймер, изолирован)
- *   - RoundBadge         — memo, НЕ ре-рендерится на тиках таймера
- *   - QuestionTextPanel  — memo по questionId, НЕ ре-рендерится на тиках
- *   - QuestionVideoHero  — memo по questionId, НЕ ре-рендерится на тиках
- *   - QuestionOptionsGrid — memo по questionId, НЕ ре-рендерится на тиках
- *   - AnswerProgress     — memo по answeredCount/playerCount
+ * Reaction mode:
+ *   reading   — вопрос + медиа, без таймера, без вариантов; простой отсчёт внизу
+ *   countdown — медиа продолжает играть, AnswerCountdownOverlay поверх (3-2-1)
+ *   answering — вопрос БЕЗ медиа + варианты, таймер
  *
- * Таким образом каждую секунду обновляется только RoundTimer
- * (18 сегментов + текст таймера + анимации) — всё остальное заморожено.
+ * Classic mode:
+ *   варианты + медиа сразу, таймер
  */
 import type { TvGameState } from '@entities/game';
 import {
@@ -19,13 +16,86 @@ import {
   QuestionVideoHero,
 } from '@entities/question';
 import { RoundBadge } from '@entities/round';
-import { MediaType } from '@quizparty/shared';
+import {
+  GameMode,
+  MediaType,
+  // MediaType,
+  REACTION_COUNTDOWN_MS,
+} from '@quizparty/shared';
 import { soundQuestionReview } from '@shared/assets/sounds';
 import { s, sf, sv } from '@shared/config/scale';
+import { colors } from '@shared/config/theme';
 import { useMusicTrack } from '@shared/ui/music-provider';
 import { AnswerProgress } from '@widgets/answer-progress';
 import { RoundTimer } from '@widgets/round-timer';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AnswerCountdownOverlay } from './answer-countdown-overlay';
+
+// ── Простой отсчёт секунд в круге ──────────────────────────────────────────
+
+const CIRCLE = s(180);
+const REACTION_COUNTDOWN_SECONDS = Math.ceil(REACTION_COUNTDOWN_MS / 1000);
+
+function ReadingCountdown({ seconds }: { seconds: number }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const prevSeconds = useRef(seconds);
+
+  useEffect(() => {
+    if (prevSeconds.current === seconds) return;
+    prevSeconds.current = seconds;
+    scaleAnim.setValue(0.65);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 6,
+      tension: 160,
+      useNativeDriver: true,
+    }).start();
+  }, [seconds, scaleAnim]);
+
+  return (
+    <View style={rdStyles.wrap}>
+      <View style={rdStyles.circle}>
+        <Animated.Text
+          style={[rdStyles.number, { transform: [{ scale: scaleAnim }] }]}
+        >
+          {seconds}
+        </Animated.Text>
+      </View>
+    </View>
+  );
+}
+
+const rdStyles = StyleSheet.create({
+  wrap: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: sv(8),
+  },
+  circle: {
+    width: CIRCLE,
+    height: CIRCLE,
+    borderRadius: CIRCLE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(24, 24, 49, 0.88)',
+    borderWidth: s(3),
+    borderColor: colors.gold,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.5,
+    shadowRadius: s(24),
+    shadowOffset: { width: 0, height: 0 },
+  },
+  number: {
+    color: colors.text,
+    fontSize: sf(90),
+    lineHeight: sv(100),
+    fontWeight: '900',
+  },
+});
+
+// ── QuestionView ────────────────────────────────────────────────────────────
 
 export function QuestionView({
   state,
@@ -39,15 +109,41 @@ export function QuestionView({
   const answeredCount = state.progress?.answeredCount ?? 0;
   const playerCount = state.progress?.playerCount ?? 0;
   const isPaused = Boolean(state.isPaused);
+  const mediaLoadPending = Boolean(state.mediaLoadPending);
   const { media } = question;
   const hasMedia = media != null;
   const options = question.options;
   const hasOptions = Array.isArray(options);
-  const mediaH = Math.round(height * 0.64);
+  const mediaH = Math.round(
+    Math.min(Math.max(height * 0.48, sv(460)), height * 0.56),
+  );
 
-  const playMusic =
-    media?.type !== MediaType.VIDEO && media?.type !== MediaType.AUDIO;
-  useMusicTrack(playMusic ? soundQuestionReview : null);
+  const isReactionMode = round.mode === GameMode.REACTION;
+  const hasAnswerWindow = Boolean(state.answerWindow);
+
+  // Фазы
+  const isCountdownPhase =
+    isReactionMode &&
+    !hasAnswerWindow &&
+    timer.stage === 'reading' &&
+    timer.remainingSeconds > 0 &&
+    timer.remainingSeconds <= REACTION_COUNTDOWN_SECONDS;
+  const isReadingPhase = isReactionMode && !hasAnswerWindow;
+  const isAnsweringPhase = !isReactionMode || hasAnswerWindow;
+
+  // В reaction media видно до открытия окна ответов, включая 3-2-1 countdown.
+  const showMediaBlock = hasMedia && (!isReactionMode || !hasAnswerWindow);
+
+  // Таймер скрыт в reading/countdown фазах
+  const showTimer = !isReadingPhase && !isCountdownPhase && !mediaLoadPending;
+
+  // const playMusic =
+  // media?.type !== MediaType.VIDEO && media?.type !== MediaType.AUDIO;
+  useMusicTrack(
+    isAnsweringPhase || media?.type === MediaType.IMAGE
+      ? soundQuestionReview
+      : null,
+  );
 
   const chrome = (
     <View style={styles.topChrome}>
@@ -55,30 +151,25 @@ export function QuestionView({
         roundNumber={round.roundNumber}
         totalRounds={round.totalRounds}
       />
-      <RoundTimer timer={timer} />
+      {showTimer && <RoundTimer timer={timer} />}
     </View>
   );
 
   const progress = hasOptions ? (
     <AnswerProgress answeredCount={answeredCount} playerCount={playerCount} />
   ) : null;
+  const countdownOverlay = isCountdownPhase ? (
+    <AnswerCountdownOverlay
+      count={Math.min(timer.remainingSeconds, REACTION_COUNTDOWN_SECONDS)}
+      screenHeight={height}
+      screenWidth={width}
+    />
+  ) : null;
 
-  const answerWindowPlaceholder = (
-    <View style={styles.answerWindowPlaceholder}>
-      <Text style={styles.answerWindowEyebrow}>Готовьтесь</Text>
-      <Text style={styles.answerWindowTitle}>
-        Варианты появятся через {timer.remainingSeconds} с
-      </Text>
-      <Text style={styles.answerWindowText}>
-        Сначала читаем вопрос, потом отвечаем на скорость.
-      </Text>
-    </View>
-  );
-
-  // ── Layout with media (video / audio / image) ────────────────────────────
-  if (hasMedia && media) {
+  // ── Layout A: медиа видна (классика всегда; реакция только в reading) ────
+  if (showMediaBlock && media) {
     return (
-      <View style={[styles.layout]}>
+      <View style={styles.layout}>
         {chrome}
         <QuestionVideoHero
           forcePaused={isPaused}
@@ -88,36 +179,38 @@ export function QuestionView({
           questionText={question.questionText}
           screenWidth={width}
         />
-        {hasOptions ? (
+        {isAnsweringPhase && hasOptions ? (
           <QuestionOptionsGrid
             options={options}
             questionId={question.id}
             videoMode
           />
-        ) : (
-          answerWindowPlaceholder
-        )}
+        ) : isReadingPhase ? (
+          <ReadingCountdown seconds={timer.remainingSeconds} />
+        ) : null}
         {progress}
+        {countdownOverlay}
       </View>
     );
   }
 
-  // ── Standard layout ──────────────────────────────────────────────────────
+  // ── Layout B: без медиа (текстовые / countdown / reaction answering) ────
   return (
-    <View style={[styles.layout]}>
+    <View style={styles.layout}>
       {chrome}
       <QuestionTextPanel
         forcePaused={isPaused}
-        media={media}
+        media={undefined}
         questionId={question.id}
         questionText={question.questionText}
       />
-      {hasOptions ? (
+      {isAnsweringPhase && hasOptions ? (
         <QuestionOptionsGrid options={options} questionId={question.id} />
-      ) : (
-        answerWindowPlaceholder
-      )}
+      ) : isReadingPhase ? (
+        <ReadingCountdown seconds={timer.remainingSeconds} />
+      ) : null}
       {progress}
+      {countdownOverlay}
     </View>
   );
 }
@@ -128,42 +221,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: sv(30),
   },
-
   topChrome: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: s(24),
-  },
-  answerWindowPlaceholder: {
-    alignSelf: 'center',
-    width: '82%',
-    minHeight: sv(150),
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: sv(8),
-    borderRadius: s(28),
-    borderWidth: s(2),
-    borderColor: 'rgba(94, 215, 255, 0.34)',
-    backgroundColor: 'rgba(8, 19, 38, 0.72)',
-    paddingHorizontal: s(34),
-  },
-  answerWindowEyebrow: {
-    color: '#5ed7ff',
-    fontSize: sf(18),
-    fontWeight: '900',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  answerWindowTitle: {
-    color: '#ffffff',
-    fontSize: sf(42),
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  answerWindowText: {
-    color: 'rgba(255, 255, 255, 0.72)',
-    fontSize: sf(22),
-    fontWeight: '700',
-    textAlign: 'center',
   },
 });

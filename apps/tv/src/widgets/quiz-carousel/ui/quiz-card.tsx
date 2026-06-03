@@ -20,7 +20,7 @@ import { Focusable } from '@shared/ui/focusable';
 import { getMediaUrl } from '@shared/lib/media';
 
 // Stable constant outside component — no recreation per render
-const ROTATE_Y = '15deg';
+const ROTATE_Y = '0deg';
 const ACTIVE_SCALE = 1;
 const INACTIVE_SCALE = 0.9;
 
@@ -31,15 +31,19 @@ const difficultyColors: Record<Difficulty, string> = {
 };
 
 type Props = {
+  hasTVPreferredFocus?: boolean;
   quiz: TvQuiz;
   isActive: boolean;
+  variant?: 'carousel' | 'grid';
   onFocus: (quiz: TvQuiz) => void;
   onPress: (quiz: TvQuiz) => void;
 };
 
 export const QuizCard = memo(function QuizCard({
+  hasTVPreferredFocus,
   quiz,
   isActive,
+  variant = 'carousel',
   onFocus,
   onPress,
 }: Props) {
@@ -56,33 +60,44 @@ export const QuizCard = memo(function QuizCard({
   );
 
   const quizDifficulty = quiz.difficulty ?? Difficulty.MEDIUM;
+  const isGrid = variant === 'grid';
 
   // Memoized: prevents new array + object allocation on every render.
   // Only recreates when isActive or themeColor change — i.e. max 2 cards per D-pad press.
   const cardInnerStyle = useMemo(
     () => [
       styles.card,
-      isActive ? styles.activeCard : null,
+      isGrid ? styles.gridCard : isActive ? styles.activeCard : null,
       {
         backgroundColor: quiz.themeColor ?? colors.purple,
         transform: [
           { perspective: 950 },
           { rotateY: ROTATE_Y },
-          { scale: isActive ? ACTIVE_SCALE : INACTIVE_SCALE },
+          { scale: isGrid || isActive ? ACTIVE_SCALE : INACTIVE_SCALE },
         ],
       },
     ],
-    [isActive, quiz.themeColor],
+    [isActive, isGrid, quiz.themeColor],
   );
 
   const frameStyle = useMemo(
-    () => [styles.frame, isActive ? styles.activeFrame : styles.inactiveFrame],
-    [isActive],
+    () => [
+      styles.frame,
+      isGrid
+        ? styles.gridFrame
+        : isActive
+          ? styles.activeFrame
+          : styles.inactiveFrame,
+    ],
+    [isActive, isGrid],
   );
 
   const categoryChipStyle = useMemo(
-    () => [styles.categoryChip, isActive ? styles.categoryChipActive : null],
-    [isActive],
+    () => [
+      styles.categoryChip,
+      !isGrid && isActive ? styles.categoryChipActive : null,
+    ],
+    [isActive, isGrid],
   );
 
   // difficultyColors values are stable string constants — safe dep.
@@ -136,7 +151,12 @@ export const QuizCard = memo(function QuizCard({
   );
 
   return (
-    <Focusable onFocus={handleFocus} onPress={handlePress} style={frameStyle}>
+    <Focusable
+      hasTVPreferredFocus={hasTVPreferredFocus}
+      onFocus={handleFocus}
+      onPress={handlePress}
+      style={frameStyle}
+    >
       {/* renderToHardwareTextureAndroid merges ImageBackground + LinearGradient
           + all overlay Views into one GPU texture per card, keeping the total
           compositing layer count within Android's hardware budget.
@@ -144,7 +164,7 @@ export const QuizCard = memo(function QuizCard({
           a wrapping View instead — the effect is identical since the entire
           subtree (image + overlays) is captured into the texture. */}
       {canUseCover && quiz.coverUrl ? (
-        <View renderToHardwareTextureAndroid style={cardInnerStyle}>
+        <View renderToHardwareTextureAndroid={!isGrid} style={cardInnerStyle}>
           <ImageBackground
             resizeMode="cover"
             source={{ uri: getMediaUrl(quiz.coverUrl) }}
@@ -154,7 +174,7 @@ export const QuizCard = memo(function QuizCard({
           </ImageBackground>
         </View>
       ) : (
-        <View renderToHardwareTextureAndroid style={cardInnerStyle}>
+        <View renderToHardwareTextureAndroid={!isGrid} style={cardInnerStyle}>
           {posterContent}
         </View>
       )}
@@ -195,6 +215,13 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
       },
     }),
+  },
+  gridFrame: {
+    opacity: 1,
+    zIndex: 1,
+  },
+  gridCard: {
+    width: '100%',
   },
   posterDim: {
     ...StyleSheet.absoluteFillObject,

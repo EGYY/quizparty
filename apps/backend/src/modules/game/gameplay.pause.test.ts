@@ -1,10 +1,12 @@
 import {
+  DEFAULT_AV_CLIP_MS,
   Difficulty,
   ErrorCode,
   GameMode,
   GamePhase,
   LobbyPlayerStatus,
   MAX_PLAYERS,
+  MediaType,
   PlayerConnectionStatus,
   ServerEvent,
 } from '@quizparty/shared';
@@ -20,6 +22,7 @@ import type { InternalGameQuestion } from './game.types';
 
 const roomCode = 'QUIZ-123456';
 const hostPlayerId = '00000000-0000-4000-8000-000000000001';
+const secondPlayerId = '00000000-0000-4000-8000-000000000002';
 
 function createRoom(): LobbyState {
   return {
@@ -110,8 +113,11 @@ function createService(game: InternalGameState, room = createRoom()) {
   const emitGame = vi.fn();
   const emitRoom = vi.fn();
   const scheduleAnswerWindowOpen = vi.fn();
+  const scheduleMediaLoadTimeout = vi.fn();
   const scheduleRoundEnd = vi.fn();
   const scheduleTimerTick = vi.fn();
+  const scheduleNextRoundCountdown = vi.fn();
+  const scheduleStartRound = vi.fn();
   const roomStateService = {
     getRoomState: vi.fn((() =>
       Promise.resolve(roomState)) satisfies RoomStateService['getRoomState']),
@@ -132,10 +138,11 @@ function createService(game: InternalGameState, room = createRoom()) {
   const timers = {
     registerHandlers: vi.fn(),
     scheduleAnswerWindowOpen,
+    scheduleMediaLoadTimeout,
     scheduleRoundEnd,
     scheduleTimerTick,
-    scheduleNextRoundCountdown: vi.fn(),
-    scheduleStartRound: vi.fn(),
+    scheduleNextRoundCountdown,
+    scheduleStartRound,
     scheduleFinishGame: vi.fn(),
   } as unknown as GameTimersService;
 
@@ -149,7 +156,10 @@ function createService(game: InternalGameState, room = createRoom()) {
     realtime,
     roomStateService,
     scheduleAnswerWindowOpen,
+    scheduleMediaLoadTimeout,
+    scheduleNextRoundCountdown,
     scheduleRoundEnd,
+    scheduleStartRound,
     scheduleTimerTick,
     service: new GamePlayService(roomStateService, gameStateService, realtime, timers),
     timers,
@@ -214,14 +224,57 @@ describe('GamePlayService pause/resume/end from host', () => {
     );
   });
 
-  it('starts a reaction round without sending options until the answer window opens', async () => {
+  it('excludes paused time from reaction response time after the answer window is open', async () => {
     const question = createQuestion();
     const room = createRoom();
     room.settings = {
       ...room.settings,
       mode: GameMode.REACTION,
       questionDurationMs: 7_000,
-      answerRevealDelayMs: 7_000,
+    };
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answers: { [question.id]: {} },
+        answerWindowOpensAt: 10_000,
+        answerWindowOpenedAt: 10_000,
+        roundEndsAt: 17_000,
+        isPaused: true,
+        pausedAt: 10_200,
+        pauseRemainingMs: 6_800,
+      }),
+      room,
+    );
+
+    vi.mocked(Date.now).mockReturnValue(15_200);
+    await ctx.service.resumeGame(roomCode, hostPlayerId);
+
+    expect(ctx.gameState.answerWindowOpensAt).toBe(15_000);
+    expect(ctx.gameState.answerWindowOpenedAt).toBe(15_000);
+    expect(ctx.gameState.roundEndsAt).toBe(22_000);
+
+    vi.mocked(Date.now).mockReturnValue(15_500);
+    await ctx.service.submitAnswer(roomCode, hostPlayerId, {
+      questionId: question.id,
+      answerIndex: 1,
+      submittedAt: 15_500,
+    });
+
+    expect(ctx.gameState.answers[question.id]?.[hostPlayerId]).toMatchObject({
+      responseMs: 500,
+      answeredAt: 15_500,
+    });
+  });
+
+  it('starts a reaction round without sending options until the answer window opens', async () => {
+    const question = createQuestion(); // no media → answerRevealDelayMs = 5000 + 3000 = 8000
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 0, // ignored by service — computed dynamically
     };
     const ctx = createService(
       createGame({
@@ -233,6 +286,7 @@ describe('GamePlayService pause/resume/end from host', () => {
 
     await ctx.service.startRound(roomCode, 0);
 
+    // now=25000, answerRevealDelayMs=13000 (10000+3000), questionDurationMs=7000
     expect(ctx.emitGame).toHaveBeenCalledWith(
       roomCode,
       ServerEvent.ROUND_START,
@@ -240,12 +294,12 @@ describe('GamePlayService pause/resume/end from host', () => {
         question: expect.not.objectContaining({
           options: expect.any(Array),
         }),
-        answerStartTime: 32_000,
-        roundEndTime: 39_000,
+        answerStartTime: 38_000,
+        roundEndTime: 45_000,
       }),
     );
-    expect(ctx.scheduleAnswerWindowOpen).toHaveBeenCalledWith(roomCode, 0, question.id, 7_000);
-    expect(ctx.scheduleRoundEnd).toHaveBeenCalledWith(roomCode, 0, question.id, 14_000);
+    expect(ctx.scheduleAnswerWindowOpen).toHaveBeenCalledWith(roomCode, 0, question.id, 13_000);
+    expect(ctx.scheduleRoundEnd).toHaveBeenCalledWith(roomCode, 0, question.id, 20_000);
   });
 
   it('clears stale answer window state when starting the next reaction round', async () => {
@@ -253,13 +307,13 @@ describe('GamePlayService pause/resume/end from host', () => {
     const secondQuestion = createQuestion({
       id: '00000000-0000-4000-8000-000000000202',
       questionText: 'Second question?',
-    });
+    }); // no media → answerRevealDelayMs = 8000
     const room = createRoom();
     room.settings = {
       ...room.settings,
       mode: GameMode.REACTION,
       questionDurationMs: 7_000,
-      answerRevealDelayMs: 7_000,
+      answerRevealDelayMs: 0, // ignored by service — computed dynamically
     };
     const ctx = createService(
       createGame({
@@ -276,18 +330,19 @@ describe('GamePlayService pause/resume/end from host', () => {
 
     await ctx.service.startRound(roomCode, 1);
 
+    // now=25000, answerRevealDelayMs=13000 (10000+3000), questionDurationMs=7000
     expect(ctx.gameState).toMatchObject({
       currentRoundIndex: 1,
       currentQuestion: secondQuestion,
-      answerWindowOpensAt: 32_000,
-      roundEndsAt: 39_000,
+      answerWindowOpensAt: 38_000,
+      roundEndsAt: 45_000,
     });
     expect(ctx.gameState.answerWindowOpenedAt).toBeUndefined();
     expect(ctx.scheduleAnswerWindowOpen).toHaveBeenCalledWith(
       roomCode,
       1,
       secondQuestion.id,
-      7_000,
+      13_000,
     );
   });
 
@@ -351,6 +406,277 @@ describe('GamePlayService pause/resume/end from host', () => {
         roundEndTime: 32_000,
       }),
     );
+  });
+
+  it('awards only the fastest reaction player when their answer is correct', async () => {
+    const question = createQuestion();
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    room.players.push({
+      playerId: secondPlayerId,
+      nickname: 'Second',
+      avatarId: 'avatar-02',
+      score: 0,
+      streak: 0,
+      isReady: true,
+      isHost: false,
+      joinedAt: '2026-05-20T00:00:01.000Z',
+      connectionStatus: PlayerConnectionStatus.CONNECTED,
+      lobbyStatus: LobbyPlayerStatus.READY,
+    });
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answers: { [question.id]: {} },
+        answerWindowOpensAt: 25_000,
+        answerWindowOpenedAt: 25_000,
+        roundEndsAt: 32_000,
+      }),
+      room,
+    );
+
+    vi.mocked(Date.now).mockReturnValue(26_000);
+    await ctx.service.submitAnswer(roomCode, hostPlayerId, {
+      questionId: question.id,
+      answerIndex: 1,
+      submittedAt: 26_000,
+    });
+    vi.mocked(Date.now).mockReturnValue(25_500);
+    await ctx.service.submitAnswer(roomCode, secondPlayerId, {
+      questionId: question.id,
+      answerIndex: 1,
+      submittedAt: 25_500,
+    });
+    expect(ctx.roomState?.players.map((player) => player.score)).toEqual([0, 0]);
+
+    vi.mocked(Date.now).mockReturnValue(32_000);
+    await ctx.service.endRound(roomCode, 0, question.id);
+
+    const roundEnd = ctx.emitGame.mock.calls.find(
+      ([, event]) => event === ServerEvent.ROUND_END,
+    )?.[2];
+    expect(
+      ctx.roomState?.players.find((player) => player.playerId === secondPlayerId),
+    ).toMatchObject({
+      score: 1,
+      streak: 1,
+    });
+    expect(ctx.roomState?.players.find((player) => player.playerId === hostPlayerId)).toMatchObject(
+      {
+        score: 0,
+        streak: 0,
+      },
+    );
+    expect(roundEnd).toMatchObject({
+      mode: GameMode.REACTION,
+      reactionWinner: {
+        playerId: secondPlayerId,
+        responseMs: 500,
+        scoreDelta: 1,
+      },
+    });
+    expect(roundEnd.scores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ playerId: hostPlayerId, responseMs: 1000, scoreDelta: 0 }),
+        expect.objectContaining({ playerId: secondPlayerId, responseMs: 500, scoreDelta: 1 }),
+      ]),
+    );
+    expect(ctx.gameState.playerStats[secondPlayerId]).toMatchObject({
+      correctAnswers: 1,
+      bestStreak: 1,
+      fastestAnswerMs: 500,
+    });
+    expect(ctx.gameState.playerStats[hostPlayerId]).toBeUndefined();
+  });
+
+  it('awards the fastest correct reaction answer even if an incorrect answer was faster', async () => {
+    const question = createQuestion();
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    room.players.push({
+      playerId: secondPlayerId,
+      nickname: 'Second',
+      avatarId: 'avatar-02',
+      score: 0,
+      streak: 0,
+      isReady: true,
+      isHost: false,
+      joinedAt: '2026-05-20T00:00:01.000Z',
+      connectionStatus: PlayerConnectionStatus.CONNECTED,
+      lobbyStatus: LobbyPlayerStatus.READY,
+    });
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answers: { [question.id]: {} },
+        answerWindowOpensAt: 25_000,
+        answerWindowOpenedAt: 25_000,
+        roundEndsAt: 32_000,
+      }),
+      room,
+    );
+
+    vi.mocked(Date.now).mockReturnValue(25_500);
+    await ctx.service.submitAnswer(roomCode, secondPlayerId, {
+      questionId: question.id,
+      answerIndex: 0,
+      submittedAt: 25_500,
+    });
+    vi.mocked(Date.now).mockReturnValue(26_000);
+    await ctx.service.submitAnswer(roomCode, hostPlayerId, {
+      questionId: question.id,
+      answerIndex: 1,
+      submittedAt: 26_000,
+    });
+
+    vi.mocked(Date.now).mockReturnValue(32_000);
+    await ctx.service.endRound(roomCode, 0, question.id);
+
+    const roundEnd = ctx.emitGame.mock.calls.find(
+      ([, event]) => event === ServerEvent.ROUND_END,
+    )?.[2];
+    expect(roundEnd).toMatchObject({
+      reactionWinner: {
+        playerId: hostPlayerId,
+        responseMs: 1000,
+        scoreDelta: 1,
+      },
+    });
+    expect(ctx.roomState?.players.find((player) => player.playerId === hostPlayerId)).toMatchObject(
+      {
+        score: 1,
+        streak: 1,
+      },
+    );
+    expect(
+      ctx.roomState?.players.find((player) => player.playerId === secondPlayerId),
+    ).toMatchObject({
+      score: 0,
+      streak: 0,
+    });
+  });
+
+  it('does not pick a reaction winner when nobody answered correctly', async () => {
+    const question = createQuestion();
+    const room = createRoom();
+    room.settings = {
+      ...room.settings,
+      mode: GameMode.REACTION,
+      questionDurationMs: 7_000,
+      answerRevealDelayMs: 7_000,
+    };
+    room.players.push({
+      playerId: secondPlayerId,
+      nickname: 'Second',
+      avatarId: 'avatar-02',
+      score: 0,
+      streak: 0,
+      isReady: true,
+      isHost: false,
+      joinedAt: '2026-05-20T00:00:01.000Z',
+      connectionStatus: PlayerConnectionStatus.CONNECTED,
+      lobbyStatus: LobbyPlayerStatus.READY,
+    });
+    const ctx = createService(
+      createGame({
+        currentQuestion: question,
+        questions: [question],
+        answers: { [question.id]: {} },
+        answerWindowOpensAt: 25_000,
+        answerWindowOpenedAt: 25_000,
+        roundEndsAt: 32_000,
+      }),
+      room,
+    );
+
+    vi.mocked(Date.now).mockReturnValue(25_500);
+    await ctx.service.submitAnswer(roomCode, secondPlayerId, {
+      questionId: question.id,
+      answerIndex: 0,
+      submittedAt: 25_500,
+    });
+    vi.mocked(Date.now).mockReturnValue(26_000);
+    await ctx.service.submitAnswer(roomCode, hostPlayerId, {
+      questionId: question.id,
+      answerIndex: 2,
+      submittedAt: 26_000,
+    });
+
+    vi.mocked(Date.now).mockReturnValue(32_000);
+    await ctx.service.endRound(roomCode, 0, question.id);
+
+    const roundEnd = ctx.emitGame.mock.calls.find(
+      ([, event]) => event === ServerEvent.ROUND_END,
+    )?.[2];
+    expect(roundEnd.reactionWinner).toBeUndefined();
+    expect(ctx.roomState?.players.map((player) => player.score)).toEqual([0, 0]);
+    expect(ctx.gameState.playerStats).toEqual({});
+  });
+
+  it('starts the reveal countdown from reveal media clip duration after media is ready', async () => {
+    const question = createQuestion({
+      revealMedia: {
+        url: '/uploads/reveal.mp4',
+        type: MediaType.VIDEO,
+        startMs: 2_000,
+        endMs: 7_000,
+      },
+    });
+    const ctx = createService(
+      createGame({
+        phase: GamePhase.ANSWER_REVEAL,
+        currentQuestion: question,
+        questions: [question, createQuestion({ id: '00000000-0000-4000-8000-000000000202' })],
+        mediaLoadPending: true,
+        totalRounds: 2,
+      }),
+    );
+
+    await ctx.service.tvMediaReady(roomCode);
+
+    expect(ctx.gameState.revealEndsAt).toBe(30_000);
+    expect(ctx.scheduleNextRoundCountdown).toHaveBeenCalledWith(roomCode, 30_000, 0);
+    expect(ctx.scheduleStartRound).toHaveBeenCalledWith(roomCode, 1, 5_000);
+  });
+
+  it('uses the shared fallback for reveal AV media without clip or file duration', async () => {
+    const question = createQuestion({
+      revealMedia: {
+        url: '/uploads/reveal.mp3',
+        type: MediaType.AUDIO,
+      },
+    });
+    const ctx = createService(
+      createGame({
+        phase: GamePhase.ANSWER_REVEAL,
+        currentQuestion: question,
+        questions: [question, createQuestion({ id: '00000000-0000-4000-8000-000000000202' })],
+        mediaLoadPending: true,
+        totalRounds: 2,
+      }),
+    );
+
+    await ctx.service.tvMediaReady(roomCode);
+
+    expect(ctx.gameState.revealEndsAt).toBe(25_000 + DEFAULT_AV_CLIP_MS);
+    expect(ctx.scheduleNextRoundCountdown).toHaveBeenCalledWith(
+      roomCode,
+      25_000 + DEFAULT_AV_CLIP_MS,
+      0,
+    );
+    expect(ctx.scheduleStartRound).toHaveBeenCalledWith(roomCode, 1, DEFAULT_AV_CLIP_MS);
   });
 
   it('closes the room when host ends the game', async () => {

@@ -1,17 +1,11 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text } from 'react-native';
 import type { TvGameState } from '@entities/game';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 import { TvMediaPlayer } from '@shared/ui/tv-media-player';
 
 type RevealState = Extract<TvGameState, { phase: 'reveal' }>;
-
-function getCorrectAnswerStyle(text: string) {
-  if (text.length > 95) return styles.correctAnswer_dense;
-  if (text.length > 52) return styles.correctAnswer_long;
-  return undefined;
-}
 
 function getExplanationStyle(text: string) {
   if (text.length > 220) return styles.correctExplanation_dense;
@@ -20,7 +14,6 @@ function getExplanationStyle(text: string) {
 }
 
 export const RevealCorrectCard = memo(function RevealCorrectCard({
-  correctAnswer,
   mediaCardH,
   mediaCardW,
   forcePaused,
@@ -28,7 +21,6 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
   roundNumber,
   explanation,
 }: {
-  correctAnswer: string;
   explanation: string | undefined;
   forcePaused?: boolean;
   mediaCardH: number;
@@ -60,7 +52,11 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
 
   return (
     <Animated.View
-      style={[styles.correctCard, { transform: correctCardTransform }]}
+      style={[
+        styles.correctCard,
+        revealMedia && styles.correctCard_media,
+        { transform: correctCardTransform },
+      ]}
     >
       {revealMedia ? (
         <>
@@ -68,28 +64,31 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
             forcePaused={forcePaused}
             media={revealMedia}
             overrideWidth={mediaCardW}
-            overrideHeight={Math.round(mediaCardH * 0.68)}
+            overrideHeight={Math.round(
+              mediaCardH * (explanation ? 0.72 : 0.92),
+            )}
             variant="reveal"
           />
-          <Text style={styles.correctLabel}>Правильный ответ:</Text>
-          <Text
-            style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}
-          >
-            {correctAnswer}
-          </Text>
+          {explanation ? (
+            <>
+              <Text style={styles.correctLabel}>Разбор</Text>
+              <Text
+                style={[
+                  styles.correctExplanation,
+                  getExplanationStyle(explanation),
+                ]}
+              >
+                {explanation}
+              </Text>
+            </>
+          ) : null}
         </>
       ) : (
         <>
-          <Text style={styles.correctStar}>★</Text>
-          <Text style={styles.correctLabel}>Правильный ответ:</Text>
-          <Text
-            style={[styles.correctAnswer, getCorrectAnswerStyle(correctAnswer)]}
-          >
-            {correctAnswer}
-          </Text>
+          <Text style={styles.correctStar}>✓</Text>
           {explanation ? (
             <>
-              <View style={styles.correctDivider} />
+              <Text style={styles.correctLabel}>Разбор</Text>
               <Text
                 style={[
                   styles.correctExplanation,
@@ -109,77 +108,57 @@ export const RevealCorrectCard = memo(function RevealCorrectCard({
 const styles = StyleSheet.create({
   correctCard: {
     alignSelf: 'stretch',
-    width: '40%',
+    width: '38%',
     minHeight: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: 'rgba(245, 255, 91, 0.76)',
+    borderColor: 'rgba(94, 215, 255, 0.54)',
     borderRadius: s(34),
     borderWidth: s(3),
-    backgroundColor: 'rgba(28, 73, 31, 0.78)',
+    backgroundColor: 'rgba(8, 17, 34, 0.88)',
     overflow: 'hidden',
-    paddingHorizontal: s(28),
-    paddingVertical: sv(26),
-    gap: s(10),
-    shadowColor: '#f7ff68',
-    shadowOpacity: 0.5,
-    shadowRadius: s(28),
+    paddingHorizontal: s(24),
+    paddingVertical: sv(24),
+    gap: sv(14),
+    shadowColor: '#5ed7ff',
+    shadowOpacity: 0.28,
+    shadowRadius: s(24),
     shadowOffset: { width: 0, height: 0 },
   },
+  correctCard_media: {
+    width: '48%',
+  },
   correctStar: {
-    color: colors.gold,
-    fontSize: sf(72),
-    lineHeight: sv(76),
+    color: '#befe5d',
+    fontSize: sf(150),
+    lineHeight: sv(156),
     fontWeight: '900',
-    textShadowColor: 'rgba(255, 229, 85, 0.86)',
+    textShadowColor: 'rgba(190, 254, 93, 0.76)',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: s(24),
+    textShadowRadius: s(28),
   },
   correctLabel: {
-    color: '#cdf47c',
-    fontSize: sf(26),
+    color: colors.gold,
+    fontSize: sf(24),
     fontWeight: '900',
+    letterSpacing: 1.1,
     textAlign: 'center',
-  },
-  correctAnswer: {
-    color: '#befe5d',
-    fontSize: sf(52),
-    lineHeight: sv(60),
-    fontWeight: '900',
-    flexShrink: 1,
-    textAlign: 'center',
-    textShadowColor: 'rgba(190, 254, 93, 0.65)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: s(18),
-  },
-  correctAnswer_long: {
-    fontSize: sf(42),
-    lineHeight: sv(48),
-  },
-  correctAnswer_dense: {
-    fontSize: sf(34),
-    lineHeight: sv(40),
-  },
-  correctDivider: {
-    width: '100%',
-    height: sv(2),
-    backgroundColor: 'rgba(255, 224, 168, 0.24)',
-    marginVertical: sv(6),
+    textTransform: 'uppercase',
   },
   correctExplanation: {
     color: colors.text,
-    fontSize: sf(27),
-    lineHeight: sv(30),
+    fontSize: sf(30),
+    lineHeight: sv(36),
     fontWeight: '800',
     flexShrink: 1,
     textAlign: 'center',
   },
   correctExplanation_long: {
-    fontSize: sf(23),
-    lineHeight: sv(27),
+    fontSize: sf(25),
+    lineHeight: sv(31),
   },
   correctExplanation_dense: {
-    fontSize: sf(20),
-    lineHeight: sv(24),
+    fontSize: sf(22),
+    lineHeight: sv(27),
   },
 });

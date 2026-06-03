@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   optionCard_video: {
-    width: '24%',
+    width: '47%',
     minHeight: 0,
-    height: sv(118),
+    height: sv(104),
     paddingVertical: sv(10),
-    paddingHorizontal: s(16),
-    gap: s(14),
+    paddingHorizontal: s(18),
+    gap: s(16),
   },
   optionIndex: {
     width: s(74),
@@ -130,5 +130,5 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: sv(3) },
     textShadowRadius: s(3),
   },
-  optionText_video: { fontSize: sf(35), lineHeight: sv(35) },
+  optionText_video: { fontSize: sf(32), lineHeight: sv(36) },
 });

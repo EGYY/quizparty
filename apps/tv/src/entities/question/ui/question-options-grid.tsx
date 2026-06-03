@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   optionsGrid_video: {
-    width: '98%',
-    maxWidth: 1900,
+    width: '92%',
+    maxWidth: 1500,
   },
 });

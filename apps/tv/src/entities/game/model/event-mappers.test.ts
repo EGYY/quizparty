@@ -1,3 +1,4 @@
+import { GameMode } from '@quizparty/shared';
 import type { RoundStartEvent } from '@quizparty/shared';
 import { buildInitialTimer } from './event-mappers';
 
@@ -6,6 +7,7 @@ const roundStart = (
 ): RoundStartEvent => ({
   roundNumber: 1,
   totalRounds: 5,
+  mode: GameMode.CLASSIC,
   serverTime: 10_000,
   roundEndTime: 40_000,
   question: {
@@ -29,9 +31,9 @@ describe('buildInitialTimer', () => {
 
   it('builds initial remaining and total seconds from round timestamps', () => {
     expect(buildInitialTimer(roundStart())).toEqual({
-      remainingSeconds: 15,
+      remainingSeconds: 30,
       totalSeconds: 30,
-      serverTime: 25_200,
+      serverTime: 10_000,
       stage: 'answering',
     });
   });
@@ -47,7 +49,7 @@ describe('buildInitialTimer', () => {
     ).toEqual({
       remainingSeconds: 0,
       totalSeconds: 1,
-      serverTime: 25_200,
+      serverTime: 40_000,
       stage: 'answering',
     });
   });
@@ -61,10 +63,19 @@ describe('buildInitialTimer', () => {
         }),
       ),
     ).toEqual({
-      remainingSeconds: 5,
+      remainingSeconds: 20,
       totalSeconds: 20,
-      serverTime: 25_200,
+      serverTime: 10_000,
       stage: 'reading',
+    });
+  });
+
+  it('does not depend on the local TV clock', () => {
+    jest.mocked(Date.now).mockReturnValue(1_900_000_000_000);
+
+    expect(buildInitialTimer(roundStart())).toMatchObject({
+      remainingSeconds: 30,
+      serverTime: 10_000,
     });
   });
 });

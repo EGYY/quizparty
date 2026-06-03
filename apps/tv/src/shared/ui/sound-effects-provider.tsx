@@ -11,15 +11,9 @@ import {
 import { StyleSheet, type ImageRequireSource } from 'react-native';
 import Video, { type VideoRef } from 'react-native-video';
 import type { ReactVideoSource } from 'react-native-video/lib/types/video';
-import {
-  soundButtonSubmit,
-  soundError,
-  soundFocus,
-} from '@shared/assets/sounds';
+import { soundError } from '@shared/assets/sounds';
 
 type SoundEffectsContextValue = {
-  playFocus: () => void;
-  playSubmit: () => void;
   playError: () => void;
   setMuted: (muted: boolean) => void;
 };
@@ -27,8 +21,6 @@ type SoundEffectsContextValue = {
 type SoundRef = MutableRefObject<VideoRef | null>;
 
 const SoundEffectsContext = createContext<SoundEffectsContextValue>({
-  playFocus: () => {},
-  playSubmit: () => {},
   playError: () => {},
   setMuted: () => {},
 });
@@ -56,55 +48,23 @@ function createPlaySound(
 }
 
 export function SoundEffectsProvider({ children }: { children: ReactNode }) {
-  const focusRef = useRef<VideoRef | null>(null);
-  const submitRef = useRef<VideoRef | null>(null);
   const errorRef = useRef<VideoRef | null>(null);
   const mutedRef = useRef(false);
 
-  const pauseFocus = useCallback(() => focusRef.current?.pause(), []);
-  const pauseSubmit = useCallback(() => submitRef.current?.pause(), []);
   const pauseError = useCallback(() => errorRef.current?.pause(), []);
-  const pauseAll = useCallback(() => {
-    pauseFocus();
-    pauseSubmit();
-    pauseError();
-  }, [pauseError, pauseFocus, pauseSubmit]);
   const setMuted = useCallback(
     (muted: boolean) => {
       mutedRef.current = muted;
-      if (muted) pauseAll();
+      if (muted) pauseError();
     },
-    [pauseAll],
+    [pauseError],
   );
-  const playFocus = useMemo(() => createPlaySound(focusRef, mutedRef, 45), []);
-  const playSubmit = useMemo(() => createPlaySound(submitRef, mutedRef), []);
   const playError = useMemo(() => createPlaySound(errorRef, mutedRef), []);
-  const value = useMemo(
-    () => ({ playFocus, playSubmit, playError, setMuted }),
-    [playError, playFocus, playSubmit, setMuted],
-  );
+  const value = useMemo(() => ({ playError, setMuted }), [playError, setMuted]);
 
   return (
     <SoundEffectsContext.Provider value={value}>
       {children}
-      <Video
-        disableFocus
-        mixWithOthers="mix"
-        paused
-        ref={focusRef}
-        source={toVideoSource(soundFocus)}
-        style={styles.hidden}
-        onEnd={pauseFocus}
-      />
-      <Video
-        disableFocus
-        mixWithOthers="mix"
-        paused
-        ref={submitRef}
-        source={toVideoSource(soundButtonSubmit)}
-        style={styles.hidden}
-        onEnd={pauseSubmit}
-      />
       <Video
         disableFocus
         mixWithOthers="mix"

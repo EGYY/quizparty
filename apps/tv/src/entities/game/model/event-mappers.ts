@@ -16,19 +16,21 @@ export function makeTvGameJoinPayload(
 }
 
 export function buildInitialTimer(round: RoundStartEvent): TimerTickEvent {
-  const now = Date.now();
   const answerStartTime = round.answerStartTime;
   const isReading =
-    typeof answerStartTime === 'number' && answerStartTime > now;
+    typeof answerStartTime === 'number' && answerStartTime > round.serverTime;
   const targetTime = isReading ? answerStartTime : round.roundEndTime;
   const totalMs = isReading
     ? targetTime - round.serverTime
     : round.roundEndTime - (answerStartTime ?? round.serverTime);
 
   return {
-    remainingSeconds: Math.max(0, Math.ceil((targetTime - now) / 1000)),
+    remainingSeconds: Math.max(
+      0,
+      Math.ceil((targetTime - round.serverTime) / 1000),
+    ),
     totalSeconds: Math.max(1, Math.ceil(totalMs / 1000)),
-    serverTime: now,
+    serverTime: round.serverTime,
     stage: isReading ? 'reading' : 'answering',
   };
 }

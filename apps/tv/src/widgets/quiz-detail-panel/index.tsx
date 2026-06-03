@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   // Outer wrapper: same size as the panel but NO overflow:hidden,
   // so tvOS focus engine can always reach the close button that lives here.
   panelOuter: {
-    width: s(720),
+    width: s(980),
     height: '100%',
   },
 
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
 
   // ── Scroll ──
   scrollContent: {
-    paddingHorizontal: s(26),
-    paddingTop: sv(18),
-    paddingBottom: sv(20),
-    gap: sv(10),
+    paddingHorizontal: s(34),
+    paddingTop: sv(26),
+    paddingBottom: sv(30),
+    gap: sv(16),
   },
 });

@@ -163,7 +163,9 @@ export function mapQuizDraft(quiz: QuizRecord): QuizDraft {
 
 export function validateQuizDraft(quiz: QuizRecord): ValidationChecklistItem[] {
   const questions = quiz.questions ?? [];
-  const everyQuestionHasFourAnswers = questions.every((question) => question.options.length === 4);
+  const everyQuestionHasFourAnswers = questions.every(
+    (question) => question.options.length >= 2 && question.options.length <= 4,
+  );
   const everyQuestionHasCorrectAnswer = questions.every(
     (question) => question.correctIndex >= 0 && question.correctIndex < question.options.length,
   );
@@ -195,7 +197,7 @@ export function validateQuizDraft(quiz: QuizRecord): ValidationChecklistItem[] {
     },
     {
       code: 'FOUR_ANSWERS',
-      label: 'У каждого вопроса 4 варианта ответа',
+      label: 'У каждого вопроса 2–4 варианта ответа',
       passed: everyQuestionHasFourAnswers,
       severity: 'ERROR',
     },

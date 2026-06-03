@@ -11,6 +11,7 @@ import {
   AdminQuizListFilters,
   AdminSort,
   AdminDashboard,
+  ApprovedQuizList,
   MediaType,
   Media,
   MediaUploadResponse,
@@ -49,7 +50,7 @@ type UploadedMediaFile = {
   size: number;
 };
 
-const MAX_MEDIA_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_MEDIA_FILE_SIZE = 50 * 1024 * 1024;
 const UPLOAD_PUBLIC_PATH = '/uploads/quiz-media';
 const supportedMimeTypes: Record<string, { extension: string; type: MediaType }> = {
   'image/gif': { extension: 'gif', type: MediaType.IMAGE },
@@ -76,7 +77,7 @@ export class QuizzesService {
     }
   }
 
-  async listApproved(query: QuizBrowserQuery): Promise<QuizDetail[]> {
+  async listApproved(query: QuizBrowserQuery): Promise<ApprovedQuizList> {
     const where = {
       status: toPrismaQuizStatus[QuizStatus.APPROVED],
       ...(query.category !== QuizCategory.ALL
@@ -94,19 +95,27 @@ export class QuizzesService {
       ...(query.tags.length ? { tags: { hasEvery: query.tags } } : {}),
     };
 
-    const quizzes = await this.prisma.quiz.findMany({
-      where,
-      // Жёсткий потолок: каталог одобренных квизов больше не выгружается
-      // целиком (раньше findMany был без лимита — риск памяти/латентности).
-      take: 100,
-      include: {
-        author: true,
-        _count: { select: { questions: true } },
-      },
-      orderBy: [{ playCount: 'desc' }, { updatedAt: 'desc' }],
-    });
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.quiz.findMany({
+        where,
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+        include: {
+          author: true,
+          _count: { select: { questions: true } },
+        },
+        orderBy: [{ playCount: 'desc' }, { updatedAt: 'desc' }],
+      }),
+      this.prisma.quiz.count({ where }),
+    ]);
 
-    return quizzes.map(mapQuizDetail);
+    return {
+      items: items.map(mapQuizDetail),
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      hasMore: query.page * query.pageSize < total,
+    };
   }
 
   async getApprovedDetail(quizId: string): Promise<QuizDetail> {
@@ -268,7 +277,7 @@ export class QuizzesService {
   ): Promise<MediaUploadResponse> {
     if (!file?.buffer) throw new BadRequestException('Media file is required');
     if (file.size > MAX_MEDIA_FILE_SIZE) {
-      throw new BadRequestException('Media file must be 10MB or smaller');
+      throw new BadRequestException('Media file must be 50MB or smaller');
     }
 
     const metadata = supportedMimeTypes[file.mimetype];

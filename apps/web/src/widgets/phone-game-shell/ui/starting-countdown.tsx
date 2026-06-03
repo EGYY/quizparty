@@ -1,5 +1,4 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { GameScreenHeader } from './shared/game-screen-header';
 import shellStyles from './phone-game-shell.module.scss';
 import styles from './starting-countdown.module.scss';
 
@@ -23,7 +22,6 @@ export function StartingCountdown({ startsAt }: { startsAt: number }) {
 
   return (
     <section className={shellStyles['phone-round-screen']}>
-      <GameScreenHeader />
       <div
         className={styles['round-countdown-card']}
         role="status"

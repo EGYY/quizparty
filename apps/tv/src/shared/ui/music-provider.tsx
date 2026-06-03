@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -12,63 +13,112 @@ import Video from 'react-native-video';
 import type { ReactVideoSource } from 'react-native-video/lib/types/video';
 import { soundMainTheme } from '@shared/assets/sounds';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Context
-// ─────────────────────────────────────────────────────────────────────────────
-
 type SoundSource = ImageRequireSource;
 
 type TrackState = {
   source: SoundSource;
   loop: boolean;
-  /** Incrementing key forces Video remount (= restart) when source changes */
   key: number;
 } | null;
 
+type TrackRequest = {
+  loop: boolean;
+  order: number;
+  source: SoundSource | null | undefined;
+};
+
 type MusicContextValue = {
+  clearTrackRequest: (id: number) => void;
   setPaused: (paused: boolean) => void;
-  setTrack: (source: SoundSource | null | undefined, loop?: boolean) => void;
+  setTrackRequest: (
+    id: number,
+    source: SoundSource | null | undefined,
+    loop?: boolean,
+  ) => void;
 };
 
 const MusicContext = createContext<MusicContextValue>({
+  clearTrackRequest: () => {},
   setPaused: () => {},
-  setTrack: () => {},
+  setTrackRequest: () => {},
 });
+
+let nextMusicRequestId = 1;
 
 function toVideoSource(source: ImageRequireSource): ReactVideoSource {
   return source as unknown as ReactVideoSource;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider — renders a single persistent Video at the app level.
-// Switching tracks changes `key`, which remounts the Video so playback
-// restarts from the beginning of the new track.
-// Same track → key unchanged → Video stays mounted → plays through seamlessly.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export function MusicProvider({ children }: { children: ReactNode }) {
+  const clearTrackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestsRef = useRef(new Map<number, TrackRequest>());
   const [paused, setPaused] = useState(false);
   const [track, setTrackState] = useState<TrackState>({
     source: soundMainTheme,
     loop: true,
     key: 0,
   });
-  const setTrack = useCallback(
-    (source: SoundSource | null | undefined, loop = true) => {
+
+  const applyRequestedTrack = useCallback(() => {
+    const activeRequest = [...requestsRef.current.values()].sort(
+      (a, b) => b.order - a.order,
+    )[0];
+    const source = activeRequest ? activeRequest.source : soundMainTheme;
+    const loop = activeRequest?.loop ?? true;
+
+    setTrackState(prev => {
       if (source == null) {
-        setTrackState(null);
-        return;
+        if (clearTrackTimerRef.current != null) {
+          clearTimeout(clearTrackTimerRef.current);
+        }
+        clearTrackTimerRef.current = setTimeout(() => {
+          setTrackState(null);
+          clearTrackTimerRef.current = null;
+        }, 80);
+        return prev;
       }
-      setTrackState(prev => {
-        // Same source and same loop mode → don't restart, continue playing
-        if (prev != null && prev.source === source && prev.loop === loop)
-          return prev;
-        return { source, loop, key: (prev?.key ?? 0) + 1 };
-      });
+
+      if (clearTrackTimerRef.current != null) {
+        clearTimeout(clearTrackTimerRef.current);
+        clearTrackTimerRef.current = null;
+      }
+
+      if (prev != null && prev.source === source && prev.loop === loop) {
+        return prev;
+      }
+
+      return { source, loop, key: (prev?.key ?? 0) + 1 };
+    });
+  }, []);
+
+  const setTrackRequest = useCallback(
+    (id: number, source: SoundSource | null | undefined, loop = true) => {
+      requestsRef.current.set(id, { source, loop, order: id });
+      applyRequestedTrack();
     },
-    [],
+    [applyRequestedTrack],
   );
-  const value = useMemo(() => ({ setPaused, setTrack }), [setPaused, setTrack]);
+
+  const clearTrackRequest = useCallback(
+    (id: number) => {
+      requestsRef.current.delete(id);
+      applyRequestedTrack();
+    },
+    [applyRequestedTrack],
+  );
+
+  const value = useMemo(
+    () => ({ clearTrackRequest, setPaused, setTrackRequest }),
+    [clearTrackRequest, setPaused, setTrackRequest],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (clearTrackTimerRef.current != null) {
+        clearTimeout(clearTrackTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <MusicContext.Provider value={value}>
@@ -76,6 +126,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       {track != null ? (
         <Video
           key={track.key}
+          disableFocus
           ignoreSilentSwitch="ignore"
           mixWithOthers="mix"
           paused={paused}
@@ -88,22 +139,25 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Hook — call inside any screen/widget to declare which track should play.
-// `loop` defaults to true. Pass false for one-shot playback.
-// When `source` changes the track updates immediately.
-// No cleanup needed: the next screen will set its own track.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export function useMusicTrack(
   source: SoundSource | null | undefined,
   loop = true,
 ) {
-  const { setTrack } = useContext(MusicContext);
+  const { clearTrackRequest, setTrackRequest } = useContext(MusicContext);
+  const idRef = useRef<number | null>(null);
+
+  if (idRef.current == null) {
+    idRef.current = nextMusicRequestId;
+    nextMusicRequestId += 1;
+  }
+
   useEffect(() => {
-    setTrack(source, loop);
-    return () => setTrack(null);
-  }, [source, loop, setTrack]);
+    const id = idRef.current;
+    if (id == null) return undefined;
+
+    setTrackRequest(id, source, loop);
+    return () => clearTrackRequest(id);
+  }, [source, loop, clearTrackRequest, setTrackRequest]);
 }
 
 export function useMusicPaused(paused: boolean) {
@@ -115,8 +169,6 @@ export function useMusicPaused(paused: boolean) {
 }
 
 const styles = StyleSheet.create({
-  // No opacity — opacity:0 can cause tvOS to suspend the rendering layer,
-  // which pauses the audio. Positioning off-screen keeps the layer active.
   hidden: {
     position: 'absolute',
     top: -10,

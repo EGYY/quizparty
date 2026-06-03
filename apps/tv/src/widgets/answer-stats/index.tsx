@@ -37,7 +37,7 @@ export const AnswerStats = memo(function AnswerStats({
     const id = setTimeout(() => {
       const animation = Animated.parallel(
         answerStats.map((stat, i) =>
-          Animated.timing(statFills[i]!, {
+          Animated.timing(statFills[i], {
             toValue: stat.percentage,
             duration: 680,
             useNativeDriver: false, // width — только JS-драйвер
@@ -62,7 +62,7 @@ export const AnswerStats = memo(function AnswerStats({
 
   return (
     <View style={[styles.panel]}>
-      <Text style={[styles.title]}>Как ответили игроки</Text>
+      <Text style={[styles.title]}>Выбор игроков</Text>
 
       {answerStats.map((stat, index) => (
         <View key={stat.optionIndex} style={styles.row}>
@@ -104,24 +104,24 @@ export const AnswerStats = memo(function AnswerStats({
 const styles = StyleSheet.create({
   panel: {
     flex: 1,
-    minHeight: sv(194),
+    minHeight: sv(170),
     borderColor: 'rgba(255, 224, 168, 0.34)',
     borderRadius: s(24),
     borderWidth: s(2),
     backgroundColor: 'rgba(18, 22, 39, 0.9)',
     paddingHorizontal: s(24),
-    paddingVertical: sv(16),
-    gap: s(6),
+    paddingVertical: sv(14),
+    gap: s(5),
   },
 
   title: {
     color: colors.text,
-    fontSize: sf(25),
+    fontSize: sf(24),
     fontWeight: '900',
-    marginBottom: sv(4),
+    marginBottom: sv(2),
   },
   row: {
-    minHeight: sv(32),
+    minHeight: sv(28),
     flexDirection: 'row',
     alignItems: 'center',
     gap: s(12),
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   letter_wrong: { color: '#ff715f' },
   track: {
     flex: 1,
-    height: sv(22),
+    height: sv(20),
     overflow: 'hidden',
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',

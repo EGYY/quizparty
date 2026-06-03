@@ -35,7 +35,6 @@ export const difficultyLabels: Record<Difficulty, string> = {
 };
 
 export const modeLabels: Record<GameMode, string> = {
-  [GameMode.FAST]: 'Быстрый',
   [GameMode.CLASSIC]: 'Классика',
   [GameMode.REACTION]: 'Реакция',
 };

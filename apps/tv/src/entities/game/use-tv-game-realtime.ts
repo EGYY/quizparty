@@ -148,6 +148,10 @@ export function useTvGameRealtime({
     socket.emit(ClientEvent.END_GAME);
   }, []);
 
+  const signalMediaReady = useCallback(() => {
+    gameSocketRef.current?.emit(ClientEvent.TV_MEDIA_READY);
+  }, []);
+
   return {
     connectionStatus: state.connectionStatus,
     endGame,
@@ -160,5 +164,6 @@ export function useTvGameRealtime({
     reconnect,
     resumeGame,
     roomClosed: state.roomClosed,
+    signalMediaReady,
   };
 }

@@ -10,7 +10,7 @@ export const QuizDetailDescription = memo(function QuizDetailDescription({
   quiz: TvQuiz;
 }) {
   return (
-    <Text numberOfLines={2} style={styles.description}>
+    <Text numberOfLines={3} style={styles.description}>
       {quiz.fullDescription ?? quiz.description}
     </Text>
   );
@@ -19,8 +19,8 @@ export const QuizDetailDescription = memo(function QuizDetailDescription({
 const styles = StyleSheet.create({
   description: {
     color: colors.text,
-    fontSize: sf(20),
-    lineHeight: sv(27),
-    marginBottom: sv(10),
+    fontSize: sf(27),
+    lineHeight: sv(36),
+    marginBottom: sv(6),
   },
 });

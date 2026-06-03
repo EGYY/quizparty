@@ -27,24 +27,24 @@ export const QuizDetailHeader = memo(function QuizDetailHeader({
 const styles = StyleSheet.create({
   titleBlock: {
     paddingRight: s(66),
-    gap: sv(6),
+    gap: sv(10),
   },
   title: {
     color: colors.text,
-    fontSize: sf(34),
+    fontSize: sf(46),
     fontWeight: '900',
-    lineHeight: sv(39),
+    lineHeight: sv(54),
   },
   categoryPill: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    paddingHorizontal: s(15),
-    paddingVertical: sv(6),
+    paddingHorizontal: s(18),
+    paddingVertical: sv(8),
   },
   categoryPillText: {
     color: colors.textSecondary,
-    fontSize: sf(16),
+    fontSize: sf(20),
     fontWeight: '800',
   },
 });

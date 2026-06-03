@@ -96,6 +96,7 @@ export function tvGameRealtimeReducer(
           phase: 'question',
           round: action.round,
           timer: buildInitialTimer(action.round),
+          mediaLoadPending: action.round.mediaLoadPending ?? false,
         },
       };
     case 'game/timerTicked':
@@ -103,7 +104,11 @@ export function tvGameRealtimeReducer(
       if (state.gameState.isPaused) return state;
       return {
         ...state,
-        gameState: { ...state.gameState, timer: action.timer },
+        gameState: {
+          ...state.gameState,
+          timer: action.timer,
+          mediaLoadPending: false,
+        },
       };
     case 'game/answerWindowOpened':
       if (state.gameState.phase !== 'question') return state;
@@ -126,7 +131,9 @@ export function tvGameRealtimeReducer(
           timer: {
             remainingSeconds: Math.max(
               0,
-              Math.ceil((action.event.roundEndTime - Date.now()) / 1000),
+              Math.ceil(
+                (action.event.roundEndTime - action.event.serverTime) / 1000,
+              ),
             ),
             totalSeconds: Math.max(
               1,

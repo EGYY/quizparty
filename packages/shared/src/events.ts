@@ -25,6 +25,8 @@ import {
   wsErrorEventSchema,
 } from './schemas';
 
+/** Схемы валидации входящих клиентских событий.
+ *  undefined означает, что событие не несёт payload. */
 export const clientEventSchemas = {
   [ClientEvent.JOIN_LOBBY]: joinLobbyPayloadSchema,
   [ClientEvent.SET_PLAYER_INFO]: setPlayerInfoPayloadSchema,
@@ -38,8 +40,11 @@ export const clientEventSchemas = {
   [ClientEvent.RESTART_GAME]: undefined,
   [ClientEvent.CHOOSE_NEXT_QUIZ]: undefined,
   [ClientEvent.HIDE_QR]: undefined,
+  [ClientEvent.TV_MEDIA_READY]: undefined,
 } as const;
 
+/** Схемы валидации исходящих серверных событий.
+ *  undefined означает, что событие не несёт payload. */
 export const serverEventSchemas = {
   [ServerEvent.LOBBY_STATE]: lobbyStateSchema,
   [ServerEvent.PLAYER_JOINED]: lobbyStateSchema,

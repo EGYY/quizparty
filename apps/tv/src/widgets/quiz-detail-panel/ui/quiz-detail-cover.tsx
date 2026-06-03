@@ -18,7 +18,7 @@ export const QuizDetailCover = memo(function QuizDetailCover({
   quiz: TvQuiz;
 }) {
   const { height } = useWindowDimensions();
-  const coverHeight = Math.round(height * 0.3);
+  const coverHeight = Math.round(height * 0.26);
   const canUseCover = Boolean(
     quiz.coverUrl &&
     !quiz.coverUrl.endsWith('.svg') &&

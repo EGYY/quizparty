@@ -3,8 +3,14 @@ import { useCountdown } from '@shared/lib/use-countdown';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 
-export function StartingView({ startsAt }: { startsAt: number }) {
-  const remaining = useCountdown(startsAt) ?? 0;
+export function StartingView({
+  serverTime,
+  startsAt,
+}: {
+  serverTime: number;
+  startsAt: number;
+}) {
+  const remaining = useCountdown(startsAt, serverTime) ?? 0;
   return (
     <View style={styles.startingPanel}>
       <Text style={styles.startingEyebrow}>Все на местах?</Text>

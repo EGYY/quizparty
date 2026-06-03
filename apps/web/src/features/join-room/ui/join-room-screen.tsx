@@ -33,7 +33,6 @@ export function JoinRoomScreen({
           Вход для авторов
         </Link>
         <h1>Подключайся и играй вместе с друзьями!</h1>
-        <div className={styles.tip}>Введи код с экрана телевизора и выбери свой аватар!</div>
         <img alt="" className={styles.mascot} src={phonePopcornMascotUrl} />
       </section>
 

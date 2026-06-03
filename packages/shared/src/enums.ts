@@ -1,3 +1,4 @@
+/** События, которые клиент отправляет на сервер через WebSocket. */
 export enum ClientEvent {
   JOIN_LOBBY = 'join_lobby',
   SET_PLAYER_INFO = 'set_player_info',
@@ -11,8 +12,12 @@ export enum ClientEvent {
   RESTART_GAME = 'restart_game',
   CHOOSE_NEXT_QUIZ = 'choose_next_quiz',
   HIDE_QR = 'hide_qr',
+  /** TV сигнализирует серверу, что медиа загружено и готово к воспроизведению.
+   *  Сервер запускает таймеры раунда только после этого события. */
+  TV_MEDIA_READY = 'tv_media_ready',
 }
 
+/** События, которые сервер рассылает клиентам через WebSocket. */
 export enum ServerEvent {
   LOBBY_STATE = 'lobby_state',
   PLAYER_JOINED = 'player_joined',
@@ -21,7 +26,11 @@ export enum ServerEvent {
   REACTION_RECEIVED = 'reaction_received',
   HOST_TRANSFERRED = 'host_transferred',
   GAME_STARTING = 'game_starting',
+  /** Старт раунда. В режиме REACTION поле `question.options` отсутствует
+   *  до события ANSWER_WINDOW_OPEN — игроки ещё не видят варианты ответов. */
   ROUND_START = 'round_start',
+  /** Открывается окно ответов. Содержит `options`, скрытые при ROUND_START
+   *  в режиме REACTION. После этого события игроки могут отправлять ответы. */
   ANSWER_WINDOW_OPEN = 'answer_window_open',
   TIMER_TICK = 'timer_tick',
   ANSWER_ACCEPTED = 'answer_accepted',
@@ -38,6 +47,7 @@ export enum ServerEvent {
   ERROR = 'error',
 }
 
+/** Фазы жизненного цикла игры на стороне сервера и лобби. */
 export enum GamePhase {
   HOME = 'HOME',
   LOBBY = 'LOBBY',
@@ -45,6 +55,8 @@ export enum GamePhase {
   ROUND_INTRO = 'ROUND_INTRO',
   QUESTION = 'QUESTION',
   ANSWER_REVEAL = 'ANSWER_REVEAL',
+  /** Устаревшая фаза — хранится в enum для обратной совместимости.
+   *  Окно реакций сейчас обрабатывается внутри ANSWER_REVEAL. */
   REACTION_WINDOW = 'REACTION_WINDOW',
   FINAL_RESULTS = 'FINAL_RESULTS',
 }
@@ -55,12 +67,18 @@ export enum Difficulty {
   HARD = 'HARD',
 }
 
+/** Режим игры определяет правила показа вопросов и подсчёта очков.
+ *
+ *  CLASSIC  — варианты ответов видны сразу, очки зависят от скорости и серии.
+ *  REACTION — вопрос показывается без вариантов; после паузы чтения и
+ *             3-секундного отсчёта появляются варианты. Очко получает
+ *             только самый быстрый правильно ответивший игрок. */
 export enum GameMode {
-  FAST = 'FAST',
   CLASSIC = 'CLASSIC',
   REACTION = 'REACTION',
 }
 
+/** Статус квиза в процессе ревью контента. */
 export enum QuizStatus {
   DRAFT = 'DRAFT',
   PENDING_REVIEW = 'PENDING_REVIEW',
@@ -79,11 +97,15 @@ export enum MediaType {
   VIDEO = 'VIDEO',
 }
 
+/** Статус WebSocket-соединения игрока. Используется для определения,
+ *  нужно ли ждать переподключения перед очисткой комнаты. */
 export enum PlayerConnectionStatus {
   CONNECTED = 'CONNECTED',
   DISCONNECTED = 'DISCONNECTED',
 }
 
+/** Готовность игрока к старту партии в лобби. Отличается от
+ *  PlayerConnectionStatus: игрок может быть подключён, но не готов. */
 export enum LobbyPlayerStatus {
   READY = 'READY',
   WAITING = 'WAITING',
@@ -104,6 +126,7 @@ export enum QuizCategory {
   ART = 'ART',
 }
 
+/** Причины отклонения квиза при ревью. */
 export enum ReviewRejectionReason {
   LOW_COVER_QUALITY = 'LOW_COVER_QUALITY',
   GRAMMAR_ERRORS = 'GRAMMAR_ERRORS',
@@ -120,6 +143,7 @@ export enum AdminSort {
   TITLE = 'TITLE',
 }
 
+/** Коды предупреждений качества квиза, выдаваемых автоматической проверкой. */
 export enum QualityWarningCode {
   LOW_IMAGE_QUALITY = 'LOW_IMAGE_QUALITY',
   TOO_FEW_QUESTIONS = 'TOO_FEW_QUESTIONS',

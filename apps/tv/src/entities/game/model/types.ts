@@ -26,6 +26,7 @@ export type TvGameState =
       phase: 'question';
       pause?: GamePausedEvent;
       isPaused?: boolean;
+      mediaLoadPending?: boolean;
       progress?: AnswerProgressEvent;
       answerWindow?: AnswerWindowOpenEvent;
       round: RoundStartEvent;

@@ -5,20 +5,17 @@ import { modeLabels } from '@shared/config/labels';
 import { colors, radii } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 import { Focusable } from '@shared/ui/focusable';
-import { LightningIcon, TimerBoltIcon, TrophyIcon } from '@shared/assets/icons';
+import { LightningIcon, TrophyIcon } from '@shared/assets/icons';
 
 const GAME_MODES = Object.values(GameMode);
 
 const modeAccents: Record<GameMode, string> = {
-  [GameMode.FAST]: colors.gold,
   [GameMode.CLASSIC]: colors.blue,
   [GameMode.REACTION]: colors.mint,
 };
 
 function getModeDescription(mode: GameMode): string {
   switch (mode) {
-    case GameMode.FAST:
-      return 'Короткие раунды и максимум драйва.';
     case GameMode.REACTION:
       return 'Сначала читаем вопрос, потом отвечаем на скорость.';
     case GameMode.CLASSIC:
@@ -28,12 +25,10 @@ function getModeDescription(mode: GameMode): string {
 
 function renderModeIcon(mode: GameMode, color: string) {
   switch (mode) {
-    case GameMode.FAST:
-      return <TimerBoltIcon color={color} size={s(30)} />;
     case GameMode.REACTION:
-      return <LightningIcon color={color} size={s(28)} />;
+      return <LightningIcon color={color} size={s(34)} />;
     case GameMode.CLASSIC:
-      return <TrophyIcon color={color} size={s(28)} />;
+      return <TrophyIcon color={color} size={s(34)} />;
   }
 }
 
@@ -68,8 +63,7 @@ const ModeOption = memo(function ModeOption({
           style={[
             styles.modeIcon,
             {
-              borderColor: `${accentColor}66`,
-              backgroundColor: `${accentColor}1f`,
+              backgroundColor: `${accentColor}24`,
             },
           ]}
         >
@@ -79,24 +73,16 @@ const ModeOption = memo(function ModeOption({
           <Text style={[styles.modeTitle, active && styles.modeTitleActive]}>
             {modeLabels[value]}
           </Text>
-          <Text style={styles.modeDescription}>
+          <Text numberOfLines={3} style={styles.modeDescription}>
             {getModeDescription(value)}
           </Text>
         </View>
-        <View
-          style={[
-            styles.modeStatus,
-            active && {
-              borderColor: `${accentColor}88`,
-              backgroundColor: `${accentColor}24`,
-            },
-          ]}
-        >
-          <Text
-            style={[styles.modeStatusText, active && { color: accentColor }]}
-          >
-            {active ? 'Выбран' : 'OK'}
-          </Text>
+        <View style={styles.modeStatus}>
+          {active ? (
+            <Text style={[styles.modeStatusIcon, { color: accentColor }]}>
+              ✓
+            </Text>
+          ) : null}
         </View>
       </Focusable>
     </View>
@@ -129,55 +115,52 @@ export const QuizModeSelector = memo(function QuizModeSelector({
 
 const styles = StyleSheet.create({
   section: {
-    gap: sv(7),
+    gap: sv(10),
   },
   sectionTitle: {
     color: colors.text,
-    fontSize: sf(19),
+    fontSize: sf(25),
     fontWeight: '900',
   },
   modeGrid: {
-    gap: sv(7),
+    flexDirection: 'row',
+    gap: s(16),
   },
   modeWrapper: {
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
   },
   modeOption: {
     width: '100%',
-    minHeight: sv(90),
+    height: sv(126),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: s(12),
+    gap: s(14),
     borderRadius: radii.md,
     borderWidth: s(1.5),
     borderColor: 'rgba(255, 255, 255, 0.12)',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    paddingHorizontal: s(14),
-    paddingVertical: sv(8),
+    paddingHorizontal: s(18),
+    paddingVertical: sv(14),
   },
   modeOptionActive: {
     backgroundColor: 'rgba(94, 215, 255, 0.10)',
-    shadowColor: colors.purple,
-    shadowOpacity: 0.3,
-    shadowRadius: s(16),
-    shadowOffset: { width: 0, height: 0 },
   },
   modeIcon: {
-    width: s(46),
-    height: s(46),
+    width: s(58),
+    height: s(58),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: s(16),
-    borderWidth: s(1.5),
+    borderRadius: s(18),
   },
   modeTextBlock: {
     flex: 1,
-    gap: sv(3),
+    gap: sv(5),
     minWidth: 0,
   },
   modeTitle: {
     color: colors.textSecondary,
-    fontSize: sf(18),
+    fontSize: sf(25),
     fontWeight: '900',
   },
   modeTitleActive: {
@@ -185,23 +168,18 @@ const styles = StyleSheet.create({
   },
   modeDescription: {
     color: colors.textSecondary,
-    fontSize: sf(14),
-    lineHeight: sv(17),
+    fontSize: sf(18),
+    lineHeight: sv(24),
   },
   modeStatus: {
-    minWidth: s(76),
+    width: s(42),
+    height: s(42),
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: s(999),
-    borderWidth: s(1),
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    paddingHorizontal: s(10),
-    paddingVertical: sv(5),
   },
-  modeStatusText: {
-    color: colors.textMuted,
-    fontSize: sf(13),
+  modeStatusIcon: {
+    fontSize: sf(34),
+    lineHeight: sv(40),
     fontWeight: '900',
   },
 });

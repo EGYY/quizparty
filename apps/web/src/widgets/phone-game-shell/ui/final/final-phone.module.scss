@@ -1,4 +1,6 @@
 .final-phone {
+  position: relative;
+  overflow: hidden;
   min-height: 0;
   display: grid;
   align-content: stretch;
@@ -6,6 +8,18 @@
   gap: 12px;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   text-align: center;
+}
+
+.final-results-reveal {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: grid;
+  align-content: stretch;
+  justify-items: center;
+  gap: 12px;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  animation: final-results-reveal 520ms ease-out both;
 }
 
 .final-hero-card,
@@ -25,6 +39,11 @@
   border-radius: 26px;
   padding: 18px 14px;
   text-align: center;
+}
+
+.final-wait-card {
+  z-index: 1;
+  align-self: center;
 }
 
 .final-trophy-badge {
@@ -75,8 +94,73 @@
   font-weight: 900;
 }
 
+.final-confetti-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.final-confetti-piece {
+  position: absolute;
+  top: -42px;
+  left: var(--confetti-left);
+  width: 9px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--confetti-color);
+  opacity: 0.95;
+  animation: final-confetti-fall var(--confetti-duration) linear var(--confetti-delay) infinite;
+}
+
+.final-confetti-long {
+  width: 8px;
+  height: 24px;
+}
+
+.final-confetti-short {
+  width: 11px;
+  height: 14px;
+}
+
+.final-confetti-square {
+  width: 13px;
+  height: 13px;
+}
+
+@keyframes final-results-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes final-confetti-fall {
+  from {
+    transform: translate3d(-14px, -10%, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate3d(18px, 52vh, 0) rotate(210deg);
+  }
+
+  to {
+    transform: translate3d(-8px, 112vh, 0) rotate(420deg);
+  }
+}
+
 @media (max-width: 460px) {
   .final-phone {
+    gap: 8px;
+  }
+
+  .final-results-reveal {
     gap: 8px;
   }
 
@@ -109,6 +193,10 @@
 
 @media (max-height: 760px) and (max-width: 460px) {
   .final-phone {
+    gap: 6px;
+  }
+
+  .final-results-reveal {
     gap: 6px;
   }
 

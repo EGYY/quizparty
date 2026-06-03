@@ -2,16 +2,22 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   AnswerAcceptedEvent,
   AnswerProgressEvent,
+  DEFAULT_AV_CLIP_MS,
   ErrorCode,
   GAME_MODE_SETTINGS,
   GameEndEvent,
+  GameMode,
   GamePausedEvent,
   GamePhase,
   GameResumedEvent,
   LeaderboardEntry,
   LobbyState,
+  Media,
+  MediaType,
   NextRoundCountdownEvent,
   PlayerConnectionStatus,
+  REACTION_COUNTDOWN_MS,
+  REACTION_TEXT_READ_MS,
   REACTION_WINDOW_SECONDS,
   RoundEndEvent,
   RoundStartEvent,
@@ -37,6 +43,8 @@ import {
 } from './game.helpers';
 import type { InternalGameState, StoredAnswer } from './game.types';
 
+const MAX_MEDIA_WAIT_MS = 10_000;
+
 type PausablePhase = GamePhase.QUESTION | GamePhase.ANSWER_REVEAL;
 
 @Injectable()
@@ -61,6 +69,7 @@ export class GamePlayService implements OnModuleInit {
         this.emitNextRoundCountdown(roomCode, nextRoundStartsAt),
       finishGame: (roomCode) => this.finishGame(roomCode),
       cleanupRoom: (roomCode) => this.cleanupRoom(roomCode),
+      mediaLoadTimeout: (roomCode) => this.tvMediaReady(roomCode),
     });
   }
 
@@ -81,6 +90,9 @@ export class GamePlayService implements OnModuleInit {
     if (game.isPaused) {
       throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game is paused');
     }
+    if (game.mediaLoadPending) {
+      throw wsError(ErrorCode.ANSWER_TOO_EARLY, 'Media is still loading');
+    }
     if (now > (game.roundEndsAt ?? 0)) {
       throw wsError(ErrorCode.ANSWER_TOO_LATE, 'Answer deadline has passed');
     }
@@ -98,7 +110,10 @@ export class GamePlayService implements OnModuleInit {
     const isCorrect = payload.answerIndex === question.correctIndex;
     const totalSeconds = Math.max(1, Math.ceil(room.settings.questionDurationMs / 1000));
     const remainingSeconds = Math.max(0, Math.ceil(((game.roundEndsAt ?? now) - now) / 1000));
-    const scoreDelta = calculateScore(isCorrect, remainingSeconds, totalSeconds, player.streak);
+    const isReactionMode = room.settings.mode === GameMode.REACTION;
+    const scoreDelta = isReactionMode
+      ? 0
+      : calculateScore(isCorrect, remainingSeconds, totalSeconds, player.streak);
     const answer: StoredAnswer = {
       answerIndex: payload.answerIndex,
       answeredAt: now,
@@ -132,12 +147,14 @@ export class GamePlayService implements OnModuleInit {
           ...current.answers,
           [question.id]: { ...(current.answers[question.id] ?? {}), [playerId]: answer },
         },
-        playerStats: nextPlayerStats(
-          current.playerStats,
-          playerId,
-          answer,
-          isCorrect ? player.streak + 1 : 0,
-        ),
+        playerStats: isReactionMode
+          ? current.playerStats
+          : nextPlayerStats(
+              current.playerStats,
+              playerId,
+              answer,
+              isCorrect ? player.streak + 1 : 0,
+            ),
         lastActivityAt: now,
       };
     });
@@ -152,18 +169,20 @@ export class GamePlayService implements OnModuleInit {
       throw wsError(ErrorCode.ANSWER_ALREADY_SUBMITTED, 'Answer already submitted');
     }
 
-    await this.roomState.patchRoomState(roomCode, (current) => ({
-      ...current,
-      players: current.players.map((currentPlayer) =>
-        currentPlayer.playerId === playerId
-          ? {
-              ...currentPlayer,
-              score: currentPlayer.score + scoreDelta,
-              streak: isCorrect ? currentPlayer.streak + 1 : 0,
-            }
-          : currentPlayer,
-      ),
-    }));
+    if (!isReactionMode) {
+      await this.roomState.patchRoomState(roomCode, (current) => ({
+        ...current,
+        players: current.players.map((currentPlayer) =>
+          currentPlayer.playerId === playerId
+            ? {
+                ...currentPlayer,
+                score: currentPlayer.score + scoreDelta,
+                streak: isCorrect ? currentPlayer.streak + 1 : 0,
+              }
+            : currentPlayer,
+        ),
+      }));
+    }
 
     const progressEvent: AnswerProgressEvent = {
       questionId: payload.questionId,
@@ -251,8 +270,16 @@ export class GamePlayService implements OnModuleInit {
           };
         }
         shouldScheduleQuestion = true;
+        const pauseDurationMs =
+          typeof game.pausedAt === 'number' ? Math.max(0, now - game.pausedAt) : 0;
         return {
           ...nextGame,
+          ...(typeof game.answerWindowOpensAt === 'number'
+            ? { answerWindowOpensAt: game.answerWindowOpensAt + pauseDurationMs }
+            : {}),
+          ...(typeof game.answerWindowOpenedAt === 'number'
+            ? { answerWindowOpenedAt: game.answerWindowOpenedAt + pauseDurationMs }
+            : {}),
           roundEndsAt: targetTime,
         };
       }
@@ -357,10 +384,14 @@ export class GamePlayService implements OnModuleInit {
     if (!question) return;
 
     const now = Date.now();
-    const answerRevealDelayMs = room.settings.answerRevealDelayMs ?? 0;
+    const { answerRevealDelayMs, questionDurationMs } = computeRoundTiming(
+      room.settings.mode,
+      question.media,
+      room.settings.questionDurationMs,
+    );
     const answerWindowOpensAt = now + answerRevealDelayMs;
     const answerWindowOpenedAt = answerRevealDelayMs > 0 ? undefined : now;
-    const roundEndsAt = answerWindowOpensAt + room.settings.questionDurationMs;
+    const roundEndsAt = answerWindowOpensAt + questionDurationMs;
     const fullQuestion = questionSchema.parse(question);
     const publicQuestion =
       answerRevealDelayMs > 0
@@ -369,9 +400,13 @@ export class GamePlayService implements OnModuleInit {
             options: undefined,
           })
         : fullQuestion;
+    const hasAvMedia =
+      question.media?.type === MediaType.VIDEO || question.media?.type === MediaType.AUDIO;
+
     const {
       answerWindowOpenedAt: _previousAnswerWindowOpenedAt,
       answerWindowOpensAt: _previousAnswerWindowOpensAt,
+      mediaLoadPending: _previousMediaLoadPending,
       ...gameWithoutAnswerWindow
     } = game;
     const nextGame: InternalGameState = {
@@ -383,6 +418,7 @@ export class GamePlayService implements OnModuleInit {
       roundEndsAt,
       answerWindowOpensAt,
       ...(typeof answerWindowOpenedAt === 'number' ? { answerWindowOpenedAt } : {}),
+      ...(hasAvMedia ? { mediaLoadPending: true } : {}),
       lastActivityAt: now,
       answers: {
         ...game.answers,
@@ -400,27 +436,35 @@ export class GamePlayService implements OnModuleInit {
       roundNumber: roundIndex + 1,
       totalRounds: game.totalRounds,
       question: publicQuestion,
+      mode: room.settings.mode,
       serverTime: now,
       roundEndTime: roundEndsAt,
       answerStartTime: answerWindowOpensAt,
+      ...(hasAvMedia ? { mediaLoadPending: true } : {}),
     };
 
     this.realtime.emitGame(roomCode, ServerEvent.ROUND_START, event);
-    await this.emitTimerTick(roomCode, roundIndex, question.id);
-    if (answerRevealDelayMs > 0) {
-      await this.timers.scheduleAnswerWindowOpen(
+
+    if (hasAvMedia) {
+      // Timer starts only after TV signals media ready (or fallback fires)
+      await this.timers.scheduleMediaLoadTimeout(roomCode, MAX_MEDIA_WAIT_MS);
+    } else {
+      await this.emitTimerTick(roomCode, roundIndex, question.id);
+      if (answerRevealDelayMs > 0) {
+        await this.timers.scheduleAnswerWindowOpen(
+          roomCode,
+          roundIndex,
+          question.id,
+          answerRevealDelayMs,
+        );
+      }
+      await this.timers.scheduleRoundEnd(
         roomCode,
         roundIndex,
         question.id,
-        answerRevealDelayMs,
+        answerRevealDelayMs + questionDurationMs,
       );
     }
-    await this.timers.scheduleRoundEnd(
-      roomCode,
-      roundIndex,
-      question.id,
-      answerRevealDelayMs + room.settings.questionDurationMs,
-    );
   }
 
   async openAnswerWindow(roomCode: string, roundIndex: number, questionId: string): Promise<void> {
@@ -495,9 +539,13 @@ export class GamePlayService implements OnModuleInit {
     const answerWindowOpensAt = game.answerWindowOpensAt;
     const targetTime = isReading && answerWindowOpensAt ? answerWindowOpensAt : game.roundEndsAt;
     const remainingMs = Math.max(0, targetTime - now);
+    const effectiveQuestionDurationMs =
+      game.roundEndsAt && game.answerWindowOpensAt
+        ? game.roundEndsAt - game.answerWindowOpensAt
+        : room.settings.questionDurationMs;
     const totalMs = isReading
       ? Math.max(1, (answerWindowOpensAt ?? now) - (game.roundStartedAt ?? now))
-      : room.settings.questionDurationMs;
+      : effectiveQuestionDurationMs;
     const event: TimerTickEvent = {
       remainingSeconds: Math.ceil(remainingMs / 1000),
       totalSeconds: Math.max(1, Math.ceil(totalMs / 1000)),
@@ -533,8 +581,14 @@ export class GamePlayService implements OnModuleInit {
     }
 
     const now = Date.now();
-    const revealEndsAt = now + room.settings.revealDurationMs;
     const answers = game.answers[questionId] ?? {};
+    const isReactionMode = room.settings.mode === GameMode.REACTION;
+    const modeSettings = GAME_MODE_SETTINGS[room.settings.mode];
+    const revealDurationMs = computeRevealDurationMs(
+      question.revealMedia,
+      room.settings.revealDurationMs,
+    );
+    const revealEndsAt = now + revealDurationMs;
     const answerStats = [0, 1, 2, 3].map((optionIndex) => {
       const count = Object.values(answers).filter(
         (answer) => answer.answerIndex === optionIndex,
@@ -545,41 +599,80 @@ export class GamePlayService implements OnModuleInit {
         percentage: room.players.length ? Math.round((count / room.players.length) * 100) : 0,
       };
     });
-    const rankedPlayers = applyRanks(room.players);
-    const scores = rankedPlayers.map((player) => {
+    const fastestReactionAnswer = isReactionMode ? getFastestCorrectAnswer(answers) : undefined;
+    const reactionWinnerAnswer = fastestReactionAnswer?.answer;
+    const reactionWinnerScoreDelta = reactionWinnerAnswer?.isCorrect ? 1 : 0;
+    const reactionWinnerPlayerId = fastestReactionAnswer?.playerId;
+    const nextPlayers = isReactionMode
+      ? applyRanks(
+          room.players.map((player) => {
+            const isWinner = player.playerId === reactionWinnerPlayerId;
+            return {
+              ...player,
+              score: player.score + (isWinner ? reactionWinnerScoreDelta : 0),
+              streak: isWinner && reactionWinnerAnswer?.isCorrect ? player.streak + 1 : 0,
+            };
+          }),
+        )
+      : applyRanks(room.players);
+    const reactionWinnerPlayer = reactionWinnerPlayerId
+      ? nextPlayers.find((player) => player.playerId === reactionWinnerPlayerId)
+      : undefined;
+    const updatedPlayerStats =
+      isReactionMode && reactionWinnerPlayerId && reactionWinnerAnswer?.isCorrect
+        ? nextPlayerStats(
+            game.playerStats,
+            reactionWinnerPlayerId,
+            { ...reactionWinnerAnswer, scoreDelta: reactionWinnerScoreDelta },
+            reactionWinnerPlayer?.streak ?? 1,
+          )
+        : game.playerStats;
+    const scores = nextPlayers.map((player) => {
       const answer = answers[player.playerId];
+      const isReactionWinner = player.playerId === reactionWinnerPlayerId;
       return {
         playerId: player.playerId,
         nickname: player.nickname,
         avatarId: player.avatarId,
         score: player.score,
-        scoreDelta: answer?.scoreDelta ?? 0,
+        scoreDelta: isReactionMode
+          ? isReactionWinner
+            ? reactionWinnerScoreDelta
+            : 0
+          : (answer?.scoreDelta ?? 0),
         streak: player.streak,
         rank: player.rank ?? 1,
         answeredCorrectly: answer?.isCorrect ?? false,
         ...(typeof answer?.answerIndex === 'number'
           ? { selectedAnswerIndex: answer.answerIndex }
           : {}),
+        ...(typeof answer?.answeredAt === 'number' ? { answeredAt: answer.answeredAt } : {}),
+        ...(typeof answer?.responseMs === 'number' ? { responseMs: answer.responseMs } : {}),
       };
     });
     const hasNextRound = roundIndex + 1 < game.totalRounds;
     const nextRoundStartsAt = hasNextRound ? revealEndsAt : undefined;
-    const modeSettings = GAME_MODE_SETTINGS[room.settings.mode];
+    const hasRevealAvMedia =
+      question.revealMedia?.type === MediaType.VIDEO ||
+      question.revealMedia?.type === MediaType.AUDIO;
 
     await this.gameState.setGameState(roomCode, {
       ...game,
       phase: GamePhase.ANSWER_REVEAL,
+      playerStats: updatedPlayerStats,
       revealEndsAt,
+      ...(hasRevealAvMedia ? { mediaLoadPending: true } : {}),
       lastActivityAt: now,
     });
     await this.roomState.patchRoomState(roomCode, (current) => ({
       ...current,
       phase: GamePhase.ANSWER_REVEAL,
-      players: applyRanks(current.players),
+      players: isReactionMode ? nextPlayers : applyRanks(current.players),
     }));
 
     const roundEndEvent: RoundEndEvent = {
       questionId,
+      mode: room.settings.mode,
       correctIndex: question.correctIndex,
       ...(modeSettings.showExplanation && question.explanation
         ? { explanation: question.explanation }
@@ -587,6 +680,20 @@ export class GamePlayService implements OnModuleInit {
       ...(question.revealMedia ? { revealMedia: question.revealMedia } : {}),
       answerStats,
       scores,
+      ...(isReactionMode && reactionWinnerAnswer && reactionWinnerPlayer
+        ? {
+            reactionWinner: {
+              playerId: reactionWinnerPlayer.playerId,
+              nickname: reactionWinnerPlayer.nickname,
+              avatarId: reactionWinnerPlayer.avatarId,
+              answeredAt: reactionWinnerAnswer.answeredAt,
+              responseMs: reactionWinnerAnswer.responseMs,
+              answeredCorrectly: reactionWinnerAnswer.isCorrect,
+              selectedAnswerIndex: reactionWinnerAnswer.answerIndex,
+              scoreDelta: reactionWinnerScoreDelta,
+            },
+          }
+        : {}),
       reactionWindowSeconds: REACTION_WINDOW_SECONDS,
       ...(nextRoundStartsAt ? { nextRoundStartsAt } : {}),
     };
@@ -597,15 +704,14 @@ export class GamePlayService implements OnModuleInit {
       serverTime: now,
     });
 
-    if (hasNextRound && nextRoundStartsAt) {
+    if (hasRevealAvMedia) {
+      // Reveal countdown starts only after TV signals media ready (or fallback fires)
+      await this.timers.scheduleMediaLoadTimeout(roomCode, MAX_MEDIA_WAIT_MS);
+    } else if (hasNextRound && nextRoundStartsAt) {
       await this.timers.scheduleNextRoundCountdown(roomCode, nextRoundStartsAt, 0);
-      await this.timers.scheduleStartRound(
-        roomCode,
-        roundIndex + 1,
-        room.settings.revealDurationMs,
-      );
+      await this.timers.scheduleStartRound(roomCode, roundIndex + 1, revealDurationMs);
     } else {
-      await this.timers.scheduleFinishGame(roomCode, room.settings.revealDurationMs);
+      await this.timers.scheduleFinishGame(roomCode, revealDurationMs);
     }
   }
 
@@ -689,6 +795,103 @@ export class GamePlayService implements OnModuleInit {
     await this.roomState.deleteRoomState(roomCode);
   }
 
+  async tvMediaReady(roomCode: string): Promise<void> {
+    const room = await this.roomState.getRoomState(roomCode);
+    if (!room) return;
+    const game = await this.gameState.getGameState(roomCode);
+    if (!game || !game.mediaLoadPending) return;
+
+    // Atomically clear the pending flag
+    const patched = await this.gameState.patchGameState(roomCode, (current) => {
+      if (!current.mediaLoadPending) return current;
+      return { ...current, mediaLoadPending: false, lastActivityAt: Date.now() };
+    });
+
+    // If paused, resumeGame will schedule timers via existing pauseRemainingMs logic
+    if (!patched || patched.isPaused) return;
+
+    if (patched.phase === GamePhase.QUESTION) {
+      await this.activateQuestionTimer(roomCode, room, patched);
+    } else if (patched.phase === GamePhase.ANSWER_REVEAL) {
+      await this.activateRevealTimer(roomCode, room, patched);
+    }
+  }
+
+  private async activateQuestionTimer(
+    roomCode: string,
+    room: LobbyState,
+    game: Awaited<ReturnType<typeof this.gameState.getGameState>>,
+  ): Promise<void> {
+    if (!game || !game.currentQuestion) return;
+    const now = Date.now();
+    const { answerRevealDelayMs, questionDurationMs } = computeRoundTiming(
+      room.settings.mode,
+      game.currentQuestion.media,
+      room.settings.questionDurationMs,
+    );
+    const answerWindowOpensAt = now + answerRevealDelayMs;
+    const roundEndsAt = answerWindowOpensAt + questionDurationMs;
+    const roundIndex = game.currentRoundIndex;
+    const questionId = game.currentQuestion.id;
+
+    await this.gameState.patchGameState(roomCode, (current) => {
+      if (current.phase !== GamePhase.QUESTION || current.isPaused) return current;
+      const { answerWindowOpenedAt: _old, ...base } = current;
+      return {
+        ...base,
+        roundStartedAt: now,
+        answerWindowOpensAt,
+        roundEndsAt,
+        ...(answerRevealDelayMs === 0 ? { answerWindowOpenedAt: now } : {}),
+        lastActivityAt: now,
+      };
+    });
+
+    await this.emitTimerTick(roomCode, roundIndex, questionId);
+    if (answerRevealDelayMs > 0) {
+      await this.timers.scheduleAnswerWindowOpen(
+        roomCode,
+        roundIndex,
+        questionId,
+        answerRevealDelayMs,
+      );
+    }
+    await this.timers.scheduleRoundEnd(
+      roomCode,
+      roundIndex,
+      questionId,
+      answerRevealDelayMs + room.settings.questionDurationMs,
+    );
+  }
+
+  private async activateRevealTimer(
+    roomCode: string,
+    room: LobbyState,
+    game: Awaited<ReturnType<typeof this.gameState.getGameState>>,
+  ): Promise<void> {
+    if (!game) return;
+    const now = Date.now();
+    const revealDurationMs = computeRevealDurationMs(
+      game.currentQuestion?.revealMedia,
+      room.settings.revealDurationMs,
+    );
+    const revealEndsAt = now + revealDurationMs;
+    const hasNextRound = game.currentRoundIndex + 1 < game.totalRounds;
+    const nextRoundStartsAt = hasNextRound ? revealEndsAt : undefined;
+
+    await this.gameState.patchGameState(roomCode, (current) => {
+      if (current.phase !== GamePhase.ANSWER_REVEAL || current.isPaused) return current;
+      return { ...current, revealEndsAt, lastActivityAt: now };
+    });
+
+    if (hasNextRound && nextRoundStartsAt) {
+      await this.timers.scheduleNextRoundCountdown(roomCode, nextRoundStartsAt, 0);
+      await this.timers.scheduleStartRound(roomCode, game.currentRoundIndex + 1, revealDurationMs);
+    } else {
+      await this.timers.scheduleFinishGame(roomCode, revealDurationMs);
+    }
+  }
+
   private async getRoomOrThrow(roomCode: string): Promise<LobbyState> {
     const state = await this.roomState.getRoomState(roomCode);
     if (!state) throw wsError(ErrorCode.ROOM_NOT_FOUND, 'Room not found');
@@ -700,6 +903,44 @@ export class GamePlayService implements OnModuleInit {
     if (!state) throw wsError(ErrorCode.GAME_NOT_STARTED, 'Game not started');
     return state;
   }
+}
+
+function clipDurationMs(media: Media): number {
+  if (media.endMs !== undefined) return media.endMs - (media.startMs ?? 0);
+  if (media.durationSeconds !== undefined) return media.durationSeconds * 1000;
+  return DEFAULT_AV_CLIP_MS;
+}
+
+function computeRoundTiming(
+  mode: GameMode,
+  media: Media | undefined,
+  settingsQuestionDurationMs: number,
+): { answerRevealDelayMs: number; questionDurationMs: number } {
+  const hasAv = media?.type === MediaType.VIDEO || media?.type === MediaType.AUDIO;
+
+  if (mode === GameMode.REACTION) {
+    const readMs = hasAv ? clipDurationMs(media) : REACTION_TEXT_READ_MS;
+    return {
+      answerRevealDelayMs: readMs + REACTION_COUNTDOWN_MS,
+      questionDurationMs: settingsQuestionDurationMs,
+    };
+  }
+
+  // CLASSIC
+  return {
+    answerRevealDelayMs: 0,
+    questionDurationMs: hasAv
+      ? Math.max(settingsQuestionDurationMs, clipDurationMs(media))
+      : settingsQuestionDurationMs,
+  };
+}
+
+function computeRevealDurationMs(
+  media: Media | undefined,
+  settingsRevealDurationMs: number,
+): number {
+  const hasAv = media?.type === MediaType.VIDEO || media?.type === MediaType.AUDIO;
+  return hasAv ? clipDurationMs(media) : settingsRevealDurationMs;
 }
 
 function isPausablePhase(phase: GamePhase): phase is PausablePhase {
@@ -728,6 +969,26 @@ function isAnswerWindowPending(game: InternalGameState): boolean {
     game.phase === GamePhase.QUESTION &&
     typeof game.answerWindowOpensAt === 'number' &&
     !game.answerWindowOpenedAt
+  );
+}
+
+function getFastestCorrectAnswer(
+  answers: Record<string, StoredAnswer>,
+): { playerId: string; answer: StoredAnswer } | undefined {
+  return Object.entries(answers).reduce<{ playerId: string; answer: StoredAnswer } | undefined>(
+    (fastest, [playerId, answer]) => {
+      if (!answer.isCorrect) return fastest;
+      if (!fastest) return { playerId, answer };
+      if (answer.responseMs < fastest.answer.responseMs) return { playerId, answer };
+      if (
+        answer.responseMs === fastest.answer.responseMs &&
+        answer.answeredAt < fastest.answer.answeredAt
+      ) {
+        return { playerId, answer };
+      }
+      return fastest;
+    },
+    undefined,
   );
 }
 

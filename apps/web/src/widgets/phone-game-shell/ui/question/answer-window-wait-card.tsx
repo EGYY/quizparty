@@ -7,7 +7,6 @@ export function AnswerWindowWaitCard({ remainingSeconds }: { remainingSeconds: n
       <Clock3 size={34} />
       <strong>Готовься отвечать</strong>
       <span>Варианты появятся через {remainingSeconds} с</span>
-      <small>Сначала читаем вопрос, потом выбираем на скорость</small>
     </div>
   );
 }

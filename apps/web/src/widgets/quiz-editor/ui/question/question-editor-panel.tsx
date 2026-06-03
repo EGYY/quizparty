@@ -42,6 +42,26 @@ export const QuestionEditorPanel = memo(function QuestionEditorPanel({
     [onChange, question.options],
   );
 
+  const addOption = useCallback(() => {
+    if (question.options.length >= 4) return;
+    onChange({ options: [...question.options, ''] });
+  }, [onChange, question.options]);
+
+  const removeOption = useCallback(
+    (optionIndex: number) => {
+      if (question.options.length <= 2) return;
+      const newOptions = question.options.filter((_, i) => i !== optionIndex);
+      let newCorrectIndex = question.correctIndex;
+      if (optionIndex < question.correctIndex) {
+        newCorrectIndex = question.correctIndex - 1;
+      } else if (optionIndex === question.correctIndex) {
+        newCorrectIndex = 0;
+      }
+      onChange({ options: newOptions, correctIndex: newCorrectIndex });
+    },
+    [onChange, question.options, question.correctIndex],
+  );
+
   return (
     <div className={styles.questionPanel}>
       <QuestionHeaderControls
@@ -63,6 +83,8 @@ export const QuestionEditorPanel = memo(function QuestionEditorPanel({
         options={question.options}
         onCorrectIndexChange={(correctIndex) => onChange({ correctIndex })}
         onOptionChange={setOption}
+        onAddOption={addOption}
+        onRemoveOption={removeOption}
       />
 
       <QuestionMediaSection

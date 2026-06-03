@@ -36,6 +36,60 @@
   line-height: 1.08;
 }
 
+.reaction-result-card {
+  display: grid;
+  gap: 12px;
+  border: 2px solid rgba(255, 209, 102, 0.42);
+  border-radius: 24px;
+  background: rgba(12, 18, 34, 0.86);
+  padding: 16px;
+}
+
+.reaction-result-card > span {
+  color: #f5d1a1;
+  font-size: 17px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.reaction-result-card p {
+  color: #fff6dd;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.reaction-winner-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.reaction-winner-row img {
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(255, 209, 102, 0.62);
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.reaction-winner-row strong,
+.reaction-winner-row small {
+  display: block;
+}
+
+.reaction-winner-row strong {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 1000;
+}
+
+.reaction-winner-row small {
+  color: #b9ff72;
+  font-size: 20px;
+  font-weight: 1000;
+}
+
 @media (max-width: 460px) {
   .round-result-card {
     gap: 8px;
@@ -54,6 +108,34 @@
 
   .reveal-phone p {
     font-size: 15px;
+  }
+
+  .reaction-result-card {
+    gap: 10px;
+    border-radius: 20px;
+    padding: 12px;
+  }
+
+  .reaction-result-card > span {
+    font-size: 15px;
+  }
+
+  .reaction-result-card p {
+    font-size: 14px;
+  }
+
+  .reaction-winner-row img {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+  }
+
+  .reaction-winner-row strong {
+    font-size: 20px;
+  }
+
+  .reaction-winner-row small {
+    font-size: 17px;
   }
 }
 

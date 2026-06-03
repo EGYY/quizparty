@@ -77,10 +77,10 @@ const styles = StyleSheet.create({
   },
   panelWrap: {
     position: 'absolute',
-    bottom: sv(24),
-    right: s(24),
-    top: sv(24),
-    width: s(720),
+    bottom: sv(34),
+    right: s(42),
+    top: sv(34),
+    width: s(980),
     zIndex: 30,
   },
 });

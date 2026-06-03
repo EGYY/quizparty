@@ -75,7 +75,7 @@ export const HostCharacter = memo(function HostCharacter({
   );
 
   return (
-    <Animated.View style={wrapStyle}>
+    <Animated.View pointerEvents="none" style={wrapStyle}>
       {/* Речевой пузырь */}
       {speech ? (
         <View
@@ -88,7 +88,14 @@ export const HostCharacter = memo(function HostCharacter({
                 : styles.bubble_left,
           ]}
         >
-          <Text style={styles.bubbleText}>{speech}</Text>
+          <Text
+            style={[
+              styles.bubbleText,
+              isTopRight ? styles.bubbleText_topRight : null,
+            ]}
+          >
+            {speech}
+          </Text>
         </View>
       ) : null}
 
@@ -115,11 +122,11 @@ const styles = StyleSheet.create({
   },
   rightWrap: { right: s(-14) },
   topRightWrap: {
-    top: sv(5),
-    right: s(64),
+    top: sv(34),
+    right: s(92),
     bottom: undefined,
-    width: s(320),
-    height: sv(430),
+    width: s(230),
+    height: sv(315),
   },
   leftWrap: {
     left: s(-80),
@@ -157,8 +164,12 @@ const styles = StyleSheet.create({
     right: s(300),
   },
   bubble_topRight: {
-    top: sv(10),
-    right: s(210),
+    top: sv(4),
+    right: s(170),
+    maxWidth: s(230),
+    borderRadius: s(15),
+    paddingHorizontal: s(12),
+    paddingVertical: sv(12),
   },
   bubble_left: {
     top: sv(100),
@@ -170,5 +181,9 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     lineHeight: sv(26),
     textAlign: 'center',
+  },
+  bubbleText_topRight: {
+    fontSize: sf(23),
+    lineHeight: sv(23),
   },
 });

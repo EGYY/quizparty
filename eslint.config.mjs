@@ -83,6 +83,15 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['apps/tv/src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: ['./apps/tv/tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
   // ── apps/web: типизация по собственному tsconfig (резолвит alias @shared/* и
   //    т.д., совпадает с `tsc -p apps/web/tsconfig.json`), возврат no-explicit-any
   {

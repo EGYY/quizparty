@@ -27,6 +27,7 @@ import {
   adminDashboardSchema,
   adminQuizListFiltersSchema,
   adminQuizListSchema,
+  approvedQuizListSchema,
   mediaSchema,
   quizBrowserQuerySchema,
   quizDraftSchema,
@@ -36,6 +37,7 @@ import {
 import type {
   AdminDashboard,
   AdminQuizList,
+  ApprovedQuizList,
   Media,
   MediaUploadResponse,
   QuizDetail,
@@ -53,6 +55,7 @@ import { QuizzesService } from './quizzes.service';
 import {
   AdminDashboardDto,
   AdminQuizListDto,
+  ApprovedQuizListDto,
   MediaDto,
   MediaUploadResponseDto,
   QuizDetailDto,
@@ -72,11 +75,13 @@ export class QuizzesController {
   @ApiQuery({ name: 'category', enum: QuizCategory, required: false })
   @ApiQuery({ name: 'difficulty', enum: Difficulty, required: false })
   @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiResponse({ status: 200, type: [QuizDetailDto] })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiResponse({ status: 200, type: ApprovedQuizListDto })
   @Get('quizzes/approved')
-  async listApproved(@Query() query: unknown): Promise<QuizDetail[]> {
+  async listApproved(@Query() query: unknown): Promise<ApprovedQuizList> {
     const parsed = quizBrowserQuerySchema.parse(query);
-    return this.quizzes.listApproved(parsed);
+    return approvedQuizListSchema.parse(await this.quizzes.listApproved(parsed));
   }
 
   @ApiTags('quizzes')

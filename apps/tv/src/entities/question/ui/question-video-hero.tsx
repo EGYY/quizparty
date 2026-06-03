@@ -7,10 +7,11 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Media } from '@quizparty/shared';
+import { s, sf, sv } from '@shared/config/scale';
 import { TvMediaPlayer } from '@shared/ui/tv-media-player';
 
 // Должно совпадать с горизонтальным padding внешнего контейнера (pages/game/index.tsx)
-const GAME_PADDING_H = 58;
+const GAME_PADDING_H = s(58);
 
 type Props = {
   forcePaused?: boolean;
@@ -29,55 +30,43 @@ export const QuestionVideoHero = memo(
     questionText,
     screenWidth,
   }: Props) {
+    const mediaWidth = Math.max(s(900), screenWidth - GAME_PADDING_H * 2);
+
     return (
-      <View style={[styles.wrapper, { height: mediaH }]}>
+      <View style={styles.wrapper}>
+        <Text numberOfLines={2} style={styles.questionText}>
+          {questionText}
+        </Text>
         <TvMediaPlayer
           forcePaused={forcePaused}
           media={media}
-          overrideWidth={screenWidth}
+          overrideWidth={mediaWidth}
           overrideHeight={mediaH}
           variant="question-av"
         />
-        <View pointerEvents="none" style={styles.overlay}>
-          <View style={styles.overlayGradient} />
-          <Text numberOfLines={2} style={[styles.overlayText]}>
-            {questionText}
-          </Text>
-        </View>
       </View>
     );
   },
   (prev, next) =>
     prev.questionId === next.questionId &&
-    prev.forcePaused === next.forcePaused,
+    prev.forcePaused === next.forcePaused &&
+    prev.mediaH === next.mediaH &&
+    prev.screenWidth === next.screenWidth,
 );
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginHorizontal: -GAME_PADDING_H,
-    overflow: 'hidden',
+    alignItems: 'center',
+    gap: sv(14),
   },
-  overlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 60,
-    paddingBottom: 30,
-    paddingTop: 40,
-  },
-  overlayGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.44)',
-  },
-  overlayText: {
+  questionText: {
     color: '#ffffff',
-    fontSize: 52,
-    lineHeight: 62,
+    fontSize: sf(46),
+    lineHeight: sv(54),
     fontWeight: '900',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.92)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 12,
+    textShadowOffset: { width: 0, height: sv(3) },
+    textShadowRadius: s(12),
   },
 });

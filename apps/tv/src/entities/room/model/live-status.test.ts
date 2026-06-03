@@ -5,6 +5,7 @@ import type {
   RoundEndEvent,
   RoundStartEvent,
 } from '@quizparty/shared';
+import { GameMode } from '@quizparty/shared';
 import {
   buildQuestionLive,
   buildRevealLive,
@@ -16,6 +17,7 @@ const roundStart = (
 ): RoundStartEvent => ({
   roundNumber: 2,
   totalRounds: 7,
+  mode: GameMode.CLASSIC,
   serverTime: 10_000,
   roundEndTime: 55_000,
   question: {
@@ -67,6 +69,7 @@ describe('lobby live status builders', () => {
   it('builds reveal live status from next round, reaction window, and empty reveal events', () => {
     const roundEnd: RoundEndEvent = {
       questionId: '00000000-0000-4000-8000-000000000101',
+      mode: GameMode.CLASSIC,
       correctIndex: 1,
       answerStats: [],
       scores: [],

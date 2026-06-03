@@ -2,7 +2,6 @@
  * RevealView — тонкий ассемблер экрана раскрытия правильного ответа.
  *
  * Слои FSD используемых компонентов:
- *   @entities/question  — RevealOptionCard
  *   @entities/round     — RoundBadge
  *   @widgets/answer-stats — AnswerStats
  *   @shared/*           — AnimatedReactionBubble, TvMediaPlayer, useMusicTrack
@@ -13,15 +12,21 @@
  *
  * PERFORMANCE:
  *   - Сам компонент memo'd — не перерисовывается, пока state/reactions не изменятся
- *   - useCountdown вынесен в RevealNextRoundCard → его 500 мс тики изолированы
  *   - карточка правильного ответа владеет своей pop-in анимацией
  */
 import { memo, useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import type { TvGameState } from '@entities/game';
 import { RoundBadge } from '@entities/round';
-import { MediaType, type ReactionEvent } from '@quizparty/shared';
+import { GameMode, MediaType, type ReactionEvent } from '@quizparty/shared';
 import { soundReveal } from '@shared/assets/sounds';
+import { getPhoneAvatarSource } from '@shared/config/phone-avatars';
 import { s, sv } from '@shared/config/scale';
 import { AnimatedReactionBubble } from '@shared/ui/animated-reaction-bubble';
 import { useMusicTrack } from '@shared/ui/music-provider';
@@ -34,9 +39,14 @@ import { RevealReactionsPanel } from './reveal-reactions-panel';
 
 const GAME_PADDING_H = s(58);
 const MAIN_ROW_GAP = s(26);
-const CORRECT_CARD_WIDTH_RATIO = 0.4;
-const CORRECT_CARD_PADDING_H = s(28);
+const MEDIA_CARD_WIDTH_RATIO = 0.38;
+const MEDIA_CARD_WITH_MEDIA_WIDTH_RATIO = 0.48;
+const MEDIA_CARD_PADDING_H = s(24);
 const CORRECT_CARD_BORDER_W = s(3);
+
+function formatSeconds(ms: number) {
+  return `${(ms / 1000).toFixed(2).replace('.', ',')} сек`;
+}
 
 export const RevealView = memo(function RevealView({
   reactions,
@@ -63,19 +73,29 @@ export const RevealView = memo(function RevealView({
     state.roundEnd.revealMedia?.type !== MediaType.VIDEO &&
     state.roundEnd.revealMedia?.type !== MediaType.AUDIO;
   useMusicTrack(playMusic ? soundReveal : null, false);
+  const isReactionMode = state.roundEnd.mode === GameMode.REACTION;
+  const hasRevealMedia = Boolean(state.roundEnd.revealMedia);
+  const reactionWinner = state.roundEnd.reactionWinner;
+  const winnerAvatarSource = getPhoneAvatarSource(reactionWinner?.avatarId);
 
   const mediaCardW = useMemo(() => {
     const contentWidth = width - GAME_PADDING_H * 2;
-    const correctCardOuterWidth =
-      (contentWidth - MAIN_ROW_GAP) * CORRECT_CARD_WIDTH_RATIO;
-    const correctCardInnerWidth =
-      correctCardOuterWidth -
-      CORRECT_CARD_PADDING_H * 2 -
+    const mediaCardWidthRatio = hasRevealMedia
+      ? MEDIA_CARD_WITH_MEDIA_WIDTH_RATIO
+      : MEDIA_CARD_WIDTH_RATIO;
+    const mediaCardOuterWidth =
+      (contentWidth - MAIN_ROW_GAP) * mediaCardWidthRatio;
+    const mediaCardInnerWidth =
+      mediaCardOuterWidth -
+      MEDIA_CARD_PADDING_H * 2 -
       CORRECT_CARD_BORDER_W * 2;
 
-    return Math.max(s(300), Math.floor(correctCardInnerWidth));
-  }, [width]);
-  const mediaCardH = useMemo(() => Math.round(height * 0.5), [height]);
+    return Math.max(s(300), Math.floor(mediaCardInnerWidth));
+  }, [hasRevealMedia, width]);
+  const mediaCardH = useMemo(
+    () => Math.round(height * (hasRevealMedia ? 0.58 : 0.52)),
+    [hasRevealMedia, height],
+  );
 
   return (
     <View style={styles.layout}>
@@ -85,16 +105,15 @@ export const RevealView = memo(function RevealView({
         totalRounds={state.round?.totalRounds ?? '?'}
       />
 
-      {/* Основной ряд: варианты + карточка ответа */}
+      {/* Основной ряд: вопрос + крупный ответ + медиа/разбор */}
       <View style={[styles.mainRow]}>
         <RevealQuestionPanel
-          correctIndex={state.roundEnd.correctIndex}
-          options={options}
+          correctAnswer={correctAnswer}
+          hasMedia={hasRevealMedia}
           questionText={question?.questionText ?? 'Вопрос раунда'}
         />
 
         <RevealCorrectCard
-          correctAnswer={correctAnswer}
           explanation={state.roundEnd.explanation}
           forcePaused={state.isPaused}
           mediaCardH={mediaCardH}
@@ -106,18 +125,51 @@ export const RevealView = memo(function RevealView({
 
       {/* Нижний ряд */}
       <View style={[styles.bottomRow]}>
-        <AnswerStats
-          answerStats={state.roundEnd.answerStats}
-          correctIndex={state.roundEnd.correctIndex}
-          roundNumber={state.round?.roundNumber}
-        />
+        {isReactionMode ? (
+          <View style={styles.reactionWinnerCard}>
+            <Text style={styles.reactionWinnerEyebrow}>
+              {reactionWinner
+                ? 'Быстрее всех ответил'
+                : 'Никто не успел ответить правильно'}
+            </Text>
+            {reactionWinner ? (
+              <View style={styles.reactionWinnerRow}>
+                {winnerAvatarSource ? (
+                  <Image
+                    source={winnerAvatarSource}
+                    style={styles.reactionWinnerAvatar}
+                  />
+                ) : (
+                  <View style={styles.reactionWinnerAvatarFallback}>
+                    <Text style={styles.reactionWinnerAvatarText}>
+                      {reactionWinner.nickname.slice(0, 1).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.reactionWinnerCopy}>
+                  <Text style={styles.reactionWinnerName} numberOfLines={1}>
+                    {reactionWinner.nickname}
+                  </Text>
+                  <Text style={styles.reactionWinnerTime}>
+                    {formatSeconds(reactionWinner.responseMs)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          <AnswerStats
+            answerStats={state.roundEnd.answerStats}
+            correctIndex={state.roundEnd.correctIndex}
+            roundNumber={state.round?.roundNumber}
+          />
+        )}
 
         <RevealReactionsPanel />
 
-        {/* Таймер следующего раунда (изолирован — владеет useCountdown) */}
+        {/* Таймер следующего раунда */}
         <RevealNextRoundCard
           staticSeconds={state.nextRound?.remainingSeconds}
-          reactionWindowClosesAt={state.reactionWindow?.closesAt}
         />
       </View>
 
@@ -151,9 +203,10 @@ const styles = StyleSheet.create({
   mainRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: s(26),
-    marginTop: sv(10),
+    minHeight: sv(575),
+    marginTop: sv(8),
   },
 
   // ── Bottom row ──
@@ -161,6 +214,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: s(18),
-    marginTop: sv(16),
+    minHeight: sv(170),
+    marginTop: sv(18),
+  },
+  reactionWinnerCard: {
+    flex: 1,
+    minHeight: sv(160),
+    justifyContent: 'center',
+    borderColor: 'rgba(255, 209, 102, 0.58)',
+    borderRadius: s(30),
+    borderWidth: s(3),
+    backgroundColor: 'rgba(12, 18, 34, 0.88)',
+    paddingHorizontal: s(28),
+    paddingVertical: sv(20),
+    gap: sv(16),
+  },
+  reactionWinnerEyebrow: {
+    color: '#f5d1a1',
+    fontSize: s(26),
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  reactionWinnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: s(22),
+  },
+  reactionWinnerAvatar: {
+    width: s(92),
+    height: s(92),
+    borderColor: 'rgba(255, 209, 102, 0.82)',
+    borderRadius: s(24),
+    borderWidth: s(3),
+  },
+  reactionWinnerAvatarFallback: {
+    width: s(92),
+    height: s(92),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: 'rgba(255, 209, 102, 0.82)',
+    borderRadius: s(24),
+    borderWidth: s(3),
+    backgroundColor: 'rgba(255, 209, 102, 0.18)',
+  },
+  reactionWinnerAvatarText: {
+    color: '#fff6dd',
+    fontSize: s(42),
+    fontWeight: '900',
+  },
+  reactionWinnerCopy: {
+    minWidth: 0,
+    flexShrink: 1,
+  },
+  reactionWinnerName: {
+    color: '#fff',
+    fontSize: s(40),
+    fontWeight: '900',
+  },
+  reactionWinnerTime: {
+    color: '#b9ff72',
+    fontSize: s(34),
+    fontWeight: '900',
   },
 });

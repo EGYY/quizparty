@@ -94,4 +94,10 @@ export class GameGateway implements OnGatewayInit {
     const { roomCode, playerId } = requireSession(socket);
     await this.gameplay.endGameFromHost(roomCode, playerId);
   }
+
+  @SubscribeMessage(ClientEvent.TV_MEDIA_READY)
+  async tvMediaReady(@ConnectedSocket() socket: QuizPartySocket): Promise<void> {
+    const { roomCode } = requireSession(socket);
+    await this.gameplay.tvMediaReady(roomCode);
+  }
 }

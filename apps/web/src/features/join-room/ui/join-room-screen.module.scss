@@ -143,34 +143,6 @@
   text-decoration: none;
 }
 
-.tip {
-  position: relative;
-  width: clamp(190px, 52vw, 246px);
-  min-height: clamp(58px, 11dvh, 94px);
-  display: grid;
-  place-items: center;
-  margin: clamp(14px, 3.5dvh, 30px) auto 0 18px;
-  padding: clamp(8px, 1.8dvh, 14px) 14px;
-  border-radius: 18px;
-  color: #17101b;
-  background: linear-gradient(180deg, #ffe189, #ffd078);
-  font-size: clamp(14px, 2.6dvh, 20px);
-  font-weight: 900;
-  line-height: 1.26;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    right: -11px;
-    top: 50%;
-    transform: translateY(-50%) rotate(45deg);
-    background: #ffd078;
-  }
-}
-
 .mascot {
   position: absolute;
   right: -16px;
@@ -251,12 +223,6 @@
     }
   }
 
-  .tip {
-    min-height: clamp(44px, 9dvh, 64px);
-    font-size: clamp(12px, 2dvh, 15px);
-    margin-top: clamp(8px, 2dvh, 16px);
-  }
-
   .mascot {
     width: clamp(90px, 18dvh, 130px);
   }
@@ -294,23 +260,6 @@
     min-height: 30px;
     padding: 0 10px;
     font-size: 11px;
-  }
-
-  .tip {
-    width: clamp(176px, 54vw, 210px);
-    min-height: clamp(52px, 9.5dvh, 74px);
-    margin: clamp(10px, 2.3dvh, 24px) auto 0 clamp(4px, 2vw, 8px);
-    padding: clamp(7px, 1.5dvh, 10px) 12px;
-    border-radius: 16px;
-    font-size: clamp(13px, 4vw, 16px);
-    line-height: 1.18;
-
-    &::after {
-      width: clamp(14px, 4vw, 22px);
-      height: clamp(14px, 4vw, 22px);
-      right: -8px;
-      top: 50%;
-    }
   }
 
   .mascot {
@@ -360,22 +309,6 @@
     width: min(clamp(138px, 23dvh, 190px), 58vw);
   }
 
-  .tip {
-    width: clamp(150px, 50vw, 178px);
-    min-height: clamp(42px, 7.8dvh, 54px);
-    margin-top: clamp(7px, 1.7dvh, 15px);
-    padding: clamp(6px, 1.2dvh, 8px) 10px;
-    border-radius: 13px;
-    font-size: clamp(11px, 3.5vw, 13px);
-
-    &::after {
-      width: 14px;
-      height: 14px;
-      right: -7px;
-      top: 50%;
-    }
-  }
-
   .mascot {
     right: -8px;
     bottom: clamp(-14px, -2dvh, -8px);
@@ -406,8 +339,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       'logo mascot'
-      'title mascot'
-      'tip tip';
+      'title mascot';
     align-content: start;
     column-gap: 8px;
     padding: 5px 6px 0;
@@ -434,22 +366,6 @@
     min-height: 26px;
     padding: 0 8px;
     font-size: 10px;
-  }
-
-  .tip {
-    grid-area: tip;
-    justify-self: start;
-    width: min(244px, 72vw);
-    min-height: 32px;
-    margin: 3px 0 0;
-    padding: 5px 9px;
-    border-radius: 11px;
-    font-size: 11px;
-    line-height: 1.12;
-
-    &::after {
-      display: none;
-    }
   }
 
   .mascot {
@@ -515,14 +431,6 @@
 
   .logo {
     width: min(210px, 30vw);
-  }
-
-  .tip {
-    width: min(220px, 32vw);
-    min-height: clamp(40px, 12dvh, 54px);
-    margin: clamp(8px, 2dvh, 14px) auto 0;
-    padding: 7px 10px;
-    font-size: clamp(12px, 3.2dvh, 14px);
   }
 
   .mascot {
@@ -591,13 +499,6 @@
 
   .logo {
     width: min(300px, 30vw);
-  }
-
-  .tip {
-    width: min(260px, 30vw);
-    min-height: clamp(54px, 10dvh, 74px);
-    margin: clamp(14px, 2.4dvh, 20px) auto 0;
-    font-size: clamp(14px, 2.3dvh, 17px);
   }
 
   .mascot {

@@ -65,7 +65,12 @@ export const GameSurface = memo(function GameSurface({
 
   function renderContent() {
     if (gameState.phase === 'starting')
-      return <StartingView startsAt={gameState.event.startsAt} />;
+      return (
+        <StartingView
+          serverTime={gameState.event.serverTime}
+          startsAt={gameState.event.startsAt}
+        />
+      );
     if (gameState.phase === 'question')
       return <QuestionView state={gameState} />;
     if (gameState.phase === 'reveal')

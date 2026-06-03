@@ -3,7 +3,6 @@ import type { PhoneGameState } from '@features/phone-game';
 import type { Player, RoomSummary } from '@quizparty/shared';
 import { MediaType } from '@quizparty/shared';
 import { CheckCircle2, Tv } from 'lucide-react';
-import { GameScreenHeader } from '../shared/game-screen-header';
 import { PlayerScoreStrip } from '../shared/player-score-strip';
 import shellStyles from '../phone-game-shell.module.scss';
 import { AnswerGrid } from './answer-grid';
@@ -11,12 +10,6 @@ import { AnswerWindowWaitCard } from './answer-window-wait-card';
 import { QuestionMetaRow } from './question-meta-row';
 import { QuestionProgress } from './question-progress';
 import styles from './question-view.module.scss';
-
-function getQuestionTextClass(text: string) {
-  if (text.length > 140) return styles['question-title--dense'];
-  if (text.length > 90) return styles['question-title--long'];
-  return '';
-}
 
 type QuestionGameState = Extract<PhoneGameState, { phase: 'question' }>;
 
@@ -40,8 +33,6 @@ export function QuestionView({
   const locked = Boolean(gameState.accepted);
   const media = gameState.round.question.media;
   const isAv = media?.type === MediaType.AUDIO || media?.type === MediaType.VIDEO;
-  const questionText = gameState.round.question.questionText;
-  const questionTextClass = getQuestionTextClass(questionText);
   const options = gameState.round.question.options;
   const hasOptions = Array.isArray(options);
 
@@ -49,7 +40,6 @@ export function QuestionView({
     <section
       className={`${shellStyles['phone-round-screen']} ${styles['question-controller']} ${isAv ? styles['question-controller--with-media'] : ''}`}
     >
-      <GameScreenHeader className={styles['header-slot']} />
       <QuestionMetaRow gameState={gameState} room={room} />
 
       <QuestionProgress
@@ -61,12 +51,8 @@ export function QuestionView({
         <div className={styles['phone-watch-tv-card']}>
           <Tv size={38} />
           <span>{media?.type === MediaType.AUDIO ? '🎵 Слушайте на TV' : '🎬 Смотрите на TV'}</span>
-          {media?.prompt ? <small>{media.prompt}</small> : null}
         </div>
       ) : null}
-      <h1 className={`${styles['question-title']} ${questionTextClass}`} aria-live="polite">
-        {questionText}
-      </h1>
 
       {hasOptions ? (
         <AnswerGrid

@@ -9,7 +9,8 @@ type TimerJobName =
   | 'end_round'
   | 'next_round_countdown'
   | 'finish_game'
-  | 'cleanup_room';
+  | 'cleanup_room'
+  | 'media_load_timeout';
 
 type TimerHandlers = {
   startRound(roomCode: string, roundIndex: number): Promise<void>;
@@ -19,6 +20,7 @@ type TimerHandlers = {
   nextRoundCountdown(roomCode: string, nextRoundStartsAt: number): Promise<void>;
   finishGame(roomCode: string): Promise<void>;
   cleanupRoom(roomCode: string): Promise<void>;
+  mediaLoadTimeout(roomCode: string): Promise<void>;
 };
 
 type TimerJobData = {
@@ -125,6 +127,15 @@ export class GameTimersService implements OnModuleDestroy {
     await this.addJob('cleanup_room', { roomCode }, delayMs, timerJobId(roomCode, 'cleanup'));
   }
 
+  async scheduleMediaLoadTimeout(roomCode: string, delayMs: number): Promise<void> {
+    await this.addJob(
+      'media_load_timeout',
+      { roomCode },
+      delayMs,
+      timerJobId(roomCode, 'media-timeout'),
+    );
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.worker.close();
     await this.queue.close();
@@ -181,6 +192,9 @@ export class GameTimersService implements OnModuleDestroy {
         return;
       case 'cleanup_room':
         await this.handlers.cleanupRoom(roomCode);
+        return;
+      case 'media_load_timeout':
+        await this.handlers.mediaLoadTimeout(roomCode);
         return;
     }
   }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   adminDashboardSchema,
+  approvedQuizListSchema,
   adminQuizListFiltersSchema,
   adminQuizListSchema,
   authSessionSchema,
@@ -36,6 +37,7 @@ import {
   reorderQuestionsRequestSchema,
   reactionEventSchema,
   reactionPayloadSchema,
+  reactionWinnerSchema,
   registerRequestSchema,
   reviewDecisionPayloadSchema,
   reviewDecisionBodySchema,
@@ -62,6 +64,7 @@ import {
 export type Media = z.infer<typeof mediaSchema>;
 export type QuizCard = z.infer<typeof quizCardSchema>;
 export type QuizDetail = z.infer<typeof quizDetailSchema>;
+export type ApprovedQuizList = z.infer<typeof approvedQuizListSchema>;
 export type QuizBrowserQuery = z.infer<typeof quizBrowserQuerySchema>;
 export type RoomSettings = z.infer<typeof roomSettingsSchema>;
 export type CreateRoomRequest = z.infer<typeof createRoomRequestSchema>;
@@ -79,6 +82,7 @@ export type SetPlayerInfoPayload = z.infer<typeof setPlayerInfoPayloadSchema>;
 export type SetReadyPayload = z.infer<typeof setReadyPayloadSchema>;
 export type ReactionPayload = z.infer<typeof reactionPayloadSchema>;
 export type ReactionEvent = z.infer<typeof reactionEventSchema>;
+export type ReactionWinner = z.infer<typeof reactionWinnerSchema>;
 export type ReactionWindowEvent = z.infer<typeof reactionWindowEventSchema>;
 export type Question = z.infer<typeof questionSchema>;
 export type RoundQuestion = z.infer<typeof roundQuestionSchema>;

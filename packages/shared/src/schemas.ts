@@ -18,6 +18,8 @@ import { ErrorCode } from './errors';
 
 export const uuidSchema = z.string().uuid();
 
+/** Допустимые форматы URL медиафайла: абсолютный URL или относительный путь (/...). */
+
 export const mediaUrlSchema = z
   .string()
   .min(1)
@@ -25,6 +27,14 @@ export const mediaUrlSchema = z
     message: 'Invalid url',
   });
 
+/**
+ * Медиафайл вопроса или reveal-экрана.
+ *
+ * startMs/endMs — обрезка клипа (сервер вычисляет длительность как endMs − startMs).
+ * durationSeconds — полная длительность файла до обрезки; нужна для расчёта
+ *   тайминга раунда, если endMs не задан.
+ * prompt — текстовая подсказка для AI-генерации (не отображается игрокам).
+ */
 export const mediaSchema = z
   .object({
     url: mediaUrlSchema,
@@ -80,6 +90,8 @@ export const quizBrowserQuerySchema = z.object({
   search: z.string().max(80).optional(),
   difficulty: difficultySchema.optional(),
   tags: z.array(z.string().min(1).max(32)).default([]),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().min(1).max(48).default(24),
 });
 
 export const quizDetailSchema = quizCardSchema.extend({
@@ -88,6 +100,17 @@ export const quizDetailSchema = quizCardSchema.extend({
   createdAt: z.string().datetime(),
 });
 
+export const approvedQuizListSchema = z.object({
+  items: z.array(quizDetailSchema),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive(),
+  total: z.number().int().nonnegative(),
+  hasMore: z.boolean(),
+});
+
+/** Настройки комнаты, вычисляемые из режима и сложности при создании.
+ *  answerRevealDelayMs устарел для вычисления тайминга — сервер теперь
+ *  рассчитывает задержку динамически по медиа вопроса. */
 export const roomSettingsSchema = z.object({
   quizId: uuidSchema,
   difficulty: difficultySchema,
@@ -133,6 +156,14 @@ export const playerSchema = z.object({
   rank: z.number().int().positive().optional(),
 });
 
+/**
+ * Полное состояние лобби, рассылаемое клиентам.
+ *
+ * playerId / playerToken — серверные поля, отправляются ТОЛЬКО сокету,
+ * который только что присоединился (не транслируются в комнату).
+ * Подписанный JWT-токен используется клиентом при переподключении
+ * для восстановления того же playerId (анти-спуфинг).
+ */
 export const lobbyStateSchema = z.object({
   roomCode: z.string(),
   joinUrl: z.string().url(),
@@ -143,9 +174,6 @@ export const lobbyStateSchema = z.object({
   hostPlayerId: uuidSchema.optional(),
   players: z.array(playerSchema).max(MAX_PLAYERS),
   maxPlayers: z.literal(MAX_PLAYERS),
-  // Серверные поля, отправляются ТОЛЬКО присоединившемуся сокету (не
-  // транслируются в комнату). Подтверждённый playerId и подписанный токен,
-  // которым клиент авторизует последующие JOIN_LOBBY/reconnect (анти-спуфинг).
   playerId: uuidSchema.optional(),
   playerToken: z.string().optional(),
 });
@@ -221,28 +249,54 @@ export const reactionWindowEventSchema = z.object({
   serverTime: z.number().int().positive(),
 });
 
+/** Вопрос с полным набором данных (включая correctIndex). Используется
+ *  только внутри бэкенда — игрокам correctIndex не отправляется. */
 export const questionSchema = z.object({
   id: uuidSchema,
   quizId: uuidSchema,
   questionText: z.string().min(1).max(500),
   media: mediaSchema.optional(),
-  options: z.array(z.string().min(1).max(140)).length(4),
+  options: z.array(z.string().min(1).max(140)).min(2).max(4),
   order: z.number().int().nonnegative(),
 });
 
+/** Вопрос для публичной рассылки. В режиме REACTION поле options отсутствует
+ *  при ROUND_START и появляется позже в событии ANSWER_WINDOW_OPEN. */
 export const roundQuestionSchema = questionSchema.extend({
   options: questionSchema.shape.options.optional(),
 });
 
+/**
+ * Событие старта раунда.
+ *
+ * answerStartTime — момент (Unix ms), когда откроется окно ответов.
+ *   В режиме CLASSIC равен serverTime. В REACTION задержан на
+ *   (длительность медиа + REACTION_COUNTDOWN_MS).
+ *   TV использует это значение для запуска обратного отсчёта.
+ *
+ * mediaLoadPending — true если у вопроса есть AV-медиа. Таймеры
+ *   не стартуют пока TV не отправит TV_MEDIA_READY.
+ */
 export const roundStartEventSchema = z.object({
   roundNumber: z.number().int().positive(),
   totalRounds: z.number().int().positive(),
   question: roundQuestionSchema,
+  mode: gameModeSchema,
   serverTime: z.number().int().positive(),
   roundEndTime: z.number().int().positive(),
   answerStartTime: z.number().int().positive().optional(),
+  mediaLoadPending: z.boolean().optional(),
 });
 
+/**
+ * Тик таймера, рассылаемый каждые ~500–1000 мс.
+ *
+ * stage:
+ *   'reading'   — REACTION, варианты ещё не открыты; totalSeconds считается
+ *                 от старта до answerStartTime (не от полной длины раунда).
+ *   'answering' — окно ответов открыто; totalSeconds = questionDurationMs.
+ *   undefined   — CLASSIC, всегда фаза answering.
+ */
 export const timerTickEventSchema = z.object({
   remainingSeconds: z.number().int().nonnegative(),
   totalSeconds: z.number().int().positive(),
@@ -293,15 +347,37 @@ export const scoreEntrySchema = z.object({
   rank: z.number().int().positive(),
   answeredCorrectly: z.boolean(),
   selectedAnswerIndex: z.number().int().min(0).max(3).optional(),
+  answeredAt: z.number().int().positive().optional(),
+  responseMs: z.number().int().nonnegative().optional(),
 });
 
+export const reactionWinnerSchema = z.object({
+  playerId: uuidSchema,
+  nickname: z.string(),
+  avatarId: z.string(),
+  answeredAt: z.number().int().positive(),
+  responseMs: z.number().int().nonnegative(),
+  answeredCorrectly: z.boolean(),
+  selectedAnswerIndex: z.number().int().min(0).max(3),
+  scoreDelta: z.number().int().nonnegative(),
+});
+
+/**
+ * Событие конца раунда с результатами.
+ *
+ * reactionWinner — только в режиме REACTION; содержит данные игрока,
+ *   первым правильно ответившего (определяется по responseMs, затем answeredAt).
+ *   Если никто не ответил верно — поле отсутствует.
+ */
 export const roundEndEventSchema = z.object({
   questionId: uuidSchema,
+  mode: gameModeSchema,
   correctIndex: z.number().int().min(0).max(3),
   explanation: z.string().max(800).optional(),
   revealMedia: mediaSchema.optional(),
   answerStats: z.array(answerStatsSchema).length(4),
   scores: z.array(scoreEntrySchema),
+  reactionWinner: reactionWinnerSchema.optional(),
   reactionWindowSeconds: z.number().int().nonnegative(),
   nextRoundStartsAt: z.number().int().positive().optional(),
 });
@@ -359,7 +435,7 @@ export const quizDraftQuestionSchema = z.object({
   questionText: z.string().min(1).max(500),
   media: mediaSchema.optional(),
   revealMedia: mediaSchema.optional(),
-  options: z.array(z.string().min(1).max(140)).length(4),
+  options: z.array(z.string().min(1).max(140)).min(2).max(4),
   order: z.number().int().nonnegative(),
   correctIndex: z.number().int().min(0).max(3),
   explanation: z.string().max(800).optional(),
@@ -504,6 +580,8 @@ export const reviewQueueSchema = z.object({
   total: z.number().int().nonnegative(),
 });
 
+/** Создаёт настройки комнаты из режима и сложности.
+ *  Вызывается при создании комнаты; тайминги берутся из GAME_MODE_SETTINGS. */
 export function deriveRoomSettings(quizId: string, difficulty: Difficulty, mode: GameMode) {
   const modeSettings = GAME_MODE_SETTINGS[mode];
 

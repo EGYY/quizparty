@@ -1,7 +1,7 @@
-import { memo } from 'react';
+import { memo, type RefObject } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import type { QuizDetail } from '@quizparty/shared';
-import { QuizCarousel } from '@widgets/quiz-carousel';
+import { QuizGrid, type QuizGridHandle } from '@widgets/quiz-grid';
 import { colors, spacing } from '@shared/config/theme';
 import { sf } from '@shared/config/scale';
 import { PageState } from '@shared/ui/page-state';
@@ -14,16 +14,26 @@ import { PageState } from '@shared/ui/page-state';
 // (e.g. detailMode D-pad, overlay open/close) even though data hadn't changed.
 type Props = {
   isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
   loadError: Error | undefined;
   onRefetch: () => void;
+  onLoadMore: () => void;
+  onFocusQuizIndex: (index: number) => void;
   visibleQuizzes: QuizDetail[];
   onOpenQuiz: (quiz: QuizDetail) => void;
+  quizGridRef: RefObject<QuizGridHandle | null>;
 };
 
 export const QuizzesSection = memo(function QuizzesSection({
   isLoading,
+  hasMore,
+  isLoadingMore,
   loadError,
+  onFocusQuizIndex,
+  onLoadMore,
   onRefetch,
+  quizGridRef,
   visibleQuizzes,
   onOpenQuiz,
 }: Props) {
@@ -53,7 +63,15 @@ export const QuizzesSection = memo(function QuizzesSection({
               Backend недоступен, показаны локальные демо-квизы.
             </Text>
           ) : null}
-          <QuizCarousel quizzes={visibleQuizzes} onOpenQuiz={onOpenQuiz} />
+          <QuizGrid
+            ref={quizGridRef}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            quizzes={visibleQuizzes}
+            onEndReached={onLoadMore}
+            onFocusIndexChange={onFocusQuizIndex}
+            onOpenQuiz={onOpenQuiz}
+          />
         </>
       ) : (
         <PageState

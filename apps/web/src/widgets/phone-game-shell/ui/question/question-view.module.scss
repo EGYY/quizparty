@@ -1,23 +1,16 @@
 .question-controller {
   --question-gap: 12px;
-  --question-title-size: clamp(1.7rem, 5dvh, 2.625rem);
-  --question-title-long-size: clamp(1.45rem, 4.2dvh, 2.125rem);
-  --question-title-dense-size: clamp(1.2rem, 3.4dvh, 1.75rem);
-  --question-answer-size: clamp(1.75rem, 4.7dvh, 2.4375rem);
-  --question-answer-long-size: clamp(1.375rem, 3.7dvh, 1.875rem);
-  --question-answer-dense-size: clamp(1.0625rem, 3dvh, 1.4375rem);
   --question-tv-label-size: clamp(1.25rem, 3.4dvh, 1.75rem);
 
   height: 100%;
   min-height: 0;
   max-height: 100%;
   align-content: stretch;
-  grid-template-rows: auto auto auto minmax(0, max-content) minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   grid-template-areas:
     'header'
     'meta'
     'progress'
-    'title'
     'answers'
     'note'
     'player';
@@ -30,7 +23,6 @@
     auto
     auto
     minmax(74px, clamp(92px, 18dvh, 156px))
-    minmax(0, max-content)
     minmax(0, 1fr)
     auto
     auto;
@@ -39,7 +31,6 @@
     'meta'
     'progress'
     'media'
-    'title'
     'answers'
     'note'
     'player';
@@ -92,30 +83,6 @@
   padding: 0 16px;
 }
 
-.question-title {
-  grid-area: title;
-  min-height: 0;
-  margin: 0;
-  color: #fff;
-  font-size: var(--question-title-size);
-  line-height: 1.08;
-  overflow-wrap: anywhere;
-  text-align: center;
-  text-wrap: balance;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.58);
-}
-
-.question-title--long {
-  font-size: var(--question-title-long-size);
-  line-height: 1.1;
-}
-
-.question-title--dense {
-  font-size: var(--question-title-dense-size);
-  line-height: 1.12;
-  text-wrap: wrap;
-}
-
 .answer-accepted-note {
   grid-area: note;
   min-height: 46px;
@@ -134,15 +101,9 @@
 @media (max-width: 460px) {
   .question-controller {
     --question-gap: 7px;
-    --question-title-size: clamp(1.375rem, 4dvh, 1.875rem);
-    --question-title-long-size: clamp(1.1875rem, 3.35dvh, 1.5625rem);
-    --question-title-dense-size: clamp(1rem, 2.8dvh, 1.3125rem);
-    --question-answer-size: clamp(1.3125rem, 3.8dvh, 1.75rem);
-    --question-answer-long-size: clamp(1.0625rem, 3dvh, 1.375rem);
-    --question-answer-dense-size: clamp(0.875rem, 2.45dvh, 1.125rem);
     --question-tv-label-size: clamp(1rem, 2.8dvh, 1.375rem);
 
-    grid-template-rows: auto auto auto minmax(0, max-content) minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   }
 
   .question-controller--with-media {
@@ -151,7 +112,6 @@
       auto
       auto
       minmax(64px, clamp(78px, 16dvh, 118px))
-      minmax(0, max-content)
       minmax(0, 1fr)
       auto
       auto;
@@ -173,18 +133,6 @@
     font-size: var(--question-tv-label-size);
   }
 
-  .question-title {
-    line-height: 1.06;
-  }
-
-  .question-title--long {
-    line-height: 1.08;
-  }
-
-  .question-title--dense {
-    line-height: 1.1;
-  }
-
   .answer-accepted-note {
     min-height: 36px;
     gap: 7px;
@@ -197,34 +145,26 @@
 @media (max-height: 820px) and (min-width: 560px) {
   .question-controller {
     --question-gap: 7px;
-    --question-title-size: clamp(1.25rem, 3.6dvh, 1.85rem);
-    --question-title-long-size: clamp(1.05rem, 3.05dvh, 1.45rem);
-    --question-title-dense-size: clamp(0.9rem, 2.55dvh, 1.2rem);
-    --question-answer-size: clamp(1.18rem, 3.25dvh, 1.55rem);
-    --question-answer-long-size: clamp(0.98rem, 2.75dvh, 1.22rem);
-    --question-answer-dense-size: clamp(0.84rem, 2.35dvh, 1rem);
     --question-tv-label-size: clamp(0.95rem, 2.6dvh, 1.2rem);
 
     grid-template-columns: minmax(0, 0.92fr) minmax(310px, 1.08fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'header meta'
       'progress progress'
-      'title answers'
-      'player answers'
-      'note answers';
+      'answers answers'
+      'player note';
     align-items: stretch;
   }
 
   .question-controller--with-media {
-    grid-template-rows: auto auto minmax(54px, 0.7fr) minmax(0, 0.9fr) auto auto;
+    grid-template-rows: auto auto minmax(54px, 0.42fr) minmax(0, 1fr) auto;
     grid-template-areas:
       'header meta'
       'progress progress'
-      'media answers'
-      'title answers'
-      'player answers'
-      'note answers';
+      'media media'
+      'answers answers'
+      'player note';
   }
 
   .phone-watch-tv-card {
@@ -244,11 +184,6 @@
     line-height: 1.1;
   }
 
-  .question-title {
-    align-self: center;
-    line-height: 1.08;
-  }
-
   .answer-accepted-note {
     min-height: 30px;
     border-radius: 12px;
@@ -259,19 +194,13 @@
 @media (max-height: 520px) and (min-width: 560px) {
   .question-controller {
     --question-gap: 5px;
-    --question-title-size: clamp(1rem, 4dvh, 1.28rem);
-    --question-title-long-size: clamp(0.86rem, 3.3dvh, 1.05rem);
-    --question-title-dense-size: clamp(0.74rem, 2.85dvh, 0.9rem);
-    --question-answer-size: clamp(0.98rem, 3.6dvh, 1.18rem);
-    --question-answer-long-size: clamp(0.82rem, 3.05dvh, 0.98rem);
-    --question-answer-dense-size: clamp(0.7rem, 2.55dvh, 0.82rem);
     --question-tv-label-size: clamp(0.78rem, 2.8dvh, 0.95rem);
 
     grid-template-columns: minmax(0, 0.78fr) minmax(340px, 1.22fr);
   }
 
   .question-controller--with-media {
-    grid-template-rows: auto auto minmax(42px, 0.6fr) minmax(0, 0.85fr) auto auto;
+    grid-template-rows: auto auto minmax(42px, 0.32fr) minmax(0, 1fr) auto;
   }
 
   .phone-watch-tv-card {
@@ -287,12 +216,6 @@
 @media (max-height: 760px) and (max-width: 460px) {
   .question-controller {
     --question-gap: 5px;
-    --question-title-size: clamp(1.125rem, 3.3dvh, 1.5rem);
-    --question-title-long-size: clamp(0.9375rem, 2.75dvh, 1.25rem);
-    --question-title-dense-size: clamp(0.8125rem, 2.35dvh, 1.0625rem);
-    --question-answer-size: clamp(1.125rem, 3.15dvh, 1.4375rem);
-    --question-answer-long-size: clamp(0.875rem, 2.5dvh, 1.125rem);
-    --question-answer-dense-size: clamp(0.8125rem, 2.2dvh, 0.9375rem);
     --question-tv-label-size: clamp(0.8125rem, 2.35dvh, 1.0625rem);
   }
 
@@ -302,7 +225,6 @@
       auto
       auto
       minmax(48px, clamp(58px, 12dvh, 82px))
-      minmax(0, max-content)
       minmax(0, 1fr)
       auto
       auto;
@@ -326,18 +248,6 @@
   .phone-watch-tv-card small {
     font-size: 10px;
     line-height: 1.1;
-  }
-
-  .question-title {
-    line-height: 1.04;
-  }
-
-  .question-title--long {
-    line-height: 1.07;
-  }
-
-  .question-title--dense {
-    line-height: 1.08;
   }
 
   .answer-accepted-note {

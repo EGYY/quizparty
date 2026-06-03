@@ -12,9 +12,12 @@ export const FallingConfetti = memo(function FallingConfetti({
   const fall = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fall.setValue(0);
-    const animation = Animated.loop(
-      Animated.sequence([
+    let stopped = false;
+    let animation: Animated.CompositeAnimation | undefined;
+
+    const runFall = () => {
+      fall.setValue(0);
+      animation = Animated.sequence([
         Animated.delay(piece.delay),
         Animated.timing(fall, {
           duration: piece.duration,
@@ -23,10 +26,20 @@ export const FallingConfetti = memo(function FallingConfetti({
           toValue: 1,
           useNativeDriver: true,
         }),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
+      ]);
+      animation.start(({ finished }) => {
+        if (finished && !stopped) {
+          runFall();
+        }
+      });
+    };
+
+    runFall();
+
+    return () => {
+      stopped = true;
+      animation?.stop();
+    };
   }, [fall, piece.delay, piece.duration]);
 
   const translateY = fall.interpolate({

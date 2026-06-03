@@ -33,6 +33,7 @@ export type InternalGameState = {
   isPaused?: boolean;
   pausedAt?: number;
   pauseRemainingMs?: number;
+  mediaLoadPending?: boolean;
   roundStartedAt?: number;
   roundEndsAt?: number;
   answerWindowOpensAt?: number;

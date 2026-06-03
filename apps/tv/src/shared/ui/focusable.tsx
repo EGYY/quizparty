@@ -10,7 +10,6 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { colors, shadows } from '@shared/config/theme';
-import { useSoundEffects } from '@shared/ui/sound-effects-provider';
 
 const SPRING_CONFIG = {
   damping: 18,
@@ -53,7 +52,6 @@ export const Focusable = forwardRef<View, Props>(function Focusable(
   { children, hasTVPreferredFocus, onFocus, onPress, style, disabled },
   ref,
 ) {
-  const { playFocus, playSubmit } = useSoundEffects();
   const scale = useRef(new Animated.Value(1)).current;
   // Separate ref for the Animated.View so we can call setNativeProps on it
   // without going through React state or the Animated value system.
@@ -68,10 +66,9 @@ export const Focusable = forwardRef<View, Props>(function Focusable(
 
   const handleFocus = useCallback(() => {
     animatedViewRef.current?.setNativeProps({ style: FOCUSED_NATIVE_STYLE });
-    playFocus();
     onFocus?.();
     animate(1.045);
-  }, [animate, onFocus, playFocus]);
+  }, [animate, onFocus]);
 
   const handleBlur = useCallback(() => {
     animatedViewRef.current?.setNativeProps({ style: BLURRED_NATIVE_STYLE });
@@ -80,10 +77,9 @@ export const Focusable = forwardRef<View, Props>(function Focusable(
 
   const handlePress = useCallback(
     (event: GestureResponderEvent) => {
-      playSubmit();
       onPress?.(event);
     },
-    [onPress, playSubmit],
+    [onPress],
   );
 
   return (

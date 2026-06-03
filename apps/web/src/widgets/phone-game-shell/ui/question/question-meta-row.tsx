@@ -24,7 +24,7 @@ export function QuestionMetaRow({
   return (
     <div className={styles['question-meta-row']}>
       <div className={styles['question-meta-pill']}>
-        <Trophy size={23} />
+        <Trophy size={20} />
         <span>Раунд</span>
         <strong>
           {gameState.round.roundNumber} / {gameState.round.totalRounds}
@@ -38,7 +38,7 @@ export function QuestionMetaRow({
         <span>с</span>
       </div>
       <div className={styles['question-meta-pill']}>
-        <Users size={23} />
+        <Users size={20} />
         <strong>
           {room.playerCount} / {room.maxPlayers}
         </strong>

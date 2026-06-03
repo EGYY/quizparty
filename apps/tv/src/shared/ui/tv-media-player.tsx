@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import Video, { type VideoRef } from 'react-native-video';
 import { MediaType, type Media } from '@quizparty/shared';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 import { getMediaUrl } from '@shared/lib/media';
+import { useMediaReady } from './media-ready-context';
 
 export function TvMediaPlayer({
   fallbackIcon = '?',
@@ -21,12 +22,16 @@ export function TvMediaPlayer({
   overrideWidth?: number;
   overrideHeight?: number;
 }) {
+  const fitMedia = variant === 'question-av' || variant === 'reveal';
   const [pausedState, setPausedState] = useState({
     mediaKey: 'empty',
     paused: false,
   });
+  const signalMediaReady = useMediaReady();
   const didSeekRef = useRef(false);
+  const didSignalMediaReadyRef = useRef(false);
   const previousMediaKeyRef = useRef('empty');
+  const questionStartedAtRef = useRef(Date.now());
   const videoRef = useRef<VideoRef | null>(null);
   const mediaKey = media
     ? `${media.type}:${media.url}:${media.startMs ?? 0}:${media.endMs ?? 'end'}`
@@ -35,6 +40,8 @@ export function TvMediaPlayer({
   if (previousMediaKeyRef.current !== mediaKey) {
     previousMediaKeyRef.current = mediaKey;
     didSeekRef.current = false;
+    didSignalMediaReadyRef.current = false;
+    questionStartedAtRef.current = Date.now();
   }
 
   const paused =
@@ -47,6 +54,16 @@ export function TvMediaPlayer({
       return { mediaKey, paused: false };
     });
   }, [mediaKey]);
+
+  // Track video ready/buffering state per mediaKey to avoid stale isReady across questions
+  const [readyForKey, setReadyForKey] = useState<string>('');
+  const [isBuffering, setIsBuffering] = useState(false);
+  const isVideoReady = readyForKey === mediaKey;
+
+  useEffect(() => {
+    setIsBuffering(false);
+  }, [mediaKey]);
+
   const resolvedUrl = media ? getMediaUrl(media.url) : undefined;
   const videoSource = useMemo(
     () => (resolvedUrl ? { uri: resolvedUrl } : undefined),
@@ -85,7 +102,7 @@ export function TvMediaPlayer({
     return (
       <View style={hasOverride ? frameStyle : [styles.frame]}>
         <Image
-          resizeMode="cover"
+          resizeMode={fitMedia ? 'contain' : 'cover'}
           source={{ uri: resolvedUrl! }}
           style={styles.image}
         />
@@ -99,10 +116,17 @@ export function TvMediaPlayer({
   const isAudio = media.type === MediaType.AUDIO;
 
   const handleLoad = () => {
-    if (!didSeekRef.current && startSeconds > 0) {
-      didSeekRef.current = true;
-      videoRef.current?.seek(startSeconds);
-    }
+    if (didSeekRef.current) return;
+    didSeekRef.current = true;
+
+    // Seek to the position that accounts for buffering time so video is in sync
+    // with the server timer that was already running while we were loading.
+    const elapsed = (Date.now() - questionStartedAtRef.current) / 1000;
+    const seekTo = startSeconds + elapsed;
+    const capped =
+      endSeconds != null ? Math.min(seekTo, endSeconds - 0.2) : seekTo;
+
+    videoRef.current?.seek(Math.max(0, capped));
   };
 
   const handleProgress = (event: { currentTime: number }) => {
@@ -112,6 +136,22 @@ export function TvMediaPlayer({
         return { mediaKey, paused: true };
       });
     }
+  };
+
+  const handleReadyForDisplay = () => {
+    setReadyForKey(mediaKey);
+    if (!didSignalMediaReadyRef.current) {
+      didSignalMediaReadyRef.current = true;
+      signalMediaReady?.();
+    }
+  };
+
+  const handleBuffer = ({
+    isBuffering: buffering,
+  }: {
+    isBuffering: boolean;
+  }) => {
+    setIsBuffering(buffering);
   };
 
   return (
@@ -138,26 +178,41 @@ export function TvMediaPlayer({
           <Text style={[styles.mediaHint]}>AUDIO</Text>
           <Video
             key={mediaKey}
+            ignoreSilentSwitch="ignore"
+            mixWithOthers="mix"
             paused={paused}
             ref={videoRef}
-            source={videoSource!}
+            source={videoSource}
             style={styles.hiddenVideo}
             onLoad={handleLoad}
             onProgress={handleProgress}
+            onReadyForDisplay={handleReadyForDisplay}
           />
         </View>
       ) : (
-        <Video
-          key={mediaKey}
-          controls
-          paused={paused}
-          ref={videoRef}
-          resizeMode="cover"
-          source={videoSource!}
-          style={styles.video}
-          onLoad={handleLoad}
-          onProgress={handleProgress}
-        />
+        <>
+          <Video
+            key={mediaKey}
+            controls={false}
+            ignoreSilentSwitch="ignore"
+            mixWithOthers="mix"
+            paused={paused}
+            ref={videoRef}
+            resizeMode={fitMedia ? 'contain' : 'cover'}
+            source={videoSource}
+            style={styles.video}
+            useTextureView
+            onBuffer={handleBuffer}
+            onLoad={handleLoad}
+            onProgress={handleProgress}
+            onReadyForDisplay={handleReadyForDisplay}
+          />
+          {(!isVideoReady || isBuffering) && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={colors.gold} />
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -200,9 +255,16 @@ const styles = StyleSheet.create({
   },
   hiddenVideo: {
     position: 'absolute',
+    top: -10,
+    left: -10,
     width: s(1),
     height: sv(1),
-    opacity: 0,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 22, 45, 0.85)',
   },
   audioScene: {
     width: '100%',

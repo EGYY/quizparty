@@ -15,6 +15,7 @@ import {
   TVEventControl,
   View,
 } from 'react-native';
+import { MediaReadyContext } from '@shared/ui/media-ready-context';
 import { useGamePage } from './model/use-game-page';
 import { GameErrorBanner } from './ui/game-error-banner';
 import { GamePauseOverlay } from './ui/game-pause-overlay';
@@ -109,50 +110,55 @@ export function GamePage({
   });
 
   return (
-    <Screen>
-      <StageBackground>
-        <View style={styles.content}>
+    <MediaReadyContext.Provider value={game.signalMediaReady}>
+      <Screen>
+        <StageBackground>
+          <View style={styles.content}>
+            {!hasImmersiveChrome ? (
+              <GameTopBar
+                connectionStatus={game.connectionStatus}
+                playerCount={playerCount}
+                quizTitle={route.quiz.title}
+                roomCode={route.room.roomCode}
+              />
+            ) : null}
+
+            {game.error ? (
+              <GameErrorBanner
+                error={game.error}
+                onReconnect={game.reconnect}
+              />
+            ) : null}
+
+            <GameSurface
+              gameState={game.gameState}
+              onChooseQuiz={handleEndGame}
+              onPlayAgain={game.playAgain}
+              reactions={game.recentReactions}
+            />
+
+            {isPaused ? (
+              <GamePauseOverlay
+                onEndGame={handleEndGame}
+                onResume={game.resumeGame}
+              />
+            ) : null}
+          </View>
+
           {!hasImmersiveChrome ? (
-            <GameTopBar
-              connectionStatus={game.connectionStatus}
-              playerCount={playerCount}
-              quizTitle={route.quiz.title}
-              roomCode={route.room.roomCode}
+            <HostCharacter
+              mood={game.gameState.phase === 'final' ? 'party' : 'thinking'}
             />
           ) : null}
 
-          {game.error ? (
-            <GameErrorBanner error={game.error} onReconnect={game.reconnect} />
-          ) : null}
-
-          <GameSurface
-            gameState={game.gameState}
-            onChooseQuiz={navigation.home}
-            onPlayAgain={game.playAgain}
-            reactions={game.recentReactions}
-          />
-
-          {isPaused ? (
-            <GamePauseOverlay
-              onEndGame={handleEndGame}
-              onResume={game.resumeGame}
+          {!hasImmersiveChrome ? (
+            <RemoteHints
+            // hints={['OK действие', 'Back назад', 'Реакции с телефона']}
             />
           ) : null}
-        </View>
-
-        {!hasImmersiveChrome ? (
-          <HostCharacter
-            mood={game.gameState.phase === 'final' ? 'party' : 'thinking'}
-          />
-        ) : null}
-
-        {!hasImmersiveChrome ? (
-          <RemoteHints
-          // hints={['OK действие', 'Back назад', 'Реакции с телефона']}
-          />
-        ) : null}
-      </StageBackground>
-    </Screen>
+        </StageBackground>
+      </Screen>
+    </MediaReadyContext.Provider>
   );
 }
 
