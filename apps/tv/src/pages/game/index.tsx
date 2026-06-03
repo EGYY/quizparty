@@ -41,6 +41,9 @@ export function GamePage({
   const endGame = game.endGame;
   const allowNavigationRef = useRef(false);
   const lastRemoteToggleAtRef = useRef(0);
+  const pendingNavigationRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const pauseControlsRef = useRef({
     isPausablePhase,
     isPaused,
@@ -78,11 +81,26 @@ export function GamePage({
   const handleEndGame = useCallback(() => {
     allowNavigationRef.current = true;
     endGame();
-    navigation.home();
+    // НЕ вызываем navigation.home() немедленно — это размонтирует GamePage
+    // и закроет сокет до того, как END_GAME доставится серверу.
+    // Навигация произойдёт через эффект roomClosed (ниже), когда сервер
+    // вернёт ROOM_CLOSED. Запасной таймаут — если ROOM_CLOSED не придёт за 3 с.
+    if (pendingNavigationRef.current != null) {
+      clearTimeout(pendingNavigationRef.current);
+    }
+    pendingNavigationRef.current = setTimeout(() => {
+      pendingNavigationRef.current = null;
+      navigation.home();
+    }, 3_000);
   }, [endGame, navigation]);
 
   useEffect(() => {
     if (!game.roomClosed) return;
+    // ROOM_CLOSED получен — отменяем запасной таймаут и сразу навигируем
+    if (pendingNavigationRef.current != null) {
+      clearTimeout(pendingNavigationRef.current);
+      pendingNavigationRef.current = null;
+    }
     allowNavigationRef.current = true;
     navigation.home();
   }, [game.roomClosed, navigation]);

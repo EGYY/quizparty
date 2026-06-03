@@ -137,10 +137,10 @@ export function QuestionView({
   // Таймер скрыт в reading/countdown фазах
   const showTimer = !isReadingPhase && !isCountdownPhase && !mediaLoadPending;
 
-  // const playMusic =
-  // media?.type !== MediaType.VIDEO && media?.type !== MediaType.AUDIO;
+  const isAvMedia =
+    media?.type === MediaType.AUDIO || media?.type === MediaType.VIDEO;
   useMusicTrack(
-    isAnsweringPhase || media?.type === MediaType.IMAGE
+    !isAvMedia || (isReactionMode && isAnsweringPhase)
       ? soundQuestionReview
       : null,
   );

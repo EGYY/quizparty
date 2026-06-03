@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { QuizStatus } from '@quizparty/shared';
 import type { QuizDraft } from '@quizparty/shared';
 import { categoryOptions, difficultyOptions, labels, StatusPill } from '@entities/quiz';
-import { Eyebrow } from '@shared/ui';
+import { Eyebrow, Select } from '@shared/ui';
 import type { DraftErrors } from '../../model/types';
 import { FieldError } from '../field-error';
 import { MediaPicker } from '../media/media-picker';
@@ -30,7 +30,7 @@ export const MetaPanel = memo(function MetaPanel({
 
       <div className={editorStyles.field}>
         <label className={editorStyles.label}>Категория</label>
-        <select
+        <Select
           value={draft.category}
           onChange={(e) => setField('category', e.target.value as QuizDraft['category'])}
         >
@@ -39,13 +39,13 @@ export const MetaPanel = memo(function MetaPanel({
               {labels[cat]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className={styles.fieldRow}>
         <div className={editorStyles.field}>
           <label className={editorStyles.label}>Сложность</label>
-          <select
+          <Select
             value={draft.difficulty}
             onChange={(e) => setField('difficulty', e.target.value as QuizDraft['difficulty'])}
           >
@@ -54,7 +54,7 @@ export const MetaPanel = memo(function MetaPanel({
                 {labels[difficulty]}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className={editorStyles.field}>
           <label className={editorStyles.label}>Цвет</label>
@@ -67,7 +67,7 @@ export const MetaPanel = memo(function MetaPanel({
       </div>
 
       <div className={`${editorStyles.field}${errors.cover ? ` ${editorStyles.hasError}` : ''}`}>
-        <span className={editorStyles.label}>Обложка</span>
+        <span className={`${editorStyles.label} ${editorStyles.required}`}>Обложка</span>
         <MediaPicker
           accept="image/*"
           currentUrl={draft.coverUrl}
@@ -89,7 +89,7 @@ export const MetaPanel = memo(function MetaPanel({
       <div
         className={`${editorStyles.field}${errors.description ? ` ${editorStyles.hasError}` : ''}`}
       >
-        <label className={editorStyles.label}>Описание</label>
+        <label className={`${editorStyles.label} ${editorStyles.required}`}>Описание</label>
         <textarea
           placeholder="Краткое описание квиза…"
           rows={3}
@@ -119,7 +119,7 @@ export const MetaPanel = memo(function MetaPanel({
       <div className={editorStyles.field}>
         <label className={editorStyles.label}>Статус</label>
         {canEditStatus ? (
-          <select
+          <Select
             value={draft.status}
             onChange={(e) => setField('status', e.target.value as QuizStatus)}
           >
@@ -128,7 +128,7 @@ export const MetaPanel = memo(function MetaPanel({
                 {labels[status]}
               </option>
             ))}
-          </select>
+          </Select>
         ) : (
           <div className={styles.statusReadOnly}>
             <StatusPill status={draft.status} />

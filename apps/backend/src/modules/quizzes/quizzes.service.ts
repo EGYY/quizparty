@@ -40,6 +40,7 @@ import {
   type WritableQuizCategory,
 } from '../../database/prisma-enums';
 import { PrismaService } from '../../database/prisma.service';
+import { compressMedia } from './media-compress';
 import { fileMatchesMime } from './media-signature';
 import { mapQuizCard, mapQuizDetail, mapQuizDraft, validateQuizDraft } from './quiz.mapper';
 
@@ -291,15 +292,24 @@ export class QuizzesService {
     const uploadDir = this.getQuizMediaUploadDir();
     await mkdir(uploadDir, { recursive: true });
 
-    const filename = `${Date.now()}-${randomUUID()}.${metadata.extension}`;
+    const compressed = await compressMedia(
+      file.buffer,
+      file.mimetype,
+      metadata.type,
+      metadata.extension,
+    );
+    const outputBuffer = compressed?.buffer ?? file.buffer;
+    const outputExtension = compressed?.extension ?? metadata.extension;
+
+    const filename = `${Date.now()}-${randomUUID()}.${outputExtension}`;
     const absolutePath = join(uploadDir, filename);
-    await writeFile(absolutePath, file.buffer);
+    await writeFile(absolutePath, outputBuffer);
 
     const media: Media = {
       url: `${UPLOAD_PUBLIC_PATH}/${encodeURIComponent(filename)}`,
       type: metadata.type,
       ...(alt?.trim() ? { alt: alt.trim().slice(0, 160) } : {}),
-      sizeBytes: file.size,
+      sizeBytes: outputBuffer.length,
     };
 
     const saved = await this.prisma.mediaAsset

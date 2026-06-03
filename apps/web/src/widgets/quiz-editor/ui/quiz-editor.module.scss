@@ -89,6 +89,11 @@
   }
 }
 
+.required::after {
+  content: ' *';
+  color: #ff6b7a;
+}
+
 .fieldError {
   display: flex;
   align-items: center;

@@ -31,7 +31,7 @@ export function AnswerOptionsEditor({
     <div
       className={`${editorStyles.field}${emptyOptionsCount > 0 ? ` ${editorStyles.hasError}` : ''}`}
     >
-      <span className={editorStyles.label}>
+      <span className={`${editorStyles.label} ${editorStyles.required}`}>
         Варианты ответа <small>(нажмите на букву, чтобы отметить правильный)</small>
       </span>
       <div className={styles.optionsGrid}>

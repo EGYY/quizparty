@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { AdminSort, QuizCategory } from '@quizparty/shared';
 import { categoryOptions, labels, sortOptions, statusOptions } from '@entities/quiz';
-import { Button, SearchField } from '@shared/ui';
+import { Button, SearchField, Select } from '@shared/ui';
 import styles from './quiz-filters.module.scss';
 
 export function QuizFilters({
@@ -82,7 +82,7 @@ export function QuizFilters({
         className={`${styles.filterRow ?? ''} ${styles.filterPanel ?? ''} ${isOpen ? (styles.filterPanelOpen ?? '') : ''}`}
         id={panelId}
       >
-        <select
+        <Select
           aria-label="Категория"
           value={category}
           onChange={(event) => setCategory(event.target.value as QuizCategory)}
@@ -93,8 +93,8 @@ export function QuizFilters({
               {labels[item]}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="Статус"
           value={status}
           onChange={(event) => setStatus(event.target.value)}
@@ -105,8 +105,8 @@ export function QuizFilters({
               {labels[item]}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="Сортировка"
           value={sort}
           onChange={(event) => setSort(event.target.value as AdminSort)}
@@ -116,7 +116,7 @@ export function QuizFilters({
               {labels[item]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     </div>
   );

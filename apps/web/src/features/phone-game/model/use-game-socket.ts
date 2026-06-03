@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MutableRefObject } from 'react';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { ClientEvent, ServerEvent } from '@quizparty/shared';
 import type { LobbyState, ReactionEvent, RoundStartEvent, WsErrorEvent } from '@quizparty/shared';
 import { clearStoredPlayerToken, saveStoredPlayerToken } from '@entities/player';
@@ -35,7 +35,7 @@ export function useGameSocket({
   roomCode: string;
   setError: (error: string | null) => void;
   setFatalError: (error: string) => void;
-  setLobbyState: (state: LobbyState) => void;
+  setLobbyState: Dispatch<SetStateAction<LobbyState | undefined>>;
 }) {
   const [gameState, setGameState] = useState<PhoneGameState>({ phase: 'lobby' });
   const [roomClosed, setRoomClosed] = useState(false);
@@ -151,6 +151,18 @@ export function useGameSocket({
         phase: 'reveal',
         roundEnd: data,
         ...(currentRoundRef.current ? { round: currentRoundRef.current } : {}),
+      });
+      setLobbyState((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          players: current.players.map((player) => {
+            const entry = data.scores.find((s) => s.playerId === player.playerId);
+            return entry
+              ? { ...player, score: entry.score, streak: entry.streak, rank: entry.rank }
+              : player;
+          }),
+        };
       });
     });
     game.on(ServerEvent.REACTION_WINDOW_OPEN, (data) => {

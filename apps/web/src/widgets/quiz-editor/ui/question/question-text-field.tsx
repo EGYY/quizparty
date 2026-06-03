@@ -13,7 +13,7 @@ export function QuestionTextField({
 }) {
   return (
     <div className={`${editorStyles.field}${error ? ` ${editorStyles.hasError}` : ''}`}>
-      <label className={editorStyles.label}>Текст вопроса</label>
+      <label className={`${editorStyles.label} ${editorStyles.required}`}>Текст вопроса</label>
       <textarea
         className={styles.textareaTall}
         placeholder="Введите текст вопроса…"

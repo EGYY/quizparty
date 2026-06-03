@@ -28,6 +28,7 @@ import {
   ensurePlayer,
   mapQuestion,
   normalizeLobbyState,
+  shuffleArray,
   wsError,
 } from './game.helpers';
 import type { InternalGameState, PlayerGameStats, RoomPatchResult } from './game.types';
@@ -322,9 +323,7 @@ export class LobbyService {
       startedAt: now,
       currentRoundIndex: -1,
       totalRounds: quiz.questions.length,
-      questions: quiz.questions
-        .sort((a, b) => a.order - b.order)
-        .map((question) => mapQuestion(question)),
+      questions: shuffleArray(quiz.questions).map((question) => mapQuestion(question)),
       answers: {},
       playerStats: Object.fromEntries(
         next.players.map((player) => [

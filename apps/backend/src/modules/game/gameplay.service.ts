@@ -184,13 +184,20 @@ export class GamePlayService implements OnModuleInit {
       }));
     }
 
+    const answeredCount = Object.keys(patched.answers[question.id] ?? {}).length;
+    const playerCount = room.players.length;
     const progressEvent: AnswerProgressEvent = {
       questionId: payload.questionId,
-      answeredCount: Object.keys(patched.answers[question.id] ?? {}).length,
-      playerCount: room.players.length,
+      answeredCount,
+      playerCount,
       serverTime: Date.now(),
     };
     this.realtime.emitGame(roomCode, ServerEvent.ANSWER_PROGRESS, progressEvent);
+
+    const answerablePlayers = room.players.filter((p) => !p.isHost);
+    if (answerablePlayers.length > 0 && answeredCount >= answerablePlayers.length) {
+      await this.endRound(roomCode, game.currentRoundIndex, question.id);
+    }
 
     return {
       questionId: payload.questionId,

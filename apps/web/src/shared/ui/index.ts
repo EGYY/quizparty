@@ -6,4 +6,5 @@ export { FallbackScreen } from './fallback-screen/fallback-screen';
 export { FormError } from './form-error/form-error';
 export { PageStatus } from './page-status';
 export { SearchField } from './search-field/search-field';
+export { Select } from './select/select';
 export { ToastViewport, useToastStore } from './toast';

@@ -43,8 +43,10 @@ export function EditorHeaderBar({
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         <input
+          aria-label="Название квиза (обязательно)"
           className={`${styles.titleInput}${showErrors && titleError ? ` ${styles.titleInputError}` : ''}`}
-          placeholder="Название квиза"
+          placeholder="Название квиза *"
+          required
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
         />

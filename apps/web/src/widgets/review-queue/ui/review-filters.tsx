@@ -2,7 +2,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { QuizCategory, QuizStatus } from '@quizparty/shared';
 import type { ReviewQueueFilters } from '@quizparty/shared';
 import { categoryOptions, labels, statusOptions } from '@entities/quiz';
-import { Button, SearchField } from '@shared/ui';
+import { Button, SearchField, Select } from '@shared/ui';
 import styles from './review-filters.module.scss';
 
 export function ReviewFilters({
@@ -47,7 +47,7 @@ export function ReviewFilters({
         className={`${styles.filters}${areFiltersOpen ? ` ${styles.filtersOpen}` : ''}`}
         id={filtersId}
       >
-        <select
+        <Select
           aria-label="Статус"
           value={filters.status ?? QuizStatus.PENDING_REVIEW}
           onChange={(event) => onFiltersChange({ status: event.target.value as QuizStatus })}
@@ -57,8 +57,8 @@ export function ReviewFilters({
               {labels[status]}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="Категория"
           value={filters.category ?? QuizCategory.ALL}
           onChange={(event) => onFiltersChange({ category: event.target.value as QuizCategory })}
@@ -69,7 +69,7 @@ export function ReviewFilters({
               {labels[category]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     </div>
   );

@@ -60,6 +60,17 @@ export function applyRanks(players: Player[]): Player[] {
   }));
 }
 
+export function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = result[i] as T;
+    result[i] = result[j] as T;
+    result[j] = temp;
+  }
+  return result;
+}
+
 export function mapQuestion(question: {
   id: string;
   quizId: string;
@@ -83,6 +94,10 @@ export function mapQuestion(question: {
   explanation?: string | null;
   order: number;
 }): InternalGameQuestion {
+  const correctText = question.options[question.correctIndex]!;
+  const shuffledOptions = shuffleArray(question.options);
+  const newCorrectIndex = shuffledOptions.indexOf(correctText);
+
   return {
     id: question.id,
     quizId: question.quizId,
@@ -119,9 +134,9 @@ export function mapQuestion(question: {
           },
         }
       : {}),
-    options: question.options,
+    options: shuffledOptions,
     order: question.order,
-    correctIndex: question.correctIndex,
+    correctIndex: newCorrectIndex,
     ...(question.explanation ? { explanation: question.explanation } : {}),
   };
 }
