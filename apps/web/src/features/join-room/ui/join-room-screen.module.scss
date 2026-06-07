@@ -17,7 +17,7 @@
   padding-bottom: max(env(safe-area-inset-bottom, 0px), clamp(14px, 2.5dvh, 22px));
   background:
     linear-gradient(180deg, rgba(6, 7, 19, 0.06), rgba(6, 7, 19, 0.76)),
-    url('/assets/phone/web-game-bg.webp') center / cover fixed,
+    url('/assets/phone/web-game-bg.webp') center / cover,
     #070817;
 }
 
@@ -235,7 +235,6 @@
 @media (max-width: 460px) {
   .shell {
     padding: 0 8px 10px;
-    background-attachment: scroll;
   }
 
   .hero {

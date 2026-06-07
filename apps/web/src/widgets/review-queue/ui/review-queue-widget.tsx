@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Eyebrow, PageStatus } from '@shared/ui';
 import layout from '@shared/ui/layout.module.scss';
 import { useReviewFilterState } from '../model/use-review-filter-state';
@@ -11,7 +10,6 @@ import styles from './review-queue.module.scss';
 
 export function ReviewQueueWidget() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const reduceMotion = useReducedMotion();
   const reviewFilters = useReviewFilterState();
   const { review, selected, selectItem } = useReviewQueue(reviewFilters.filters);
 
@@ -56,11 +54,7 @@ export function ReviewQueueWidget() {
         ) : null}
       </div>
 
-      <motion.aside
-        className={`${layout.panel} ${styles.detail}`}
-        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <aside className={`${layout.panel} ${styles.detail} ${styles.detailFade}`}>
         {selected ? (
           <ReviewDetailPanel
             key={selected.id}
@@ -70,7 +64,7 @@ export function ReviewQueueWidget() {
         ) : (
           <PageStatus text="Очередь пуста" />
         )}
-      </motion.aside>
+      </aside>
     </section>
   );
 }

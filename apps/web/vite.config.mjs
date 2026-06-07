@@ -19,6 +19,26 @@ export default defineConfig({
       '@shared': src('shared'),
     },
   },
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-libs': [
+            '@tanstack/react-query',
+            'react-router-dom',
+            'axios',
+            'zustand',
+            'react-hook-form',
+          ],
+        },
+      },
+    },
+  },
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   server: {
     proxy: {
       '/api': 'http://localhost:3001',

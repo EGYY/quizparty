@@ -28,7 +28,7 @@ export function JoinRoomScreen({
   return (
     <main className={styles.shell}>
       <section className={styles.hero}>
-        <img alt="QuizParty" className={styles.logo} src={quizPartyLogoUrl} />
+        <img alt="QuizParty" className={styles.logo} src={quizPartyLogoUrl} fetchPriority="high" />
         <Link className={styles.authorLink} to="/admin/login">
           Вход для авторов
         </Link>
