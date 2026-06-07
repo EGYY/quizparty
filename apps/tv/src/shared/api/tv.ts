@@ -52,6 +52,23 @@ function delay(ms: number): Promise<void> {
   });
 }
 
+function isNetworkDebugEnabled(): boolean {
+  return (
+    typeof globalThis !== 'undefined' &&
+    (globalThis as { __DEV__?: boolean }).__DEV__ === true
+  );
+}
+
+function describeError(error: unknown): Record<string, unknown> {
+  if (!(error instanceof Error)) return { value: String(error) };
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+    cause: (error as Error & { cause?: unknown }).cause,
+  };
+}
+
 export async function request<T>(
   path: string,
   options: FetchOptions = {},
@@ -62,6 +79,11 @@ export async function request<T>(
   let lastError: unknown;
   const url = `${API_BASE_URL}${path}`;
   const externalSignal = requestOptions.signal;
+  const method = (requestOptions.method ?? 'GET').toUpperCase();
+
+  if (isNetworkDebugEnabled()) {
+    console.info('[TV API] request', { method, url, retry, timeoutMs });
+  }
 
   for (let attempt = 0; attempt <= retry; attempt += 1) {
     const controller = new AbortController();
@@ -110,6 +132,15 @@ export async function request<T>(
           ? new HttpTimeoutError(timeoutMs, url)
           : error;
       lastError = requestError;
+      if (isNetworkDebugEnabled()) {
+        console.warn('[TV API] request failed', {
+          method,
+          url,
+          attempt: attempt + 1,
+          attempts: retry + 1,
+          error: describeError(requestError),
+        });
+      }
       if (attempt === retry || !shouldRetry(requestError)) break;
       await delay(450 * (attempt + 1));
     } finally {

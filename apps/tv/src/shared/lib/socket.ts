@@ -54,13 +54,43 @@ const TV_SOCKET_OPTIONS = {
   timeout: 8000,
 };
 
+function isNetworkDebugEnabled(): boolean {
+  return (
+    typeof globalThis !== 'undefined' &&
+    (globalThis as { __DEV__?: boolean }).__DEV__ === true
+  );
+}
+
+function describeSocketError(error: Error): Record<string, unknown> {
+  const richError = error as Error & {
+    data?: unknown;
+    description?: unknown;
+    context?: unknown;
+    type?: unknown;
+  };
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+    type: richError.type,
+    description: richError.description,
+    context: richError.context,
+    data: richError.data,
+  };
+}
+
 /**
  * Типобезопасная обёртка над socket.io-client для TV-приложения.
  * Валидирует все входящие серверные события через Zod-схемы из @quizparty/shared.
  * Невалидные события молча отбрасываются.
  */
 export function createTvSocket(namespace: TvSocketNamespace): TvSocket {
-  const raw: Socket = io(`${SOCKET_BASE_URL}/${namespace}`, TV_SOCKET_OPTIONS);
+  const url = `${SOCKET_BASE_URL}/${namespace}`;
+  if (isNetworkDebugEnabled()) {
+    console.info('[TV SOCKET] create', { namespace, url });
+  }
+
+  const raw: Socket = io(url, TV_SOCKET_OPTIONS);
 
   return {
     raw,
@@ -88,7 +118,17 @@ export function createTvSocket(namespace: TvSocketNamespace): TvSocket {
     },
     onConnect: cb => raw.on('connect', cb),
     onDisconnect: cb => raw.on('disconnect', cb),
-    onConnectError: cb => raw.on('connect_error', cb),
+    onConnectError: cb =>
+      raw.on('connect_error', error => {
+        if (isNetworkDebugEnabled()) {
+          console.warn('[TV SOCKET] connect_error', {
+            namespace,
+            url,
+            error: describeSocketError(error),
+          });
+        }
+        cb(error);
+      }),
     onReconnectAttempt: cb => raw.io.on('reconnect_attempt', cb),
     onReconnect: cb => raw.io.on('reconnect', cb),
   };

@@ -3,7 +3,6 @@ export {
   defaultCoverUrl,
   logoMarkUrl,
   phonePopcornMascotUrl,
-  phoneQuestionFallbackUrl,
   popcornMascotUrl,
   quizPartyLogoUrl,
   resolveAssetUrl,

@@ -4,8 +4,10 @@
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
-            <!-- Let's Encrypt ISRG Root X1 — не входит в системный стор Android < 7.1.1 -->
+            <!-- Let's Encrypt roots for Android TV devices with stale trust stores. -->
             <certificates src="@raw/isrg_root_x1" />
+            <certificates src="@raw/isrg_root_x2" />
+            <certificates src="@raw/isrg_root_yr" />
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
