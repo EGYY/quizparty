@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://quizpartygame.ru/sitemap.xml

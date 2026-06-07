@@ -28,12 +28,25 @@ export function JoinRoomScreen({
   return (
     <main className={styles.shell}>
       <section className={styles.hero}>
-        <img alt="QuizParty" className={styles.logo} src={quizPartyLogoUrl} fetchPriority="high" />
+        <img
+          alt="QuizParty"
+          className={styles.logo}
+          src={quizPartyLogoUrl}
+          width={860}
+          height={344}
+          fetchPriority="high"
+        />
         <Link className={styles.authorLink} to="/admin/login">
           Вход для авторов
         </Link>
         <h1>Подключайся и играй вместе с друзьями!</h1>
-        <img alt="" className={styles.mascot} src={phonePopcornMascotUrl} />
+        <img
+          alt=""
+          className={styles.mascot}
+          src={phonePopcornMascotUrl}
+          width={512}
+          height={512}
+        />
       </section>
 
       <section className={`${styles.baseCard} ${styles.card}`}>

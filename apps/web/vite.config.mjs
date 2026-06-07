@@ -23,21 +23,18 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-libs': [
-            '@tanstack/react-query',
-            'react-router-dom',
-            'axios',
-            'zustand',
-            'react-hook-form',
-          ],
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) {
+            return 'vendor-react';
+          }
+          if (
+            /[\\/]node_modules[\\/](@tanstack|react-router|axios|zustand|react-hook-form)/.test(id)
+          ) {
+            return 'vendor-libs';
+          }
         },
       },
     },
-  },
-  esbuild: {
-    drop: ['console', 'debugger'],
   },
   server: {
     proxy: {

@@ -60,12 +60,24 @@ export const LobbyPhoneScreen = memo(function LobbyPhoneScreen({
             <ArrowLeft size={26} />
           </button>
         </div>
-        <img alt="QuizParty" className={styles['phone-lobby-logo']} src={quizPartyLogoUrl} />
+        <img
+          alt="QuizParty"
+          className={styles['phone-lobby-logo']}
+          src={quizPartyLogoUrl}
+          width={860}
+          height={344}
+        />
         <div className={styles['phone-lobby-code']}>
           <span>Комната</span>
           <strong>{room.roomCode}</strong>
         </div>
-        <img alt="" className={styles['phone-lobby-mascot']} src={phonePopcornMascotUrl} />
+        <img
+          alt=""
+          className={styles['phone-lobby-mascot']}
+          src={phonePopcornMascotUrl}
+          width={512}
+          height={512}
+        />
       </header>
 
       <section className={styles['phone-lobby-panel']}>
