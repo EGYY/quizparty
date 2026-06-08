@@ -23,4 +23,4 @@ export const adminAvatarUrl = '/assets/avatars/admin.svg';
 export const logoMarkUrl = '/assets/brand/logo-mark.svg';
 export const popcornMascotUrl = '/assets/brand/popcorn-mascot.svg';
 export const quizPartyLogoUrl = '/assets/brand/quizparty-logo.webp';
-export const phonePopcornMascotUrl = '/assets/phone/popcorn-mascot.webp';
+export const phonePopcornMascotUrl = '/assets/phone/host-quizzy-welcome.webp';

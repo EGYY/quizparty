@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
-import { REACTION_EMOJIS } from '../model/reveal';
+import { DEFAULT_REACTIONS } from '@quizparty/shared';
 
 export const RevealReactionsPanel = memo(function RevealReactionsPanel() {
   return (
@@ -12,7 +12,7 @@ export const RevealReactionsPanel = memo(function RevealReactionsPanel() {
         Покажи, что ты думаешь об этом вопросе!
       </Text>
       <View style={styles.reactionPalette}>
-        {REACTION_EMOJIS.map(emoji => (
+        {DEFAULT_REACTIONS.map(emoji => (
           <View key={emoji} style={styles.reactionPaletteItem}>
             <Text style={styles.reactionPaletteText}>{emoji}</Text>
           </View>

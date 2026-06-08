@@ -4,8 +4,12 @@ declare const require: (path: string) => ImageSourcePropType;
 
 export const homeBackground = require('./images/quiz-night-bg.webp');
 export const quizPartyLogo = require('./images/quizparty-logo.webp');
-export const hostPresenter = require('./images/popcorn-mascot.webp');
-export const finalHostCheer = require('./images/generated/host-final-cheer.webp');
+export const hostQuizzyWelcome = require('./images/generated/host-quizzy-welcome.webp');
+export const hostQuizzyThinking = require('./images/generated/host-quizzy-thinking.webp');
+export const hostQuizzyLobby = require('./images/generated/host-quizzy-lobby.webp');
+export const hostQuizzyFinal = require('./images/generated/host-quizzy-final.webp');
+export const hostPresenter = hostQuizzyWelcome;
+export const finalHostCheer = hostQuizzyFinal;
 export const finalPodiums = require('./images/generated/final-podiums-stage.webp');
 export const avatar01 = require('./images/avatars/avatar-01.webp');
 export const avatar02 = require('./images/avatars/avatar-02.webp');

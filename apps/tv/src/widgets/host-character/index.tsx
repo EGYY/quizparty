@@ -7,7 +7,11 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'react-native';
-import { hostPresenter } from '@shared/assets/images';
+import {
+  hostQuizzyLobby,
+  hostQuizzyThinking,
+  hostQuizzyWelcome,
+} from '@shared/assets/images';
 import { colors } from '@shared/config/theme';
 import { s, sf, sv } from '@shared/config/scale';
 
@@ -60,6 +64,12 @@ export const HostCharacter = memo(function HostCharacter({
 
   const isRight = placement !== 'left';
   const isTopRight = placement === 'topRight';
+  const hostSource =
+    mood === 'thinking'
+      ? hostQuizzyThinking
+      : mood === 'party'
+        ? hostQuizzyLobby
+        : hostQuizzyWelcome;
 
   // Memoized: prevents a new array + object allocation on every parent re-render.
   // translateY is a stable AnimatedInterpolation (from useMemo above), so this
@@ -101,7 +111,7 @@ export const HostCharacter = memo(function HostCharacter({
 
       <Image
         resizeMode="contain"
-        source={hostPresenter}
+        source={hostSource}
         style={[styles.image, placement === 'left' && styles.mirrored]}
       />
     </Animated.View>

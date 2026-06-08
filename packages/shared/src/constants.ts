@@ -38,7 +38,7 @@ export const GAME_MODE_SETTINGS = {
   },
 } as const;
 
-export const DEFAULT_REACTIONS = ['😂', '❤️', '🔥', '😱', '👏', '🎉'] as const;
+export const DEFAULT_REACTIONS = ['😂', '🤡', '💩', '👿', '🤬', '🥱'] as const;
 
 /** Длительность полноэкранного отсчёта «3-2-1» перед появлением
  *  вариантов ответов в режиме REACTION. */
