@@ -8,4 +8,4 @@
  *   'http://10.0.2.2:3001'     — Android emulator → localhost:3001
  *   'http://192.168.1.5:3001'  — physical device on the same Wi-Fi
  */
-export const BACKEND_ORIGIN = 'https://quizpartygame.ru';
+export const BACKEND_ORIGIN = 'https://quiz-party.ru';
